@@ -1,0 +1,49 @@
+{
+  "sheet_name": "Jan 2026 Performance",
+  "columns": [
+    {
+      "letter": "A",
+      "name": "Show / Placement"
+    },
+    {
+      "letter": "B",
+      "name": "Host"
+    },
+    {
+      "letter": "C",
+      "name": "Read Type"
+    },
+    {
+      "letter": "D",
+      "name": "Week"
+    },
+    {
+      "letter": "E",
+      "name": "StakePoint Spend"
+    },
+    {
+      "letter": "F",
+      "name": "WagerLine Spend"
+    },
+    {
+      "letter": "G",
+      "name": "Total Spend"
+    },
+    {
+      "letter": "H",
+      "name": "Downloads (est.)"
+    },
+    {
+      "letter": "I",
+      "name": "Promo Code Uses"
+    },
+    {
+      "letter": "J",
+      "name": "Notes"
+    }
+  ],
+  "brands": [
+    "StakePoint",
+    "WagerLine"
+  ]
+}

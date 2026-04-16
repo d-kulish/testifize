@@ -1,0 +1,37 @@
+{
+  "sheet_name_prefix": "MediaWave_",
+  "columns": [
+    {
+      "letter": "A",
+      "name": "Date"
+    },
+    {
+      "letter": "B",
+      "name": "Campaign Name"
+    },
+    {
+      "letter": "C",
+      "name": "Brand"
+    },
+    {
+      "letter": "D",
+      "name": "Placement Type"
+    },
+    {
+      "letter": "E",
+      "name": "Gross Spend (USD)"
+    },
+    {
+      "letter": "F",
+      "name": "Net Spend (USD)"
+    },
+    {
+      "letter": "G",
+      "name": "Impressions"
+    },
+    {
+      "letter": "H",
+      "name": "Clicks"
+    }
+  ]
+}
