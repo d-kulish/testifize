@@ -1,0 +1,96 @@
+{
+  "source_file": "../files/Bleav_MMM_Daily_WithImpressions.xlsx",
+  "sheet_name": "By_Show_Detail",
+  "file_type": "xlsx",
+  "header": {
+    "row": 1,
+    "columns": [
+      {
+        "letter": "A",
+        "name": "Date"
+      },
+      {
+        "letter": "B",
+        "name": "Vendor"
+      },
+      {
+        "letter": "C",
+        "name": "Campaign"
+      },
+      {
+        "letter": "D",
+        "name": "Marketing_Channel"
+      },
+      {
+        "letter": "E",
+        "name": "Sub_Channel"
+      },
+      {
+        "letter": "F",
+        "name": "Daily_Spend"
+      },
+      {
+        "letter": "G",
+        "name": "Daily_Impressions"
+      },
+      {
+        "letter": "H",
+        "name": "Spend_Pattern"
+      },
+      {
+        "letter": "I",
+        "name": "Data_Source"
+      }
+    ]
+  },
+  "selected_columns": {
+    "date": "Date",
+    "source_vendor": "Vendor",
+    "campaign": "Campaign",
+    "marketing_channel": "Marketing_Channel",
+    "sub_channel": "Sub_Channel",
+    "spend": "Daily_Spend",
+    "impressions": "Daily_Impressions",
+    "spend_pattern": "Spend_Pattern",
+    "data_source": "Data_Source"
+  },
+  "validations": {
+    "Vendor": {
+      "allowed_values": [
+        "Bleav Podcast Network"
+      ]
+    },
+    "Marketing_Channel": {
+      "allowed_values": [
+        "Podcast/Audio"
+      ]
+    },
+    "Sub_Channel": {
+      "allowed_values": [
+        "Sports Podcast Network"
+      ]
+    },
+    "Spend_Pattern": {
+      "allowed_values": [
+        "Flat Daily"
+      ]
+    },
+    "Data_Source": {
+      "allowed_values": [
+        "Actual",
+        "Imputed from Feb",
+        "Imputed from Jun"
+      ]
+    }
+  },
+  "output_defaults": {
+    "Vendor": "Bleav",
+    "Brand": "BetOnline",
+    "Spend_Type": "Actual"
+  },
+  "notes": [
+    "By_Show_Detail is the primary input because it contains the actual show/campaign names required by the output Campaign column.",
+    "Daily_Aggregated is useful for daily total checks, but its Campaign value is only a coarse aggregate label and should not be used as the final Campaign value.",
+    "final/Bleav.csv is partial: it lacks impressions, campaign/show, data source, and source-file lineage."
+  ]
+}

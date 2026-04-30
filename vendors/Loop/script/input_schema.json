@@ -1,0 +1,49 @@
+{
+  "source_file": "../files/LOOP FEB'26 FINAL.xlsx",
+  "sheet_name": "Daily Spend",
+  "file_type": "xlsx",
+  "header": {
+    "row": 5,
+    "columns": [
+      {
+        "letter": "A",
+        "name": "Date"
+      },
+      {
+        "letter": "B",
+        "name": "Impressions"
+      },
+      {
+        "letter": "C",
+        "name": "Spots"
+      },
+      {
+        "letter": "D",
+        "name": "Spend"
+      }
+    ]
+  },
+  "selected_columns": {
+    "date": "Date",
+    "impressions": "Impressions",
+    "spend": "Spend"
+  },
+  "skip_rules": [
+    "Skip report metadata rows above the header.",
+    "Skip the subtotal row where Date is blank and Impressions/Spend are populated.",
+    "Skip trailing blank rows."
+  ],
+  "comparison_window": {
+    "start_date": "2026-02-01",
+    "end_date": "2026-02-28"
+  },
+  "output_defaults": {
+    "Vendor": "Loop",
+    "Brand": "BetOnline",
+    "Channel": "DOOH",
+    "Platform": "Loop TV",
+    "Data_Grain": "daily",
+    "Processed_At": "generated",
+    "Source_File": "LOOP FEB'26 FINAL.xlsx"
+  }
+}

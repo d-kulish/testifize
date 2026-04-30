@@ -1,0 +1,611 @@
+date,airport_code,airport_name,dma,screen_type,cpm,scheduleid,asset_id,asset_label,spend,impressions
+2025-06-01 00:00:00,AUS,Austin-Bergstrom International Airport,"Austin, Texas",Restaurant/Bar/Newsstand,16.84,"5,036",151E05038B6D75,Bet Online,10.8618,645
+2025-06-01 00:00:00,DAL,Dallas Love Field,"Dallas-Fort Worth, Texas",Restaurant/Bar/Newsstand,16.84,"5,036",151E05038B6D75,Bet Online,4.34472,258
+2025-06-01 00:00:00,DAL,Dallas Love Field,"Dallas-Fort Worth, Texas",Gate,16.84,"5,036",151E05038B6D75,Bet Online,5.79296,344
+2025-06-01 00:00:00,DCA,Ronald Reagan National Airport,"Washington, D.C. (Hagerstown)",Restaurant/Bar/Newsstand,16.84,"5,036",151E05038B6D75,Bet Online,15.93064,946
+2025-06-01 00:00:00,DFW,DFW International Airport,"Dallas-Fort Worth, Texas",Restaurant/Bar/Newsstand,16.84,"5,036",151E05038B6D75,Bet Online,2.17236,129
+2025-06-01 00:00:00,FLL,Fort Lauderdale-Hollywood International Airport,"Miami-Fort Lauderdale, Florida",Restaurant/Bar/Newsstand,16.84,"5,036",151E05038B6D75,Bet Online,5.79296,344
+2025-06-01 00:00:00,IAH,George Bush Intercontinental Airport,"Houston, Texas",Restaurant/Bar/Newsstand,16.84,"5,036",151E05038B6D75,Bet Online,36.3744,2160
+2025-06-01 00:00:00,LAX,Los Angeles International Airport,"Los Angeles, California",Restaurant/Bar/Newsstand,16.84,"5,036",151E05038B6D75,Bet Online,20.99948,1247
+2025-06-01 00:00:00,MCO,Orlando International Airport,"Orlando-Daytona Beach-Melbourne, Florida",Restaurant/Bar/Newsstand,16.84,"5,036",151E05038B6D75,Bet Online,6.51708,387
+2025-06-01 00:00:00,MIA,Miami International Airport,"Miami-Fort Lauderdale, Florida",Restaurant/Bar/Newsstand,16.84,"5,036",151E05038B6D75,Bet Online,17.37888,1032
+2025-06-01 00:00:00,MIA,Miami International Airport,"Miami-Fort Lauderdale, Florida",Gate,16.84,"5,036",151E05038B6D75,Bet Online,67.39368,4002
+2025-06-01 00:00:00,MKE,Milwaukee Mitchell International Airport,"Milwaukee, Wisconsin",Restaurant/Bar/Newsstand,16.84,"5,036",151E05038B6D75,Bet Online,5.79296,344
+2025-06-01 00:00:00,MKE,Milwaukee Mitchell International Airport,"Milwaukee, Wisconsin",Gate,16.84,"5,036",151E05038B6D75,Bet Online,10.07032,598
+2025-06-01 00:00:00,MSP,Minneapolis-St. Paul International Airport,"Minneapolis-St. Paul, Minnesota",Restaurant/Bar/Newsstand,16.84,"5,036",151E05038B6D75,Bet Online,31.79392,1888
+2025-06-01 00:00:00,MSP,Minneapolis-St. Paul International Airport,"Minneapolis-St. Paul, Minnesota",Gate,16.84,"5,036",151E05038B6D75,Bet Online,49.0044,2910
+2025-06-01 00:00:00,PBI,Palm Beach International Airport,"West Palm Beach-Fort Pierce, Florida",Restaurant/Bar/Newsstand,16.84,"5,036",151E05038B6D75,Bet Online,2.17236,129
+2025-06-01 00:00:00,SAT,San Antonio International Airport,"San Antonio, Texas",Restaurant/Bar/Newsstand,16.84,"5,036",151E05038B6D75,Bet Online,2.89648,172
+2025-06-01 00:00:00,SAT,San Antonio International Airport,"San Antonio, Texas",Gate,16.84,"5,036",151E05038B6D75,Bet Online,15.00444,891
+2025-06-01 00:00:00,SEA,Seattle-Tacoma International Airport,"Seattle-Tacoma, Washington",Gate,16.84,"5,036",151E05038B6D75,Bet Online,49.24016,2924
+2025-06-01 00:00:00,SFO,San Francisco International Airport,"San Francisco-Oakland-San Jose, California",Restaurant/Bar/Newsstand,16.84,"5,036",151E05038B6D75,Bet Online,7.96532,473
+2025-06-01 00:00:00,SJC,San Jose Mineta International Airport,"San Francisco-Oakland-San Jose, California",Restaurant/Bar/Newsstand,16.84,"5,036",151E05038B6D75,Bet Online,2.89648,172
+2025-06-01 00:00:00,SNA,John Wayne Airport Orange County,"Los Angeles, California",Restaurant/Bar/Newsstand,16.84,"5,036",151E05038B6D75,Bet Online,1.44824,86
+2025-06-01 00:00:00,TPA,Tampa International Airport,"Tampa-St. Petersburg (Sarasota), Florida",Restaurant/Bar/Newsstand,16.84,"5,036",151E05038B6D75,Bet Online,14.4824,860
+2025-06-02 00:00:00,AUS,Austin-Bergstrom International Airport,"Austin, Texas",Restaurant/Bar/Newsstand,16.84,"5,036",151E05038B6D75,Bet Online,11.58592,688
+2025-06-02 00:00:00,DAL,Dallas Love Field,"Dallas-Fort Worth, Texas",Restaurant/Bar/Newsstand,16.84,"5,036",151E05038B6D75,Bet Online,4.34472,258
+2025-06-02 00:00:00,DAL,Dallas Love Field,"Dallas-Fort Worth, Texas",Gate,16.84,"5,036",151E05038B6D75,Bet Online,5.79296,344
+2025-06-02 00:00:00,DCA,Ronald Reagan National Airport,"Washington, D.C. (Hagerstown)",Restaurant/Bar/Newsstand,16.84,"5,036",151E05038B6D75,Bet Online,15.93064,946
+2025-06-02 00:00:00,DFW,DFW International Airport,"Dallas-Fort Worth, Texas",Restaurant/Bar/Newsstand,16.84,"5,036",151E05038B6D75,Bet Online,2.89648,172
+2025-06-02 00:00:00,FLL,Fort Lauderdale-Hollywood International Airport,"Miami-Fort Lauderdale, Florida",Restaurant/Bar/Newsstand,16.84,"5,036",151E05038B6D75,Bet Online,5.79296,344
+2025-06-02 00:00:00,IAH,George Bush Intercontinental Airport,"Houston, Texas",Restaurant/Bar/Newsstand,16.84,"5,036",151E05038B6D75,Bet Online,38.79936,2304
+2025-06-02 00:00:00,LAX,Los Angeles International Airport,"Los Angeles, California",Restaurant/Bar/Newsstand,16.84,"5,036",151E05038B6D75,Bet Online,23.89596,1419
+2025-06-02 00:00:00,MCO,Orlando International Airport,"Orlando-Daytona Beach-Melbourne, Florida",Restaurant/Bar/Newsstand,16.84,"5,036",151E05038B6D75,Bet Online,7.2412,430
+2025-06-02 00:00:00,MIA,Miami International Airport,"Miami-Fort Lauderdale, Florida",Restaurant/Bar/Newsstand,16.84,"5,036",151E05038B6D75,Bet Online,17.37888,1032
+2025-06-02 00:00:00,MIA,Miami International Airport,"Miami-Fort Lauderdale, Florida",Gate,16.84,"5,036",151E05038B6D75,Bet Online,67.39368,4002
+2025-06-02 00:00:00,MKE,Milwaukee Mitchell International Airport,"Milwaukee, Wisconsin",Restaurant/Bar/Newsstand,16.84,"5,036",151E05038B6D75,Bet Online,5.79296,344
+2025-06-02 00:00:00,MKE,Milwaukee Mitchell International Airport,"Milwaukee, Wisconsin",Gate,16.84,"5,036",151E05038B6D75,Bet Online,10.07032,598
+2025-06-02 00:00:00,MSP,Minneapolis-St. Paul International Airport,"Minneapolis-St. Paul, Minnesota",Restaurant/Bar/Newsstand,16.84,"5,036",151E05038B6D75,Bet Online,31.79392,1888
+2025-06-02 00:00:00,MSP,Minneapolis-St. Paul International Airport,"Minneapolis-St. Paul, Minnesota",Gate,16.84,"5,036",151E05038B6D75,Bet Online,49.0044,2910
+2025-06-02 00:00:00,PBI,Palm Beach International Airport,"West Palm Beach-Fort Pierce, Florida",Restaurant/Bar/Newsstand,16.84,"5,036",151E05038B6D75,Bet Online,4.34472,258
+2025-06-02 00:00:00,SAT,San Antonio International Airport,"San Antonio, Texas",Restaurant/Bar/Newsstand,16.84,"5,036",151E05038B6D75,Bet Online,2.89648,172
+2025-06-02 00:00:00,SAT,San Antonio International Airport,"San Antonio, Texas",Gate,16.84,"5,036",151E05038B6D75,Bet Online,15.45912,918
+2025-06-02 00:00:00,SEA,Seattle-Tacoma International Airport,"Seattle-Tacoma, Washington",Gate,16.84,"5,036",151E05038B6D75,Bet Online,49.24016,2924
+2025-06-02 00:00:00,SFO,San Francisco International Airport,"San Francisco-Oakland-San Jose, California",Restaurant/Bar/Newsstand,16.84,"5,036",151E05038B6D75,Bet Online,7.2412,430
+2025-06-02 00:00:00,SJC,San Jose Mineta International Airport,"San Francisco-Oakland-San Jose, California",Restaurant/Bar/Newsstand,16.84,"5,036",151E05038B6D75,Bet Online,2.89648,172
+2025-06-02 00:00:00,SNA,John Wayne Airport Orange County,"Los Angeles, California",Restaurant/Bar/Newsstand,16.84,"5,036",151E05038B6D75,Bet Online,1.44824,86
+2025-06-02 00:00:00,TPA,Tampa International Airport,"Tampa-St. Petersburg (Sarasota), Florida",Restaurant/Bar/Newsstand,16.84,"5,036",151E05038B6D75,Bet Online,15.20652,903
+2025-06-03 00:00:00,AUS,Austin-Bergstrom International Airport,"Austin, Texas",Restaurant/Bar/Newsstand,16.84,"5,036",151E05038B6D75,Bet Online,12.31004,731
+2025-06-03 00:00:00,DAL,Dallas Love Field,"Dallas-Fort Worth, Texas",Restaurant/Bar/Newsstand,16.84,"5,036",151E05038B6D75,Bet Online,4.34472,258
+2025-06-03 00:00:00,DAL,Dallas Love Field,"Dallas-Fort Worth, Texas",Gate,16.84,"5,036",151E05038B6D75,Bet Online,5.79296,344
+2025-06-03 00:00:00,DCA,Ronald Reagan National Airport,"Washington, D.C. (Hagerstown)",Restaurant/Bar/Newsstand,16.84,"5,036",151E05038B6D75,Bet Online,15.93064,946
+2025-06-03 00:00:00,DFW,DFW International Airport,"Dallas-Fort Worth, Texas",Restaurant/Bar/Newsstand,16.84,"5,036",151E05038B6D75,Bet Online,2.89648,172
+2025-06-03 00:00:00,FLL,Fort Lauderdale-Hollywood International Airport,"Miami-Fort Lauderdale, Florida",Restaurant/Bar/Newsstand,16.84,"5,036",151E05038B6D75,Bet Online,5.79296,344
+2025-06-03 00:00:00,HNL,Honolulu International Airport,"Honolulu, Hawaii",Restaurant/Bar/Newsstand,16.84,"5,036",151E05038B6D75,Bet Online,1.44824,86
+2025-06-03 00:00:00,IAH,George Bush Intercontinental Airport,"Houston, Texas",Restaurant/Bar/Newsstand,16.84,"5,036",151E05038B6D75,Bet Online,39.87712,2368
+2025-06-03 00:00:00,LAX,Los Angeles International Airport,"Los Angeles, California",Restaurant/Bar/Newsstand,16.84,"5,036",151E05038B6D75,Bet Online,19.55124,1161
+2025-06-03 00:00:00,MCO,Orlando International Airport,"Orlando-Daytona Beach-Melbourne, Florida",Restaurant/Bar/Newsstand,16.84,"5,036",151E05038B6D75,Bet Online,8.68944,516
+2025-06-03 00:00:00,MIA,Miami International Airport,"Miami-Fort Lauderdale, Florida",Restaurant/Bar/Newsstand,16.84,"5,036",151E05038B6D75,Bet Online,17.37888,1032
+2025-06-03 00:00:00,MIA,Miami International Airport,"Miami-Fort Lauderdale, Florida",Gate,16.84,"5,036",151E05038B6D75,Bet Online,67.39368,4002
+2025-06-03 00:00:00,MKE,Milwaukee Mitchell International Airport,"Milwaukee, Wisconsin",Restaurant/Bar/Newsstand,16.84,"5,036",151E05038B6D75,Bet Online,5.79296,344
+2025-06-03 00:00:00,MKE,Milwaukee Mitchell International Airport,"Milwaukee, Wisconsin",Gate,16.84,"5,036",151E05038B6D75,Bet Online,10.07032,598
+2025-06-03 00:00:00,MSP,Minneapolis-St. Paul International Airport,"Minneapolis-St. Paul, Minnesota",Restaurant/Bar/Newsstand,16.84,"5,036",151E05038B6D75,Bet Online,36.10496,2144
+2025-06-03 00:00:00,MSP,Minneapolis-St. Paul International Airport,"Minneapolis-St. Paul, Minnesota",Gate,16.84,"5,036",151E05038B6D75,Bet Online,49.0044,2910
+2025-06-03 00:00:00,PBI,Palm Beach International Airport,"West Palm Beach-Fort Pierce, Florida",Restaurant/Bar/Newsstand,16.84,"5,036",151E05038B6D75,Bet Online,4.34472,258
+2025-06-03 00:00:00,SAT,San Antonio International Airport,"San Antonio, Texas",Restaurant/Bar/Newsstand,16.84,"5,036",151E05038B6D75,Bet Online,2.89648,172
+2025-06-03 00:00:00,SAT,San Antonio International Airport,"San Antonio, Texas",Gate,16.84,"5,036",151E05038B6D75,Bet Online,15.45912,918
+2025-06-03 00:00:00,SEA,Seattle-Tacoma International Airport,"Seattle-Tacoma, Washington",Gate,16.84,"5,036",151E05038B6D75,Bet Online,24.62008,1462
+2025-06-03 00:00:00,SJC,San Jose Mineta International Airport,"San Francisco-Oakland-San Jose, California",Restaurant/Bar/Newsstand,16.84,"5,036",151E05038B6D75,Bet Online,2.89648,172
+2025-06-03 00:00:00,SNA,John Wayne Airport Orange County,"Los Angeles, California",Restaurant/Bar/Newsstand,16.84,"5,036",151E05038B6D75,Bet Online,1.44824,86
+2025-06-03 00:00:00,TPA,Tampa International Airport,"Tampa-St. Petersburg (Sarasota), Florida",Restaurant/Bar/Newsstand,16.84,"5,036",151E05038B6D75,Bet Online,15.93064,946
+2025-06-04 00:00:00,AUS,Austin-Bergstrom International Airport,"Austin, Texas",Restaurant/Bar/Newsstand,16.84,"5,036",151E05038B6D75,Bet Online,10.13768,602
+2025-06-04 00:00:00,DAL,Dallas Love Field,"Dallas-Fort Worth, Texas",Restaurant/Bar/Newsstand,16.84,"5,036",151E05038B6D75,Bet Online,4.34472,258
+2025-06-04 00:00:00,DAL,Dallas Love Field,"Dallas-Fort Worth, Texas",Gate,16.84,"5,036",151E05038B6D75,Bet Online,5.79296,344
+2025-06-04 00:00:00,DCA,Ronald Reagan National Airport,"Washington, D.C. (Hagerstown)",Restaurant/Bar/Newsstand,16.84,"5,036",151E05038B6D75,Bet Online,15.93064,946
+2025-06-04 00:00:00,DFW,DFW International Airport,"Dallas-Fort Worth, Texas",Restaurant/Bar/Newsstand,16.84,"5,036",151E05038B6D75,Bet Online,2.89648,172
+2025-06-04 00:00:00,FLL,Fort Lauderdale-Hollywood International Airport,"Miami-Fort Lauderdale, Florida",Restaurant/Bar/Newsstand,16.84,"5,036",151E05038B6D75,Bet Online,5.79296,344
+2025-06-04 00:00:00,HNL,Honolulu International Airport,"Honolulu, Hawaii",Restaurant/Bar/Newsstand,16.84,"5,036",151E05038B6D75,Bet Online,2.17236,129
+2025-06-04 00:00:00,IAH,George Bush Intercontinental Airport,"Houston, Texas",Restaurant/Bar/Newsstand,16.84,"5,036",151E05038B6D75,Bet Online,41.49376,2464
+2025-06-04 00:00:00,LAX,Los Angeles International Airport,"Los Angeles, California",Restaurant/Bar/Newsstand,16.84,"5,036",151E05038B6D75,Bet Online,21.7236,1290
+2025-06-04 00:00:00,MCO,Orlando International Airport,"Orlando-Daytona Beach-Melbourne, Florida",Restaurant/Bar/Newsstand,16.84,"5,036",151E05038B6D75,Bet Online,7.2412,430
+2025-06-04 00:00:00,MIA,Miami International Airport,"Miami-Fort Lauderdale, Florida",Restaurant/Bar/Newsstand,16.84,"5,036",151E05038B6D75,Bet Online,17.37888,1032
+2025-06-04 00:00:00,MIA,Miami International Airport,"Miami-Fort Lauderdale, Florida",Gate,16.84,"5,036",151E05038B6D75,Bet Online,67.39368,4002
+2025-06-04 00:00:00,MKE,Milwaukee Mitchell International Airport,"Milwaukee, Wisconsin",Restaurant/Bar/Newsstand,16.84,"5,036",151E05038B6D75,Bet Online,5.79296,344
+2025-06-04 00:00:00,MKE,Milwaukee Mitchell International Airport,"Milwaukee, Wisconsin",Gate,16.84,"5,036",151E05038B6D75,Bet Online,10.07032,598
+2025-06-04 00:00:00,MSP,Minneapolis-St. Paul International Airport,"Minneapolis-St. Paul, Minnesota",Restaurant/Bar/Newsstand,16.84,"5,036",151E05038B6D75,Bet Online,34.48832,2048
+2025-06-04 00:00:00,MSP,Minneapolis-St. Paul International Airport,"Minneapolis-St. Paul, Minnesota",Gate,16.84,"5,036",151E05038B6D75,Bet Online,49.0044,2910
+2025-06-04 00:00:00,PBI,Palm Beach International Airport,"West Palm Beach-Fort Pierce, Florida",Restaurant/Bar/Newsstand,16.84,"5,036",151E05038B6D75,Bet Online,4.34472,258
+2025-06-04 00:00:00,SAT,San Antonio International Airport,"San Antonio, Texas",Restaurant/Bar/Newsstand,16.84,"5,036",151E05038B6D75,Bet Online,2.89648,172
+2025-06-04 00:00:00,SAT,San Antonio International Airport,"San Antonio, Texas",Gate,16.84,"5,036",151E05038B6D75,Bet Online,15.45912,918
+2025-06-04 00:00:00,SEA,Seattle-Tacoma International Airport,"Seattle-Tacoma, Washington",Gate,16.84,"5,036",151E05038B6D75,Bet Online,49.24016,2924
+2025-06-04 00:00:00,SJC,San Jose Mineta International Airport,"San Francisco-Oakland-San Jose, California",Restaurant/Bar/Newsstand,16.84,"5,036",151E05038B6D75,Bet Online,2.89648,172
+2025-06-04 00:00:00,SNA,John Wayne Airport Orange County,"Los Angeles, California",Restaurant/Bar/Newsstand,16.84,"5,036",151E05038B6D75,Bet Online,1.44824,86
+2025-06-04 00:00:00,TPA,Tampa International Airport,"Tampa-St. Petersburg (Sarasota), Florida",Restaurant/Bar/Newsstand,16.84,"5,036",151E05038B6D75,Bet Online,16.65476,989
+2025-06-05 00:00:00,AUS,Austin-Bergstrom International Airport,"Austin, Texas",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,10.8618,645
+2025-06-05 00:00:00,DAL,Dallas Love Field,"Dallas-Fort Worth, Texas",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,6.51708,387
+2025-06-05 00:00:00,DAL,Dallas Love Field,"Dallas-Fort Worth, Texas",Gate,16.84,"5,111",152F112B80F051,Bet Online,8.68944,516
+2025-06-05 00:00:00,DCA,Ronald Reagan National Airport,"Washington, D.C. (Hagerstown)",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,10.13768,602
+2025-06-05 00:00:00,DFW,DFW International Airport,"Dallas-Fort Worth, Texas",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,4.34472,258
+2025-06-05 00:00:00,FLL,Fort Lauderdale-Hollywood International Airport,"Miami-Fort Lauderdale, Florida",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,5.79296,344
+2025-06-05 00:00:00,HNL,Honolulu International Airport,"Honolulu, Hawaii",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,1.44824,86
+2025-06-05 00:00:00,IAH,George Bush Intercontinental Airport,"Houston, Texas",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,50.38528,2992
+2025-06-05 00:00:00,LAX,Los Angeles International Airport,"Los Angeles, California",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,30.41304,1806
+2025-06-05 00:00:00,MCO,Orlando International Airport,"Orlando-Daytona Beach-Melbourne, Florida",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,7.96532,473
+2025-06-05 00:00:00,MIA,Miami International Airport,"Miami-Fort Lauderdale, Florida",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,16.65476,989
+2025-06-05 00:00:00,MIA,Miami International Airport,"Miami-Fort Lauderdale, Florida",Gate,16.84,"5,111",152F112B80F051,Bet Online,67.39368,4002
+2025-06-05 00:00:00,MKE,Milwaukee Mitchell International Airport,"Milwaukee, Wisconsin",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,8.68944,516
+2025-06-05 00:00:00,MKE,Milwaukee Mitchell International Airport,"Milwaukee, Wisconsin",Gate,16.84,"5,111",152F112B80F051,Bet Online,15.10548,897
+2025-06-05 00:00:00,MSP,Minneapolis-St. Paul International Airport,"Minneapolis-St. Paul, Minnesota",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,50.65472,3008
+2025-06-05 00:00:00,MSP,Minneapolis-St. Paul International Airport,"Minneapolis-St. Paul, Minnesota",Gate,16.84,"5,111",152F112B80F051,Bet Online,73.5066,4365
+2025-06-05 00:00:00,OGG,Kahului Airport,"Honolulu, Hawaii",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,1.97028,117
+2025-06-05 00:00:00,PBI,Palm Beach International Airport,"West Palm Beach-Fort Pierce, Florida",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,4.34472,258
+2025-06-05 00:00:00,SAT,San Antonio International Airport,"San Antonio, Texas",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,4.34472,258
+2025-06-05 00:00:00,SAT,San Antonio International Airport,"San Antonio, Texas",Gate,16.84,"5,111",152F112B80F051,Bet Online,22.734,1350
+2025-06-05 00:00:00,SEA,Seattle-Tacoma International Airport,"Seattle-Tacoma, Washington",Gate,16.84,"5,111",152F112B80F051,Bet Online,73.86024,4386
+2025-06-05 00:00:00,SJC,San Jose Mineta International Airport,"San Francisco-Oakland-San Jose, California",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,4.34472,258
+2025-06-05 00:00:00,SNA,John Wayne Airport Orange County,"Los Angeles, California",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,2.17236,129
+2025-06-05 00:00:00,TPA,Tampa International Airport,"Tampa-St. Petersburg (Sarasota), Florida",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,16.65476,989
+2025-06-06 00:00:00,AUS,Austin-Bergstrom International Airport,"Austin, Texas",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,18.82712,1118
+2025-06-06 00:00:00,FLL,Fort Lauderdale-Hollywood International Airport,"Miami-Fort Lauderdale, Florida",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,4.34472,258
+2025-06-06 00:00:00,HNL,Honolulu International Airport,"Honolulu, Hawaii",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,11.58592,688
+2025-06-06 00:00:00,IAH,George Bush Intercontinental Airport,"Houston, Texas",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,34.75776,2064
+2025-06-06 00:00:00,LAX,Los Angeles International Airport,"Los Angeles, California",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,17.37888,1032
+2025-06-06 00:00:00,MCO,Orlando International Airport,"Orlando-Daytona Beach-Melbourne, Florida",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,6.51708,387
+2025-06-06 00:00:00,MIA,Miami International Airport,"Miami-Fort Lauderdale, Florida",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,0.72412,43
+2025-06-06 00:00:00,MSP,Minneapolis-St. Paul International Airport,"Minneapolis-St. Paul, Minnesota",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,22.09408,1312
+2025-06-06 00:00:00,OGG,Kahului Airport,"Honolulu, Hawaii",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,5.91084,351
+2025-06-06 00:00:00,TPA,Tampa International Airport,"Tampa-St. Petersburg (Sarasota), Florida",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,15.20652,903
+2025-06-07 00:00:00,AUS,Austin-Bergstrom International Airport,"Austin, Texas",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,18.103,1075
+2025-06-07 00:00:00,FLL,Fort Lauderdale-Hollywood International Airport,"Miami-Fort Lauderdale, Florida",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,4.34472,258
+2025-06-07 00:00:00,HNL,Honolulu International Airport,"Honolulu, Hawaii",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,13.03416,774
+2025-06-07 00:00:00,IAH,George Bush Intercontinental Airport,"Houston, Texas",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,36.3744,2160
+2025-06-07 00:00:00,LAX,Los Angeles International Airport,"Los Angeles, California",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,18.103,1075
+2025-06-07 00:00:00,MCO,Orlando International Airport,"Orlando-Daytona Beach-Melbourne, Florida",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,6.51708,387
+2025-06-07 00:00:00,MSP,Minneapolis-St. Paul International Airport,"Minneapolis-St. Paul, Minnesota",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,23.17184,1376
+2025-06-07 00:00:00,OGG,Kahului Airport,"Honolulu, Hawaii",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,5.91084,351
+2025-06-07 00:00:00,TPA,Tampa International Airport,"Tampa-St. Petersburg (Sarasota), Florida",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,13.03416,774
+2025-06-08 00:00:00,AUS,Austin-Bergstrom International Airport,"Austin, Texas",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,18.103,1075
+2025-06-08 00:00:00,DAL,Dallas Love Field,"Dallas-Fort Worth, Texas",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,4.34472,258
+2025-06-08 00:00:00,DAL,Dallas Love Field,"Dallas-Fort Worth, Texas",Gate,16.84,"5,111",152F112B80F051,Bet Online,5.79296,344
+2025-06-08 00:00:00,DCA,Ronald Reagan National Airport,"Washington, D.C. (Hagerstown)",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,14.4824,860
+2025-06-08 00:00:00,DFW,DFW International Airport,"Dallas-Fort Worth, Texas",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,2.89648,172
+2025-06-08 00:00:00,FLL,Fort Lauderdale-Hollywood International Airport,"Miami-Fort Lauderdale, Florida",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,1.44824,86
+2025-06-08 00:00:00,HNL,Honolulu International Airport,"Honolulu, Hawaii",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,13.03416,774
+2025-06-08 00:00:00,IAH,George Bush Intercontinental Airport,"Houston, Texas",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,32.06336,1904
+2025-06-08 00:00:00,LAX,Los Angeles International Airport,"Los Angeles, California",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,17.37888,1032
+2025-06-08 00:00:00,MCO,Orlando International Airport,"Orlando-Daytona Beach-Melbourne, Florida",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,5.06884,301
+2025-06-08 00:00:00,MSP,Minneapolis-St. Paul International Airport,"Minneapolis-St. Paul, Minnesota",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,42.57152,2528
+2025-06-08 00:00:00,MSP,Minneapolis-St. Paul International Airport,"Minneapolis-St. Paul, Minnesota",Gate,16.84,"5,111",152F112B80F051,Bet Online,49.0044,2910
+2025-06-08 00:00:00,OGG,Kahului Airport,"Honolulu, Hawaii",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,9.19464,546
+2025-06-08 00:00:00,PBI,Palm Beach International Airport,"West Palm Beach-Fort Pierce, Florida",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,4.34472,258
+2025-06-08 00:00:00,SAT,San Antonio International Airport,"San Antonio, Texas",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,2.17236,129
+2025-06-08 00:00:00,SAT,San Antonio International Airport,"San Antonio, Texas",Gate,16.84,"5,111",152F112B80F051,Bet Online,13.18572,783
+2025-06-08 00:00:00,TPA,Tampa International Airport,"Tampa-St. Petersburg (Sarasota), Florida",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,20.99948,1247
+2025-06-09 00:00:00,AUS,Austin-Bergstrom International Airport,"Austin, Texas",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,18.82712,1118
+2025-06-09 00:00:00,DAL,Dallas Love Field,"Dallas-Fort Worth, Texas",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,6.51708,387
+2025-06-09 00:00:00,DAL,Dallas Love Field,"Dallas-Fort Worth, Texas",Gate,16.84,"5,111",152F112B80F051,Bet Online,8.68944,516
+2025-06-09 00:00:00,DCA,Ronald Reagan National Airport,"Washington, D.C. (Hagerstown)",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,21.7236,1290
+2025-06-09 00:00:00,DFW,DFW International Airport,"Dallas-Fort Worth, Texas",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,4.34472,258
+2025-06-09 00:00:00,FLL,Fort Lauderdale-Hollywood International Airport,"Miami-Fort Lauderdale, Florida",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,8.68944,516
+2025-06-09 00:00:00,HNL,Honolulu International Airport,"Honolulu, Hawaii",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,15.93064,946
+2025-06-09 00:00:00,IAH,George Bush Intercontinental Airport,"Houston, Texas",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,53.07968,3152
+2025-06-09 00:00:00,LAX,Los Angeles International Airport,"Los Angeles, California",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,22.44772,1333
+2025-06-09 00:00:00,MCO,Orlando International Airport,"Orlando-Daytona Beach-Melbourne, Florida",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,13.75828,817
+2025-06-09 00:00:00,MIA,Miami International Airport,"Miami-Fort Lauderdale, Florida",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,26.06832,1548
+2025-06-09 00:00:00,MIA,Miami International Airport,"Miami-Fort Lauderdale, Florida",Gate,16.84,"5,111",152F112B80F051,Bet Online,101.09052,6003
+2025-06-09 00:00:00,MKE,Milwaukee Mitchell International Airport,"Milwaukee, Wisconsin",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,8.68944,516
+2025-06-09 00:00:00,MKE,Milwaukee Mitchell International Airport,"Milwaukee, Wisconsin",Gate,16.84,"5,111",152F112B80F051,Bet Online,15.10548,897
+2025-06-09 00:00:00,MSP,Minneapolis-St. Paul International Airport,"Minneapolis-St. Paul, Minnesota",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,51.1936,3040
+2025-06-09 00:00:00,MSP,Minneapolis-St. Paul International Airport,"Minneapolis-St. Paul, Minnesota",Gate,16.84,"5,111",152F112B80F051,Bet Online,73.5066,4365
+2025-06-09 00:00:00,OGG,Kahului Airport,"Honolulu, Hawaii",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,11.82168,702
+2025-06-09 00:00:00,PBI,Palm Beach International Airport,"West Palm Beach-Fort Pierce, Florida",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,6.51708,387
+2025-06-09 00:00:00,SAT,San Antonio International Airport,"San Antonio, Texas",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,4.34472,258
+2025-06-09 00:00:00,SAT,San Antonio International Airport,"San Antonio, Texas",Gate,16.84,"5,111",152F112B80F051,Bet Online,23.18868,1377
+2025-06-09 00:00:00,SEA,Seattle-Tacoma International Airport,"Seattle-Tacoma, Washington",Gate,16.84,"5,111",152F112B80F051,Bet Online,73.86024,4386
+2025-06-09 00:00:00,SJC,San Jose Mineta International Airport,"San Francisco-Oakland-San Jose, California",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,4.34472,258
+2025-06-09 00:00:00,SNA,John Wayne Airport Orange County,"Los Angeles, California",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,2.17236,129
+2025-06-09 00:00:00,TPA,Tampa International Airport,"Tampa-St. Petersburg (Sarasota), Florida",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,26.79244,1591
+2025-06-10 00:00:00,ATL,Hartsfield-Jackson Atlanta International Airport,"Atlanta, Georgia",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,147.11424,8736
+2025-06-10 00:00:00,ATL,Hartsfield-Jackson Atlanta International Airport,"Atlanta, Georgia",Gate,16.84,"5,111",152F112B80F051,Bet Online,176.75264,10496
+2025-06-10 00:00:00,AUS,Austin-Bergstrom International Airport,"Austin, Texas",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,49.24016,2924
+2025-06-10 00:00:00,BHM,Birmingham-Shuttlesworth International Airport,"Birmingham (Anniston and Tuscaloosa), Alabama",Gate,16.84,"5,111",152F112B80F051,Bet Online,7.52748,447
+2025-06-10 00:00:00,DAL,Dallas Love Field,"Dallas-Fort Worth, Texas",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,15.93064,946
+2025-06-10 00:00:00,DAL,Dallas Love Field,"Dallas-Fort Worth, Texas",Gate,16.84,"5,111",152F112B80F051,Bet Online,17.37888,1032
+2025-06-10 00:00:00,DCA,Ronald Reagan National Airport,"Washington, D.C. (Hagerstown)",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,43.4472,2580
+2025-06-10 00:00:00,DFW,DFW International Airport,"Dallas-Fort Worth, Texas",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,8.68944,516
+2025-06-10 00:00:00,FLL,Fort Lauderdale-Hollywood International Airport,"Miami-Fort Lauderdale, Florida",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,17.37888,1032
+2025-06-10 00:00:00,GSP,GSP International Airport,Greenville-Spartanburg-Asheville-Anderson,Gate,16.84,"5,111",152F112B80F051,Bet Online,8.48736,504
+2025-06-10 00:00:00,HNL,Honolulu International Airport,"Honolulu, Hawaii",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,28.9648,1720
+2025-06-10 00:00:00,IAH,George Bush Intercontinental Airport,"Houston, Texas",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,129.60064,7696
+2025-06-10 00:00:00,JAN,Jackson-Medgar Wiley Evers International Airport,"Jackson, Mississippi",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,4.31104,256
+2025-06-10 00:00:00,JAX,Jacksonville International Airport,"Jacksonville, Florida",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,17.37888,1032
+2025-06-10 00:00:00,JNU,Juneau Airport,"Juneau, Alaska",Gate,16.84,"5,111",152F112B80F051,Bet Online,1.54928,92
+2025-06-10 00:00:00,LAX,Los Angeles International Airport,"Los Angeles, California",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,64.44668,3827
+2025-06-10 00:00:00,MCI,Kansas City International Airport,"Kansas City, Missouri",Gate,16.84,"5,111",152F112B80F051,Bet Online,25.46208,1512
+2025-06-10 00:00:00,MCO,Orlando International Airport,"Orlando-Daytona Beach-Melbourne, Florida",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,28.9648,1720
+2025-06-10 00:00:00,MIA,Miami International Airport,"Miami-Fort Lauderdale, Florida",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,52.13664,3096
+2025-06-10 00:00:00,MIA,Miami International Airport,"Miami-Fort Lauderdale, Florida",Gate,16.84,"5,111",152F112B80F051,Bet Online,202.18104,12006
+2025-06-10 00:00:00,MKE,Milwaukee Mitchell International Airport,"Milwaukee, Wisconsin",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,17.37888,1032
+2025-06-10 00:00:00,MKE,Milwaukee Mitchell International Airport,"Milwaukee, Wisconsin",Gate,16.84,"5,111",152F112B80F051,Bet Online,30.21096,1794
+2025-06-10 00:00:00,MSP,Minneapolis-St. Paul International Airport,"Minneapolis-St. Paul, Minnesota",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,123.40352,7328
+2025-06-10 00:00:00,MSP,Minneapolis-St. Paul International Airport,"Minneapolis-St. Paul, Minnesota",Gate,16.84,"5,111",152F112B80F051,Bet Online,147.0132,8730
+2025-06-10 00:00:00,OGG,Kahului Airport,"Honolulu, Hawaii",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,18.38928,1092
+2025-06-10 00:00:00,PBI,Palm Beach International Airport,"West Palm Beach-Fort Pierce, Florida",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,13.03416,774
+2025-06-10 00:00:00,PHL,Philadelphia International Airport,"Philadelphia, Pennsylvania",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,87.02912,5168
+2025-06-10 00:00:00,PHL,Philadelphia International Airport,"Philadelphia, Pennsylvania",Gate,16.84,"5,111",152F112B80F051,Bet Online,67.36,4000
+2025-06-10 00:00:00,RSW,Southwest Florida International Airport,"Fort Myers-Naples, Naples, Florida",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,13.67408,812
+2025-06-10 00:00:00,SAN,San Diego International Airport,"San Diego, California",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,31.13716,1849
+2025-06-10 00:00:00,SAN,San Diego International Airport,"San Diego, California",Gate,16.84,"5,111",152F112B80F051,Bet Online,72.412,4300
+2025-06-10 00:00:00,SAT,San Antonio International Airport,"San Antonio, Texas",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,8.68944,516
+2025-06-10 00:00:00,SAT,San Antonio International Airport,"San Antonio, Texas",Gate,16.84,"5,111",152F112B80F051,Bet Online,45.92268,2727
+2025-06-10 00:00:00,SAV,Savannah/Hilton Head International Airport,"Savannah, Georgia",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,10.8618,645
+2025-06-10 00:00:00,SEA,Seattle-Tacoma International Airport,"Seattle-Tacoma, Washington",Gate,16.84,"5,111",152F112B80F051,Bet Online,147.72048,8772
+2025-06-10 00:00:00,SJC,San Jose Mineta International Airport,"San Francisco-Oakland-San Jose, California",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,8.68944,516
+2025-06-10 00:00:00,SMF,Sacramento International Airport,"Sacramento-Stockton-Modesto, California",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,18.82712,1118
+2025-06-10 00:00:00,SNA,John Wayne Airport Orange County,"Los Angeles, California",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,4.34472,258
+2025-06-10 00:00:00,STL,St. Louis Lambert International Airport,"St. Louis, Missouri",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,31.86128,1892
+2025-06-10 00:00:00,STL,St. Louis Lambert International Airport,"St. Louis, Missouri",Gate,16.84,"5,111",152F112B80F051,Bet Online,38.79936,2304
+2025-06-10 00:00:00,TPA,Tampa International Airport,"Tampa-St. Petersburg (Sarasota), Florida",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,55.75724,3311
+2025-06-11 00:00:00,ATL,Hartsfield-Jackson Atlanta International Airport,"Atlanta, Georgia",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,208.19292,12363
+2025-06-11 00:00:00,ATL,Hartsfield-Jackson Atlanta International Airport,"Atlanta, Georgia",Gate,16.84,"5,111",152F112B80F051,Bet Online,265.12896,15744
+2025-06-11 00:00:00,AUS,Austin-Bergstrom International Airport,"Austin, Texas",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,48.51604,2881
+2025-06-11 00:00:00,BHM,Birmingham-Shuttlesworth International Airport,"Birmingham (Anniston and Tuscaloosa), Alabama",Gate,16.84,"5,111",152F112B80F051,Bet Online,13.94352,828
+2025-06-11 00:00:00,DAL,Dallas Love Field,"Dallas-Fort Worth, Texas",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,17.37888,1032
+2025-06-11 00:00:00,DAL,Dallas Love Field,"Dallas-Fort Worth, Texas",Gate,16.84,"5,111",152F112B80F051,Bet Online,17.37888,1032
+2025-06-11 00:00:00,DCA,Ronald Reagan National Airport,"Washington, D.C. (Hagerstown)",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,43.4472,2580
+2025-06-11 00:00:00,DFW,DFW International Airport,"Dallas-Fort Worth, Texas",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,8.68944,516
+2025-06-11 00:00:00,FLL,Fort Lauderdale-Hollywood International Airport,"Miami-Fort Lauderdale, Florida",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,17.37888,1032
+2025-06-11 00:00:00,GSP,GSP International Airport,Greenville-Spartanburg-Asheville-Anderson,Gate,16.84,"5,111",152F112B80F051,Bet Online,12.73104,756
+2025-06-11 00:00:00,HNL,Honolulu International Airport,"Honolulu, Hawaii",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,18.82712,1118
+2025-06-11 00:00:00,IAH,George Bush Intercontinental Airport,"Houston, Texas",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,127.71456,7584
+2025-06-11 00:00:00,JAN,Jackson-Medgar Wiley Evers International Airport,"Jackson, Mississippi",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,6.46656,384
+2025-06-11 00:00:00,JAX,Jacksonville International Airport,"Jacksonville, Florida",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,26.06832,1548
+2025-06-11 00:00:00,JNU,Juneau Airport,"Juneau, Alaska",Gate,16.84,"5,111",152F112B80F051,Bet Online,2.15552,128
+2025-06-11 00:00:00,LAX,Los Angeles International Airport,"Los Angeles, California",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,56.48136,3354
+2025-06-11 00:00:00,MCI,Kansas City International Airport,"Kansas City, Missouri",Gate,16.84,"5,111",152F112B80F051,Bet Online,50.92416,3024
+2025-06-11 00:00:00,MCO,Orlando International Airport,"Orlando-Daytona Beach-Melbourne, Florida",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,28.9648,1720
+2025-06-11 00:00:00,MIA,Miami International Airport,"Miami-Fort Lauderdale, Florida",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,52.13664,3096
+2025-06-11 00:00:00,MIA,Miami International Airport,"Miami-Fort Lauderdale, Florida",Gate,16.84,"5,111",152F112B80F051,Bet Online,202.18104,12006
+2025-06-11 00:00:00,MKE,Milwaukee Mitchell International Airport,"Milwaukee, Wisconsin",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,17.37888,1032
+2025-06-11 00:00:00,MKE,Milwaukee Mitchell International Airport,"Milwaukee, Wisconsin",Gate,16.84,"5,111",152F112B80F051,Bet Online,30.21096,1794
+2025-06-11 00:00:00,MSP,Minneapolis-St. Paul International Airport,"Minneapolis-St. Paul, Minnesota",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,115.8592,6880
+2025-06-11 00:00:00,MSP,Minneapolis-St. Paul International Airport,"Minneapolis-St. Paul, Minnesota",Gate,16.84,"5,111",152F112B80F051,Bet Online,147.0132,8730
+2025-06-11 00:00:00,OGG,Kahului Airport,"Honolulu, Hawaii",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,19.7028,1170
+2025-06-11 00:00:00,PBI,Palm Beach International Airport,"West Palm Beach-Fort Pierce, Florida",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,13.03416,774
+2025-06-11 00:00:00,PHL,Philadelphia International Airport,"Philadelphia, Pennsylvania",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,120.2376,7140
+2025-06-11 00:00:00,PHL,Philadelphia International Airport,"Philadelphia, Pennsylvania",Gate,16.84,"5,111",152F112B80F051,Bet Online,95.567,5675
+2025-06-11 00:00:00,RSW,Southwest Florida International Airport,"Fort Myers-Naples, Naples, Florida",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,20.51112,1218
+2025-06-11 00:00:00,SAN,San Diego International Airport,"San Diego, California",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,41.99896,2494
+2025-06-11 00:00:00,SAN,San Diego International Airport,"San Diego, California",Gate,16.84,"5,111",152F112B80F051,Bet Online,108.618,6450
+2025-06-11 00:00:00,SAT,San Antonio International Airport,"San Antonio, Texas",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,12.31004,731
+2025-06-11 00:00:00,SAT,San Antonio International Airport,"San Antonio, Texas",Gate,16.84,"5,111",152F112B80F051,Bet Online,42.73992,2538
+2025-06-11 00:00:00,SAV,Savannah/Hilton Head International Airport,"Savannah, Georgia",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,15.20652,903
+2025-06-11 00:00:00,SEA,Seattle-Tacoma International Airport,"Seattle-Tacoma, Washington",Gate,16.84,"5,111",152F112B80F051,Bet Online,123.1004,7310
+2025-06-11 00:00:00,SFO,San Francisco International Airport,"San Francisco-Oakland-San Jose, California",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,1.44824,86
+2025-06-11 00:00:00,SJC,San Jose Mineta International Airport,"San Francisco-Oakland-San Jose, California",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,8.68944,516
+2025-06-11 00:00:00,SMF,Sacramento International Airport,"Sacramento-Stockton-Modesto, California",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,27.51656,1634
+2025-06-11 00:00:00,SNA,John Wayne Airport Orange County,"Los Angeles, California",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,2.89648,172
+2025-06-11 00:00:00,STL,St. Louis Lambert International Airport,"St. Louis, Missouri",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,47.0678,2795
+2025-06-11 00:00:00,STL,St. Louis Lambert International Airport,"St. Louis, Missouri",Gate,16.84,"5,111",152F112B80F051,Bet Online,58.19904,3456
+2025-06-11 00:00:00,TPA,Tampa International Airport,"Tampa-St. Petersburg (Sarasota), Florida",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,59.37784,3526
+2025-06-12 00:00:00,ATL,Hartsfield-Jackson Atlanta International Airport,"Atlanta, Georgia",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,202.93884,12051
+2025-06-12 00:00:00,ATL,Hartsfield-Jackson Atlanta International Airport,"Atlanta, Georgia",Gate,16.84,"5,111",152F112B80F051,Bet Online,265.12896,15744
+2025-06-12 00:00:00,AUS,Austin-Bergstrom International Airport,"Austin, Texas",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,49.96428,2967
+2025-06-12 00:00:00,BHM,Birmingham-Shuttlesworth International Airport,"Birmingham (Anniston and Tuscaloosa), Alabama",Gate,16.84,"5,111",152F112B80F051,Bet Online,12.3774,735
+2025-06-12 00:00:00,DAL,Dallas Love Field,"Dallas-Fort Worth, Texas",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,17.37888,1032
+2025-06-12 00:00:00,DAL,Dallas Love Field,"Dallas-Fort Worth, Texas",Gate,16.84,"5,111",152F112B80F051,Bet Online,17.37888,1032
+2025-06-12 00:00:00,DCA,Ronald Reagan National Airport,"Washington, D.C. (Hagerstown)",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,43.4472,2580
+2025-06-12 00:00:00,DFW,DFW International Airport,"Dallas-Fort Worth, Texas",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,7.2412,430
+2025-06-12 00:00:00,FLL,Fort Lauderdale-Hollywood International Airport,"Miami-Fort Lauderdale, Florida",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,17.37888,1032
+2025-06-12 00:00:00,GSP,GSP International Airport,Greenville-Spartanburg-Asheville-Anderson,Gate,16.84,"5,111",152F112B80F051,Bet Online,12.73104,756
+2025-06-12 00:00:00,HNL,Honolulu International Airport,"Honolulu, Hawaii",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,15.20652,903
+2025-06-12 00:00:00,IAH,George Bush Intercontinental Airport,"Houston, Texas",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,116.93696,6944
+2025-06-12 00:00:00,JAN,Jackson-Medgar Wiley Evers International Airport,"Jackson, Mississippi",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,6.46656,384
+2025-06-12 00:00:00,JAX,Jacksonville International Airport,"Jacksonville, Florida",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,26.06832,1548
+2025-06-12 00:00:00,JNU,Juneau Airport,"Juneau, Alaska",Gate,16.84,"5,111",152F112B80F051,Bet Online,2.55968,152
+2025-06-12 00:00:00,LAX,Los Angeles International Airport,"Los Angeles, California",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,58.65372,3483
+2025-06-12 00:00:00,MCI,Kansas City International Airport,"Kansas City, Missouri",Gate,16.84,"5,111",152F112B80F051,Bet Online,42.4368,2520
+2025-06-12 00:00:00,MCO,Orlando International Airport,"Orlando-Daytona Beach-Melbourne, Florida",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,28.9648,1720
+2025-06-12 00:00:00,MIA,Miami International Airport,"Miami-Fort Lauderdale, Florida",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,49.24016,2924
+2025-06-12 00:00:00,MIA,Miami International Airport,"Miami-Fort Lauderdale, Florida",Gate,16.84,"5,111",152F112B80F051,Bet Online,202.18104,12006
+2025-06-12 00:00:00,MKE,Milwaukee Mitchell International Airport,"Milwaukee, Wisconsin",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,17.37888,1032
+2025-06-12 00:00:00,MKE,Milwaukee Mitchell International Airport,"Milwaukee, Wisconsin",Gate,16.84,"5,111",152F112B80F051,Bet Online,30.21096,1794
+2025-06-12 00:00:00,MSP,Minneapolis-St. Paul International Airport,"Minneapolis-St. Paul, Minnesota",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,117.47584,6976
+2025-06-12 00:00:00,MSP,Minneapolis-St. Paul International Airport,"Minneapolis-St. Paul, Minnesota",Gate,16.84,"5,111",152F112B80F051,Bet Online,147.0132,8730
+2025-06-12 00:00:00,OGG,Kahului Airport,"Honolulu, Hawaii",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,19.04604,1131
+2025-06-12 00:00:00,PBI,Palm Beach International Airport,"West Palm Beach-Fort Pierce, Florida",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,13.03416,774
+2025-06-12 00:00:00,PHL,Philadelphia International Airport,"Philadelphia, Pennsylvania",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,113.93944,6766
+2025-06-12 00:00:00,PHL,Philadelphia International Airport,"Philadelphia, Pennsylvania",Gate,16.84,"5,111",152F112B80F051,Bet Online,101.04,6000
+2025-06-12 00:00:00,RSW,Southwest Florida International Airport,"Fort Myers-Naples, Naples, Florida",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,20.51112,1218
+2025-06-12 00:00:00,SAN,San Diego International Airport,"San Diego, California",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,43.4472,2580
+2025-06-12 00:00:00,SAN,San Diego International Airport,"San Diego, California",Gate,16.84,"5,111",152F112B80F051,Bet Online,108.618,6450
+2025-06-12 00:00:00,SAT,San Antonio International Airport,"San Antonio, Texas",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,13.03416,774
+2025-06-12 00:00:00,SAT,San Antonio International Airport,"San Antonio, Texas",Gate,16.84,"5,111",152F112B80F051,Bet Online,46.37736,2754
+2025-06-12 00:00:00,SAV,Savannah/Hilton Head International Airport,"Savannah, Georgia",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,15.20652,903
+2025-06-12 00:00:00,SEA,Seattle-Tacoma International Airport,"Seattle-Tacoma, Washington",Gate,16.84,"5,111",152F112B80F051,Bet Online,147.72048,8772
+2025-06-12 00:00:00,SFO,San Francisco International Airport,"San Francisco-Oakland-San Jose, California",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,12.31004,731
+2025-06-12 00:00:00,SJC,San Jose Mineta International Airport,"San Francisco-Oakland-San Jose, California",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,7.96532,473
+2025-06-12 00:00:00,SMF,Sacramento International Airport,"Sacramento-Stockton-Modesto, California",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,26.79244,1591
+2025-06-12 00:00:00,SNA,John Wayne Airport Orange County,"Los Angeles, California",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,3.6206,215
+2025-06-12 00:00:00,STL,St. Louis Lambert International Airport,"St. Louis, Missouri",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,45.61956,2709
+2025-06-12 00:00:00,STL,St. Louis Lambert International Airport,"St. Louis, Missouri",Gate,16.84,"5,111",152F112B80F051,Bet Online,58.19904,3456
+2025-06-12 00:00:00,TPA,Tampa International Airport,"Tampa-St. Petersburg (Sarasota), Florida",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,56.48136,3354
+2025-06-13 00:00:00,ATL,Hartsfield-Jackson Atlanta International Airport,"Atlanta, Georgia",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,212.13348,12597
+2025-06-13 00:00:00,ATL,Hartsfield-Jackson Atlanta International Airport,"Atlanta, Georgia",Gate,16.84,"5,111",152F112B80F051,Bet Online,265.12896,15744
+2025-06-13 00:00:00,AUS,Austin-Bergstrom International Airport,"Austin, Texas",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,49.24016,2924
+2025-06-13 00:00:00,BHM,Birmingham-Shuttlesworth International Airport,"Birmingham (Anniston and Tuscaloosa), Alabama",Gate,16.84,"5,111",152F112B80F051,Bet Online,13.94352,828
+2025-06-13 00:00:00,DAL,Dallas Love Field,"Dallas-Fort Worth, Texas",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,15.93064,946
+2025-06-13 00:00:00,DAL,Dallas Love Field,"Dallas-Fort Worth, Texas",Gate,16.84,"5,111",152F112B80F051,Bet Online,17.37888,1032
+2025-06-13 00:00:00,DCA,Ronald Reagan National Airport,"Washington, D.C. (Hagerstown)",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,43.4472,2580
+2025-06-13 00:00:00,DFW,DFW International Airport,"Dallas-Fort Worth, Texas",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,7.96532,473
+2025-06-13 00:00:00,FLL,Fort Lauderdale-Hollywood International Airport,"Miami-Fort Lauderdale, Florida",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,17.37888,1032
+2025-06-13 00:00:00,GSP,GSP International Airport,Greenville-Spartanburg-Asheville-Anderson,Gate,16.84,"5,111",152F112B80F051,Bet Online,12.73104,756
+2025-06-13 00:00:00,HNL,Honolulu International Airport,"Honolulu, Hawaii",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,26.79244,1591
+2025-06-13 00:00:00,IAH,George Bush Intercontinental Airport,"Houston, Texas",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,116.66752,6928
+2025-06-13 00:00:00,JAN,Jackson-Medgar Wiley Evers International Airport,"Jackson, Mississippi",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,6.46656,384
+2025-06-13 00:00:00,JAX,Jacksonville International Airport,"Jacksonville, Florida",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,26.06832,1548
+2025-06-13 00:00:00,JNU,Juneau Airport,"Juneau, Alaska",Gate,16.84,"5,111",152F112B80F051,Bet Online,2.42496,144
+2025-06-13 00:00:00,LAX,Los Angeles International Airport,"Los Angeles, California",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,55.75724,3311
+2025-06-13 00:00:00,MCI,Kansas City International Airport,"Kansas City, Missouri",Gate,16.84,"5,111",152F112B80F051,Bet Online,33.94944,2016
+2025-06-13 00:00:00,MCO,Orlando International Airport,"Orlando-Daytona Beach-Melbourne, Florida",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,30.41304,1806
+2025-06-13 00:00:00,MIA,Miami International Airport,"Miami-Fort Lauderdale, Florida",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,47.0678,2795
+2025-06-13 00:00:00,MIA,Miami International Airport,"Miami-Fort Lauderdale, Florida",Gate,16.84,"5,111",152F112B80F051,Bet Online,202.18104,12006
+2025-06-13 00:00:00,MKE,Milwaukee Mitchell International Airport,"Milwaukee, Wisconsin",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,15.93064,946
+2025-06-13 00:00:00,MKE,Milwaukee Mitchell International Airport,"Milwaukee, Wisconsin",Gate,16.84,"5,111",152F112B80F051,Bet Online,30.21096,1794
+2025-06-13 00:00:00,MSP,Minneapolis-St. Paul International Airport,"Minneapolis-St. Paul, Minnesota",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,126.09792,7488
+2025-06-13 00:00:00,MSP,Minneapolis-St. Paul International Airport,"Minneapolis-St. Paul, Minnesota",Gate,16.84,"5,111",152F112B80F051,Bet Online,147.0132,8730
+2025-06-13 00:00:00,OGG,Kahului Airport,"Honolulu, Hawaii",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,19.04604,1131
+2025-06-13 00:00:00,PBI,Palm Beach International Airport,"West Palm Beach-Fort Pierce, Florida",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,13.03416,774
+2025-06-13 00:00:00,PHL,Philadelphia International Airport,"Philadelphia, Pennsylvania",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,115.08456,6834
+2025-06-13 00:00:00,PHL,Philadelphia International Airport,"Philadelphia, Pennsylvania",Gate,16.84,"5,111",152F112B80F051,Bet Online,99.356,5900
+2025-06-13 00:00:00,RSW,Southwest Florida International Airport,"Fort Myers-Naples, Naples, Florida",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,20.51112,1218
+2025-06-13 00:00:00,SAN,San Diego International Airport,"San Diego, California",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,36.93012,2193
+2025-06-13 00:00:00,SAN,San Diego International Airport,"San Diego, California",Gate,16.84,"5,111",152F112B80F051,Bet Online,108.618,6450
+2025-06-13 00:00:00,SAT,San Antonio International Airport,"San Antonio, Texas",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,12.31004,731
+2025-06-13 00:00:00,SAT,San Antonio International Airport,"San Antonio, Texas",Gate,16.84,"5,111",152F112B80F051,Bet Online,40.9212,2430
+2025-06-13 00:00:00,SAV,Savannah/Hilton Head International Airport,"Savannah, Georgia",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,14.4824,860
+2025-06-13 00:00:00,SEA,Seattle-Tacoma International Airport,"Seattle-Tacoma, Washington",Gate,16.84,"5,111",152F112B80F051,Bet Online,147.72048,8772
+2025-06-13 00:00:00,SFO,San Francisco International Airport,"San Francisco-Oakland-San Jose, California",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,12.31004,731
+2025-06-13 00:00:00,SJC,San Jose Mineta International Airport,"San Francisco-Oakland-San Jose, California",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,7.2412,430
+2025-06-13 00:00:00,SMF,Sacramento International Airport,"Sacramento-Stockton-Modesto, California",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,29.68892,1763
+2025-06-13 00:00:00,SNA,John Wayne Airport Orange County,"Los Angeles, California",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,3.6206,215
+2025-06-13 00:00:00,STL,St. Louis Lambert International Airport,"St. Louis, Missouri",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,47.79192,2838
+2025-06-13 00:00:00,STL,St. Louis Lambert International Airport,"St. Louis, Missouri",Gate,16.84,"5,111",152F112B80F051,Bet Online,58.19904,3456
+2025-06-13 00:00:00,TPA,Tampa International Airport,"Tampa-St. Petersburg (Sarasota), Florida",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,57.9296,3440
+2025-06-14 00:00:00,ATL,Hartsfield-Jackson Atlanta International Airport,"Atlanta, Georgia",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,177.98196,10569
+2025-06-14 00:00:00,ATL,Hartsfield-Jackson Atlanta International Airport,"Atlanta, Georgia",Gate,16.84,"5,111",152F112B80F051,Bet Online,106.96768,6352
+2025-06-14 00:00:00,AUS,Austin-Bergstrom International Airport,"Austin, Texas",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,47.0678,2795
+2025-06-14 00:00:00,BHM,Birmingham-Shuttlesworth International Airport,"Birmingham (Anniston and Tuscaloosa), Alabama",Gate,16.84,"5,111",152F112B80F051,Bet Online,3.89004,231
+2025-06-14 00:00:00,DAL,Dallas Love Field,"Dallas-Fort Worth, Texas",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,10.13768,602
+2025-06-14 00:00:00,DAL,Dallas Love Field,"Dallas-Fort Worth, Texas",Gate,16.84,"5,111",152F112B80F051,Bet Online,11.58592,688
+2025-06-14 00:00:00,DCA,Ronald Reagan National Airport,"Washington, D.C. (Hagerstown)",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,28.9648,1720
+2025-06-14 00:00:00,DFW,DFW International Airport,"Dallas-Fort Worth, Texas",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,2.17236,129
+2025-06-14 00:00:00,FLL,Fort Lauderdale-Hollywood International Airport,"Miami-Fort Lauderdale, Florida",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,16.65476,989
+2025-06-14 00:00:00,GSP,GSP International Airport,Greenville-Spartanburg-Asheville-Anderson,Gate,16.84,"5,111",152F112B80F051,Bet Online,4.24368,252
+2025-06-14 00:00:00,HNL,Honolulu International Airport,"Honolulu, Hawaii",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,31.13716,1849
+2025-06-14 00:00:00,IAH,George Bush Intercontinental Airport,"Houston, Texas",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,96.72896,5744
+2025-06-14 00:00:00,JAN,Jackson-Medgar Wiley Evers International Airport,"Jackson, Mississippi",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,3.77216,224
+2025-06-14 00:00:00,JAX,Jacksonville International Airport,"Jacksonville, Florida",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,17.37888,1032
+2025-06-14 00:00:00,JNU,Juneau Airport,"Juneau, Alaska",Gate,16.84,"5,111",152F112B80F051,Bet Online,1.61664,96
+2025-06-14 00:00:00,LAX,Los Angeles International Airport,"Los Angeles, California",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,71.68788,4257
+2025-06-14 00:00:00,MCI,Kansas City International Airport,"Kansas City, Missouri",Gate,16.84,"5,111",152F112B80F051,Bet Online,8.48736,504
+2025-06-14 00:00:00,MCO,Orlando International Airport,"Orlando-Daytona Beach-Melbourne, Florida",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,23.89596,1419
+2025-06-14 00:00:00,MIA,Miami International Airport,"Miami-Fort Lauderdale, Florida",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,23.17184,1376
+2025-06-14 00:00:00,MIA,Miami International Airport,"Miami-Fort Lauderdale, Florida",Gate,16.84,"5,111",152F112B80F051,Bet Online,67.39368,4002
+2025-06-14 00:00:00,MKE,Milwaukee Mitchell International Airport,"Milwaukee, Wisconsin",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,14.4824,860
+2025-06-14 00:00:00,MKE,Milwaukee Mitchell International Airport,"Milwaukee, Wisconsin",Gate,16.84,"5,111",152F112B80F051,Bet Online,15.10548,897
+2025-06-14 00:00:00,MSP,Minneapolis-St. Paul International Airport,"Minneapolis-St. Paul, Minnesota",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,98.61504,5856
+2025-06-14 00:00:00,MSP,Minneapolis-St. Paul International Airport,"Minneapolis-St. Paul, Minnesota",Gate,16.84,"5,111",152F112B80F051,Bet Online,80.3268,4770
+2025-06-14 00:00:00,OGG,Kahului Airport,"Honolulu, Hawaii",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,21.67308,1287
+2025-06-14 00:00:00,PBI,Palm Beach International Airport,"West Palm Beach-Fort Pierce, Florida",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,7.96532,473
+2025-06-14 00:00:00,PHL,Philadelphia International Airport,"Philadelphia, Pennsylvania",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,89.31936,5304
+2025-06-14 00:00:00,PHL,Philadelphia International Airport,"Philadelphia, Pennsylvania",Gate,16.84,"5,111",152F112B80F051,Bet Online,44.626,2650
+2025-06-14 00:00:00,RSW,Southwest Florida International Airport,"Fort Myers-Naples, Naples, Florida",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,13.18572,783
+2025-06-14 00:00:00,SAN,San Diego International Airport,"San Diego, California",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,36.93012,2193
+2025-06-14 00:00:00,SAN,San Diego International Airport,"San Diego, California",Gate,16.84,"5,111",152F112B80F051,Bet Online,72.412,4300
+2025-06-14 00:00:00,SAT,San Antonio International Airport,"San Antonio, Texas",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,7.96532,473
+2025-06-14 00:00:00,SAT,San Antonio International Airport,"San Antonio, Texas",Gate,16.84,"5,111",152F112B80F051,Bet Online,30.91824,1836
+2025-06-14 00:00:00,SAV,Savannah/Hilton Head International Airport,"Savannah, Georgia",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,11.58592,688
+2025-06-14 00:00:00,SEA,Seattle-Tacoma International Airport,"Seattle-Tacoma, Washington",Gate,16.84,"5,111",152F112B80F051,Bet Online,98.48032,5848
+2025-06-14 00:00:00,SFO,San Francisco International Airport,"San Francisco-Oakland-San Jose, California",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,13.03416,774
+2025-06-14 00:00:00,SJC,San Jose Mineta International Airport,"San Francisco-Oakland-San Jose, California",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,5.79296,344
+2025-06-14 00:00:00,SMF,Sacramento International Airport,"Sacramento-Stockton-Modesto, California",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,28.24068,1677
+2025-06-14 00:00:00,SNA,John Wayne Airport Orange County,"Los Angeles, California",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,2.89648,172
+2025-06-14 00:00:00,STL,St. Louis Lambert International Airport,"St. Louis, Missouri",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,31.86128,1892
+2025-06-14 00:00:00,STL,St. Louis Lambert International Airport,"St. Louis, Missouri",Gate,16.84,"5,111",152F112B80F051,Bet Online,38.79936,2304
+2025-06-14 00:00:00,TPA,Tampa International Airport,"Tampa-St. Petersburg (Sarasota), Florida",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,47.0678,2795
+2025-06-15 00:00:00,ATL,Hartsfield-Jackson Atlanta International Airport,"Atlanta, Georgia",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,162.21972,9633
+2025-06-15 00:00:00,ATL,Hartsfield-Jackson Atlanta International Airport,"Atlanta, Georgia",Gate,16.84,"5,111",152F112B80F051,Bet Online,133.10336,7904
+2025-06-15 00:00:00,AUS,Austin-Bergstrom International Airport,"Austin, Texas",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,49.24016,2924
+2025-06-15 00:00:00,BHM,Birmingham-Shuttlesworth International Airport,"Birmingham (Anniston and Tuscaloosa), Alabama",Gate,16.84,"5,111",152F112B80F051,Bet Online,3.89004,231
+2025-06-15 00:00:00,DAL,Dallas Love Field,"Dallas-Fort Worth, Texas",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,5.06884,301
+2025-06-15 00:00:00,DAL,Dallas Love Field,"Dallas-Fort Worth, Texas",Gate,16.84,"5,111",152F112B80F051,Bet Online,5.79296,344
+2025-06-15 00:00:00,DCA,Ronald Reagan National Airport,"Washington, D.C. (Hagerstown)",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,23.17184,1376
+2025-06-15 00:00:00,DFW,DFW International Airport,"Dallas-Fort Worth, Texas",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,1.44824,86
+2025-06-15 00:00:00,FLL,Fort Lauderdale-Hollywood International Airport,"Miami-Fort Lauderdale, Florida",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,8.68944,516
+2025-06-15 00:00:00,GSP,GSP International Airport,Greenville-Spartanburg-Asheville-Anderson,Gate,16.84,"5,111",152F112B80F051,Bet Online,6.36552,378
+2025-06-15 00:00:00,HNL,Honolulu International Airport,"Honolulu, Hawaii",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,22.44772,1333
+2025-06-15 00:00:00,IAH,George Bush Intercontinental Airport,"Houston, Texas",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,79.21536,4704
+2025-06-15 00:00:00,JAN,Jackson-Medgar Wiley Evers International Airport,"Jackson, Mississippi",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,2.15552,128
+2025-06-15 00:00:00,JAX,Jacksonville International Airport,"Jacksonville, Florida",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,13.75828,817
+2025-06-15 00:00:00,JNU,Juneau Airport,"Juneau, Alaska",Gate,16.84,"5,111",152F112B80F051,Bet Online,1.14512,68
+2025-06-15 00:00:00,LAX,Los Angeles International Airport,"Los Angeles, California",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,59.37784,3526
+2025-06-15 00:00:00,MCI,Kansas City International Airport,"Kansas City, Missouri",Gate,16.84,"5,111",152F112B80F051,Bet Online,8.48736,504
+2025-06-15 00:00:00,MCO,Orlando International Airport,"Orlando-Daytona Beach-Melbourne, Florida",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,36.93012,2193
+2025-06-15 00:00:00,MIA,Miami International Airport,"Miami-Fort Lauderdale, Florida",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,27.51656,1634
+2025-06-15 00:00:00,MIA,Miami International Airport,"Miami-Fort Lauderdale, Florida",Gate,16.84,"5,111",152F112B80F051,Bet Online,134.78736,8004
+2025-06-15 00:00:00,MKE,Milwaukee Mitchell International Airport,"Milwaukee, Wisconsin",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,7.2412,430
+2025-06-15 00:00:00,MKE,Milwaukee Mitchell International Airport,"Milwaukee, Wisconsin",Gate,16.84,"5,111",152F112B80F051,Bet Online,10.07032,598
+2025-06-15 00:00:00,MSP,Minneapolis-St. Paul International Airport,"Minneapolis-St. Paul, Minnesota",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,72.7488,4320
+2025-06-15 00:00:00,MSP,Minneapolis-St. Paul International Airport,"Minneapolis-St. Paul, Minnesota",Gate,16.84,"5,111",152F112B80F051,Bet Online,49.0044,2910
+2025-06-15 00:00:00,OGG,Kahului Airport,"Honolulu, Hawaii",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,12.47844,741
+2025-06-15 00:00:00,PBI,Palm Beach International Airport,"West Palm Beach-Fort Pierce, Florida",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,7.96532,473
+2025-06-15 00:00:00,PHL,Philadelphia International Airport,"Philadelphia, Pennsylvania",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,83.0212,4930
+2025-06-15 00:00:00,PHL,Philadelphia International Airport,"Philadelphia, Pennsylvania",Gate,16.84,"5,111",152F112B80F051,Bet Online,53.888,3200
+2025-06-15 00:00:00,RSW,Southwest Florida International Airport,"Fort Myers-Naples, Naples, Florida",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,9.7672,580
+2025-06-15 00:00:00,SAN,San Diego International Airport,"San Diego, California",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,34.75776,2064
+2025-06-15 00:00:00,SAN,San Diego International Airport,"San Diego, California",Gate,16.84,"5,111",152F112B80F051,Bet Online,54.309,3225
+2025-06-15 00:00:00,SAT,San Antonio International Airport,"San Antonio, Texas",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,9.41356,559
+2025-06-15 00:00:00,SAT,San Antonio International Airport,"San Antonio, Texas",Gate,16.84,"5,111",152F112B80F051,Bet Online,13.18572,783
+2025-06-15 00:00:00,SAV,Savannah/Hilton Head International Airport,"Savannah, Georgia",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,10.8618,645
+2025-06-15 00:00:00,SEA,Seattle-Tacoma International Airport,"Seattle-Tacoma, Washington",Gate,16.84,"5,111",152F112B80F051,Bet Online,49.24016,2924
+2025-06-15 00:00:00,SFO,San Francisco International Airport,"San Francisco-Oakland-San Jose, California",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,12.31004,731
+2025-06-15 00:00:00,SJC,San Jose Mineta International Airport,"San Francisco-Oakland-San Jose, California",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,3.6206,215
+2025-06-15 00:00:00,SMF,Sacramento International Airport,"Sacramento-Stockton-Modesto, California",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,5.06884,301
+2025-06-15 00:00:00,SNA,John Wayne Airport Orange County,"Los Angeles, California",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,1.44824,86
+2025-06-15 00:00:00,STL,St. Louis Lambert International Airport,"St. Louis, Missouri",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,16.65476,989
+2025-06-15 00:00:00,STL,St. Louis Lambert International Airport,"St. Louis, Missouri",Gate,16.84,"5,111",152F112B80F051,Bet Online,19.39968,1152
+2025-06-15 00:00:00,TPA,Tampa International Airport,"Tampa-St. Petersburg (Sarasota), Florida",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,41.27484,2451
+2025-06-16 00:00:00,ATL,Hartsfield-Jackson Atlanta International Airport,"Atlanta, Georgia",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,122.15736,7254
+2025-06-16 00:00:00,ATL,Hartsfield-Jackson Atlanta International Airport,"Atlanta, Georgia",Gate,16.84,"5,111",152F112B80F051,Bet Online,126.09792,7488
+2025-06-16 00:00:00,AUS,Austin-Bergstrom International Airport,"Austin, Texas",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,29.68892,1763
+2025-06-16 00:00:00,BHM,Birmingham-Shuttlesworth International Airport,"Birmingham (Anniston and Tuscaloosa), Alabama",Gate,16.84,"5,111",152F112B80F051,Bet Online,4.64784,276
+2025-06-16 00:00:00,DAL,Dallas Love Field,"Dallas-Fort Worth, Texas",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,8.68944,516
+2025-06-16 00:00:00,DAL,Dallas Love Field,"Dallas-Fort Worth, Texas",Gate,16.84,"5,111",152F112B80F051,Bet Online,8.68944,516
+2025-06-16 00:00:00,DCA,Ronald Reagan National Airport,"Washington, D.C. (Hagerstown)",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,21.7236,1290
+2025-06-16 00:00:00,DFW,DFW International Airport,"Dallas-Fort Worth, Texas",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,2.89648,172
+2025-06-16 00:00:00,FLL,Fort Lauderdale-Hollywood International Airport,"Miami-Fort Lauderdale, Florida",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,8.68944,516
+2025-06-16 00:00:00,GSP,GSP International Airport,Greenville-Spartanburg-Asheville-Anderson,Gate,16.84,"5,111",152F112B80F051,Bet Online,6.36552,378
+2025-06-16 00:00:00,HNL,Honolulu International Airport,"Honolulu, Hawaii",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,10.8618,645
+2025-06-16 00:00:00,IAH,George Bush Intercontinental Airport,"Houston, Texas",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,57.12128,3392
+2025-06-16 00:00:00,JAN,Jackson-Medgar Wiley Evers International Airport,"Jackson, Mississippi",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,2.6944,160
+2025-06-16 00:00:00,JAX,Jacksonville International Airport,"Jacksonville, Florida",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,13.03416,774
+2025-06-16 00:00:00,JNU,Juneau Airport,"Juneau, Alaska",Gate,16.84,"5,111",152F112B80F051,Bet Online,1.21248,72
+2025-06-16 00:00:00,LAX,Los Angeles International Airport,"Los Angeles, California",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,44.89544,2666
+2025-06-16 00:00:00,MCI,Kansas City International Airport,"Kansas City, Missouri",Gate,16.84,"5,111",152F112B80F051,Bet Online,16.97472,1008
+2025-06-16 00:00:00,MCO,Orlando International Airport,"Orlando-Daytona Beach-Melbourne, Florida",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,20.27536,1204
+2025-06-16 00:00:00,MIA,Miami International Airport,"Miami-Fort Lauderdale, Florida",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,23.89596,1419
+2025-06-16 00:00:00,MIA,Miami International Airport,"Miami-Fort Lauderdale, Florida",Gate,16.84,"5,111",152F112B80F051,Bet Online,101.09052,6003
+2025-06-16 00:00:00,MKE,Milwaukee Mitchell International Airport,"Milwaukee, Wisconsin",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,10.8618,645
+2025-06-16 00:00:00,MKE,Milwaukee Mitchell International Airport,"Milwaukee, Wisconsin",Gate,16.84,"5,111",152F112B80F051,Bet Online,15.10548,897
+2025-06-16 00:00:00,MSP,Minneapolis-St. Paul International Airport,"Minneapolis-St. Paul, Minnesota",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,59.81568,3552
+2025-06-16 00:00:00,MSP,Minneapolis-St. Paul International Airport,"Minneapolis-St. Paul, Minnesota",Gate,16.84,"5,111",152F112B80F051,Bet Online,73.5066,4365
+2025-06-16 00:00:00,OGG,Kahului Airport,"Honolulu, Hawaii",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,8.53788,507
+2025-06-16 00:00:00,PBI,Palm Beach International Airport,"West Palm Beach-Fort Pierce, Florida",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,6.51708,387
+2025-06-16 00:00:00,PHL,Philadelphia International Airport,"Philadelphia, Pennsylvania",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,61.26392,3638
+2025-06-16 00:00:00,PHL,Philadelphia International Airport,"Philadelphia, Pennsylvania",Gate,16.84,"5,111",152F112B80F051,Bet Online,45.889,2725
+2025-06-16 00:00:00,RSW,Southwest Florida International Airport,"Fort Myers-Naples, Naples, Florida",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,10.25556,609
+2025-06-16 00:00:00,SAN,San Diego International Airport,"San Diego, California",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,21.7236,1290
+2025-06-16 00:00:00,SAN,San Diego International Airport,"San Diego, California",Gate,16.84,"5,111",152F112B80F051,Bet Online,54.309,3225
+2025-06-16 00:00:00,SAT,San Antonio International Airport,"San Antonio, Texas",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,10.13768,602
+2025-06-16 00:00:00,SAT,San Antonio International Airport,"San Antonio, Texas",Gate,16.84,"5,111",152F112B80F051,Bet Online,23.18868,1377
+2025-06-16 00:00:00,SAV,Savannah/Hilton Head International Airport,"Savannah, Georgia",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,7.96532,473
+2025-06-16 00:00:00,SEA,Seattle-Tacoma International Airport,"Seattle-Tacoma, Washington",Gate,16.84,"5,111",152F112B80F051,Bet Online,73.86024,4386
+2025-06-16 00:00:00,SFO,San Francisco International Airport,"San Francisco-Oakland-San Jose, California",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,7.2412,430
+2025-06-16 00:00:00,SJC,San Jose Mineta International Airport,"San Francisco-Oakland-San Jose, California",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,4.34472,258
+2025-06-16 00:00:00,SMF,Sacramento International Airport,"Sacramento-Stockton-Modesto, California",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,7.96532,473
+2025-06-16 00:00:00,SNA,John Wayne Airport Orange County,"Los Angeles, California",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,2.17236,129
+2025-06-16 00:00:00,STL,St. Louis Lambert International Airport,"St. Louis, Missouri",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,23.89596,1419
+2025-06-16 00:00:00,STL,St. Louis Lambert International Airport,"St. Louis, Missouri",Gate,16.84,"5,111",152F112B80F051,Bet Online,29.09952,1728
+2025-06-16 00:00:00,TPA,Tampa International Airport,"Tampa-St. Petersburg (Sarasota), Florida",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,29.68892,1763
+2025-06-18 00:00:00,ATL,Hartsfield-Jackson Atlanta International Airport,"Atlanta, Georgia",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,38.74884,2301
+2025-06-18 00:00:00,ATL,Hartsfield-Jackson Atlanta International Airport,"Atlanta, Georgia",Gate,16.84,"5,111",152F112B80F051,Bet Online,44.18816,2624
+2025-06-18 00:00:00,AUS,Austin-Bergstrom International Airport,"Austin, Texas",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,4.34472,258
+2025-06-18 00:00:00,BHM,Birmingham-Shuttlesworth International Airport,"Birmingham (Anniston and Tuscaloosa), Alabama",Gate,16.84,"5,111",152F112B80F051,Bet Online,2.32392,138
+2025-06-18 00:00:00,DAL,Dallas Love Field,"Dallas-Fort Worth, Texas",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,2.89648,172
+2025-06-18 00:00:00,DAL,Dallas Love Field,"Dallas-Fort Worth, Texas",Gate,16.84,"5,111",152F112B80F051,Bet Online,2.89648,172
+2025-06-18 00:00:00,DCA,Ronald Reagan National Airport,"Washington, D.C. (Hagerstown)",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,7.96532,473
+2025-06-18 00:00:00,DFW,DFW International Airport,"Dallas-Fort Worth, Texas",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,1.44824,86
+2025-06-18 00:00:00,FLL,Fort Lauderdale-Hollywood International Airport,"Miami-Fort Lauderdale, Florida",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,2.89648,172
+2025-06-18 00:00:00,GSP,GSP International Airport,Greenville-Spartanburg-Asheville-Anderson,Gate,16.84,"5,111",152F112B80F051,Bet Online,2.12184,126
+2025-06-18 00:00:00,IAH,George Bush Intercontinental Airport,"Houston, Texas",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,18.8608,1120
+2025-06-18 00:00:00,JAN,Jackson-Medgar Wiley Evers International Airport,"Jackson, Mississippi",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,1.07776,64
+2025-06-18 00:00:00,JAX,Jacksonville International Airport,"Jacksonville, Florida",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,4.34472,258
+2025-06-18 00:00:00,JNU,Juneau Airport,"Juneau, Alaska",Gate,16.84,"5,111",152F112B80F051,Bet Online,0.40416,24
+2025-06-18 00:00:00,LAX,Los Angeles International Airport,"Los Angeles, California",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,10.13768,602
+2025-06-18 00:00:00,MCI,Kansas City International Airport,"Kansas City, Missouri",Gate,16.84,"5,111",152F112B80F051,Bet Online,8.48736,504
+2025-06-18 00:00:00,MCO,Orlando International Airport,"Orlando-Daytona Beach-Melbourne, Florida",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,6.51708,387
+2025-06-18 00:00:00,MIA,Miami International Airport,"Miami-Fort Lauderdale, Florida",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,7.96532,473
+2025-06-18 00:00:00,MIA,Miami International Airport,"Miami-Fort Lauderdale, Florida",Gate,16.84,"5,111",152F112B80F051,Bet Online,33.69684,2001
+2025-06-18 00:00:00,MKE,Milwaukee Mitchell International Airport,"Milwaukee, Wisconsin",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,3.6206,215
+2025-06-18 00:00:00,MKE,Milwaukee Mitchell International Airport,"Milwaukee, Wisconsin",Gate,16.84,"5,111",152F112B80F051,Bet Online,5.03516,299
+2025-06-18 00:00:00,MSP,Minneapolis-St. Paul International Airport,"Minneapolis-St. Paul, Minnesota",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,21.01632,1248
+2025-06-18 00:00:00,MSP,Minneapolis-St. Paul International Airport,"Minneapolis-St. Paul, Minnesota",Gate,16.84,"5,111",152F112B80F051,Bet Online,24.5022,1455
+2025-06-18 00:00:00,PBI,Palm Beach International Airport,"West Palm Beach-Fort Pierce, Florida",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,2.17236,129
+2025-06-18 00:00:00,PHL,Philadelphia International Airport,"Philadelphia, Pennsylvania",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,18.32192,1088
+2025-06-18 00:00:00,PHL,Philadelphia International Airport,"Philadelphia, Pennsylvania",Gate,16.84,"5,111",152F112B80F051,Bet Online,16.84,1000
+2025-06-18 00:00:00,RSW,Southwest Florida International Airport,"Fort Myers-Naples, Naples, Florida",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,3.41852,203
+2025-06-18 00:00:00,SAN,San Diego International Airport,"San Diego, California",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,4.34472,258
+2025-06-18 00:00:00,SAN,San Diego International Airport,"San Diego, California",Gate,16.84,"5,111",152F112B80F051,Bet Online,18.103,1075
+2025-06-18 00:00:00,SAT,San Antonio International Airport,"San Antonio, Texas",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,2.89648,172
+2025-06-18 00:00:00,SAT,San Antonio International Airport,"San Antonio, Texas",Gate,16.84,"5,111",152F112B80F051,Bet Online,7.72956,459
+2025-06-18 00:00:00,SAV,Savannah/Hilton Head International Airport,"Savannah, Georgia",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,2.17236,129
+2025-06-18 00:00:00,SEA,Seattle-Tacoma International Airport,"Seattle-Tacoma, Washington",Gate,16.84,"5,111",152F112B80F051,Bet Online,24.62008,1462
+2025-06-18 00:00:00,SFO,San Francisco International Airport,"San Francisco-Oakland-San Jose, California",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,1.44824,86
+2025-06-18 00:00:00,SJC,San Jose Mineta International Airport,"San Francisco-Oakland-San Jose, California",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,1.44824,86
+2025-06-18 00:00:00,SMF,Sacramento International Airport,"Sacramento-Stockton-Modesto, California",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,4.34472,258
+2025-06-18 00:00:00,SNA,John Wayne Airport Orange County,"Los Angeles, California",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,0.72412,43
+2025-06-18 00:00:00,STL,St. Louis Lambert International Airport,"St. Louis, Missouri",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,7.96532,473
+2025-06-18 00:00:00,STL,St. Louis Lambert International Airport,"St. Louis, Missouri",Gate,16.84,"5,111",152F112B80F051,Bet Online,9.69984,576
+2025-06-18 00:00:00,TPA,Tampa International Airport,"Tampa-St. Petersburg (Sarasota), Florida",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,5.79296,344
+2025-06-19 00:00:00,IAH,George Bush Intercontinental Airport,"Houston, Texas",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,2.15552,128
+2025-06-20 00:00:00,IAH,George Bush Intercontinental Airport,"Houston, Texas",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,3.23328,192
+2025-06-24 00:00:00,PHL,Philadelphia International Airport,"Philadelphia, Pennsylvania",Restaurant/Bar/Newsstand,16.84,"5,111",152F112B80F051,Bet Online,1.71768,102
+2025-06-27 00:00:00,ATL,Hartsfield-Jackson Atlanta International Airport,"Atlanta, Georgia",Restaurant/Bar/Newsstand,16.84,"5,111",15976D525A538C,Bet Online,29.70576,1764
+2025-06-27 00:00:00,ATL,Hartsfield-Jackson Atlanta International Airport,"Atlanta, Georgia",Gate,16.84,"5,111",15976D525A538C,Bet Online,44.18816,2624
+2025-06-27 00:00:00,AUS,Austin-Bergstrom International Airport,"Austin, Texas",Restaurant/Bar/Newsstand,16.84,"5,111",15976D525A538C,Bet Online,2.89648,172
+2025-06-27 00:00:00,DAL,Dallas Love Field,"Dallas-Fort Worth, Texas",Restaurant/Bar/Newsstand,16.84,"5,111",15976D525A538C,Bet Online,0.842,50
+2025-06-27 00:00:00,DCA,Ronald Reagan National Airport,"Washington, D.C. (Hagerstown)",Restaurant/Bar/Newsstand,16.84,"5,111",15976D525A538C,Bet Online,7.578,450
+2025-06-27 00:00:00,FLL,Fort Lauderdale-Hollywood International Airport,"Miami-Fort Lauderdale, Florida",Restaurant/Bar/Newsstand,16.84,"5,111",15976D525A538C,Bet Online,3.368,200
+2025-06-27 00:00:00,GSP,GSP International Airport,Greenville-Spartanburg-Asheville-Anderson,Gate,16.84,"5,111",15976D525A538C,Bet Online,2.22288,132
+2025-06-27 00:00:00,IAH,George Bush Intercontinental Airport,"Houston, Texas",Restaurant/Bar/Newsstand,16.84,"5,111",15976D525A538C,Bet Online,2.23972,133
+2025-06-27 00:00:00,JAN,Jackson-Medgar Wiley Evers International Airport,"Jackson, Mississippi",Restaurant/Bar/Newsstand,16.84,"5,111",15976D525A538C,Bet Online,1.07776,64
+2025-06-27 00:00:00,JAX,Jacksonville International Airport,"Jacksonville, Florida",Restaurant/Bar/Newsstand,16.84,"5,111",15976D525A538C,Bet Online,5.052,300
+2025-06-27 00:00:00,JNU,Juneau Airport,"Juneau, Alaska",Gate,16.84,"5,111",15976D525A538C,Bet Online,0.40416,24
+2025-06-27 00:00:00,LAX,Los Angeles International Airport,"Los Angeles, California",Restaurant/Bar/Newsstand,16.84,"5,111",15976D525A538C,Bet Online,5.052,300
+2025-06-27 00:00:00,MCO,Orlando International Airport,"Orlando-Daytona Beach-Melbourne, Florida",Restaurant/Bar/Newsstand,16.84,"5,111",15976D525A538C,Bet Online,5.894,350
+2025-06-27 00:00:00,MIA,Miami International Airport,"Miami-Fort Lauderdale, Florida",Restaurant/Bar/Newsstand,16.84,"5,111",15976D525A538C,Bet Online,9.262,550
+2025-06-27 00:00:00,MIA,Miami International Airport,"Miami-Fort Lauderdale, Florida",Gate,16.84,"5,111",15976D525A538C,Bet Online,42.48732,2523
+2025-06-27 00:00:00,MSP,Minneapolis-St. Paul International Airport,"Minneapolis-St. Paul, Minnesota",Restaurant/Bar/Newsstand,16.84,"5,111",15976D525A538C,Bet Online,2.15552,128
+2025-06-27 00:00:00,PBI,Palm Beach International Airport,"West Palm Beach-Fort Pierce, Florida",Restaurant/Bar/Newsstand,16.84,"5,111",15976D525A538C,Bet Online,2.526,150
+2025-06-27 00:00:00,PHL,Philadelphia International Airport,"Philadelphia, Pennsylvania",Restaurant/Bar/Newsstand,16.84,"5,111",15976D525A538C,Bet Online,21.40364,1271
+2025-06-27 00:00:00,PHL,Philadelphia International Airport,"Philadelphia, Pennsylvania",Gate,16.84,"5,111",15976D525A538C,Bet Online,20.8816,1240
+2025-06-27 00:00:00,RSW,Southwest Florida International Airport,"Fort Myers-Naples, Naples, Florida",Restaurant/Bar/Newsstand,16.84,"5,111",15976D525A538C,Bet Online,3.368,200
+2025-06-27 00:00:00,SAN,San Diego International Airport,"San Diego, California",Restaurant/Bar/Newsstand,16.84,"5,111",15976D525A538C,Bet Online,4.21,250
+2025-06-27 00:00:00,SAT,San Antonio International Airport,"San Antonio, Texas",Restaurant/Bar/Newsstand,16.84,"5,111",15976D525A538C,Bet Online,2.526,150
+2025-06-27 00:00:00,SAV,Savannah/Hilton Head International Airport,"Savannah, Georgia",Restaurant/Bar/Newsstand,16.84,"5,111",15976D525A538C,Bet Online,2.526,150
+2025-06-27 00:00:00,SFO,San Francisco International Airport,"San Francisco-Oakland-San Jose, California",Restaurant/Bar/Newsstand,16.84,"5,111",15976D525A538C,Bet Online,1.684,100
+2025-06-27 00:00:00,SMF,Sacramento International Airport,"Sacramento-Stockton-Modesto, California",Restaurant/Bar/Newsstand,16.84,"5,111",15976D525A538C,Bet Online,2.526,150
+2025-06-27 00:00:00,TPA,Tampa International Airport,"Tampa-St. Petersburg (Sarasota), Florida",Restaurant/Bar/Newsstand,16.84,"5,111",15976D525A538C,Bet Online,6.736,400
+2025-06-28 00:00:00,ATL,Hartsfield-Jackson Atlanta International Airport,"Atlanta, Georgia",Restaurant/Bar/Newsstand,16.84,"5,111",158200617D96BF,Bet Online,2.12184,126
+2025-06-28 00:00:00,AUS,Austin-Bergstrom International Airport,"Austin, Texas",Restaurant/Bar/Newsstand,16.84,"5,111",158200617D96BF,Bet Online,2.89648,172
+2025-06-28 00:00:00,BHM,Birmingham-Shuttlesworth International Airport,"Birmingham (Anniston and Tuscaloosa), Alabama",Gate,16.84,"5,111",158200617D96BF,Bet Online,2.32392,138
+2025-06-28 00:00:00,DAL,Dallas Love Field,"Dallas-Fort Worth, Texas",Restaurant/Bar/Newsstand,16.84,"5,111",158200617D96BF,Bet Online,3.368,200
+2025-06-28 00:00:00,DAL,Dallas Love Field,"Dallas-Fort Worth, Texas",Gate,16.84,"5,111",158200617D96BF,Bet Online,3.368,200
+2025-06-28 00:00:00,DFW,DFW International Airport,"Dallas-Fort Worth, Texas",Restaurant/Bar/Newsstand,16.84,"5,111",158200617D96BF,Bet Online,1.684,100
+2025-06-28 00:00:00,IAH,George Bush Intercontinental Airport,"Houston, Texas",Restaurant/Bar/Newsstand,16.84,"5,111",158200617D96BF,Bet Online,15.998,950
+2025-06-28 00:00:00,JAN,Jackson-Medgar Wiley Evers International Airport,"Jackson, Mississippi",Restaurant/Bar/Newsstand,16.84,"5,111",158200617D96BF,Bet Online,1.07776,64
+2025-06-28 00:00:00,LAX,Los Angeles International Airport,"Los Angeles, California",Restaurant/Bar/Newsstand,16.84,"5,111",158200617D96BF,Bet Online,13.472,800
+2025-06-28 00:00:00,MCI,Kansas City International Airport,"Kansas City, Missouri",Gate,16.84,"5,111",158200617D96BF,Bet Online,8.48736,504
+2025-06-28 00:00:00,MCO,Orlando International Airport,"Orlando-Daytona Beach-Melbourne, Florida",Restaurant/Bar/Newsstand,16.84,"5,111",158200617D96BF,Bet Online,2.526,150
+2025-06-28 00:00:00,MIA,Miami International Airport,"Miami-Fort Lauderdale, Florida",Restaurant/Bar/Newsstand,16.84,"5,111",158200617D96BF,Bet Online,0.842,50
+2025-06-28 00:00:00,MKE,Milwaukee Mitchell International Airport,"Milwaukee, Wisconsin",Restaurant/Bar/Newsstand,16.84,"5,111",158200617D96BF,Bet Online,4.21,250
+2025-06-28 00:00:00,MKE,Milwaukee Mitchell International Airport,"Milwaukee, Wisconsin",Gate,16.84,"5,111",158200617D96BF,Bet Online,4.59732,273
+2025-06-28 00:00:00,MSP,Minneapolis-St. Paul International Airport,"Minneapolis-St. Paul, Minnesota",Restaurant/Bar/Newsstand,16.84,"5,111",158200617D96BF,Bet Online,18.32192,1088
+2025-06-28 00:00:00,MSP,Minneapolis-St. Paul International Airport,"Minneapolis-St. Paul, Minnesota",Gate,16.84,"5,111",158200617D96BF,Bet Online,21.23524,1261
+2025-06-28 00:00:00,RSW,Southwest Florida International Airport,"Fort Myers-Naples, Naples, Florida",Restaurant/Bar/Newsstand,16.84,"5,111",158200617D96BF,Bet Online,2.526,150
+2025-06-28 00:00:00,SAN,San Diego International Airport,"San Diego, California",Restaurant/Bar/Newsstand,16.84,"5,111",158200617D96BF,Bet Online,4.21,250
+2025-06-28 00:00:00,SAN,San Diego International Airport,"San Diego, California",Gate,16.84,"5,111",158200617D96BF,Bet Online,19.366,1150
+2025-06-28 00:00:00,SAT,San Antonio International Airport,"San Antonio, Texas",Restaurant/Bar/Newsstand,16.84,"5,111",158200617D96BF,Bet Online,1.684,100
+2025-06-28 00:00:00,SAT,San Antonio International Airport,"San Antonio, Texas",Gate,16.84,"5,111",158200617D96BF,Bet Online,8.30212,493
+2025-06-28 00:00:00,SAV,Savannah/Hilton Head International Airport,"Savannah, Georgia",Restaurant/Bar/Newsstand,16.84,"5,111",158200617D96BF,Bet Online,0.842,50
+2025-06-28 00:00:00,SEA,Seattle-Tacoma International Airport,"Seattle-Tacoma, Washington",Gate,16.84,"5,111",158200617D96BF,Bet Online,28.628,1700
+2025-06-28 00:00:00,SFO,San Francisco International Airport,"San Francisco-Oakland-San Jose, California",Restaurant/Bar/Newsstand,16.84,"5,111",158200617D96BF,Bet Online,1.684,100
+2025-06-28 00:00:00,SJC,San Jose Mineta International Airport,"San Francisco-Oakland-San Jose, California",Restaurant/Bar/Newsstand,16.84,"5,111",158200617D96BF,Bet Online,1.684,100
+2025-06-28 00:00:00,SMF,Sacramento International Airport,"Sacramento-Stockton-Modesto, California",Restaurant/Bar/Newsstand,16.84,"5,111",158200617D96BF,Bet Online,3.368,200
+2025-06-28 00:00:00,SNA,John Wayne Airport Orange County,"Los Angeles, California",Restaurant/Bar/Newsstand,16.84,"5,111",158200617D96BF,Bet Online,0.842,50
+2025-06-28 00:00:00,STL,St. Louis Lambert International Airport,"St. Louis, Missouri",Restaurant/Bar/Newsstand,16.84,"5,111",158200617D96BF,Bet Online,9.262,550
+2025-06-28 00:00:00,STL,St. Louis Lambert International Airport,"St. Louis, Missouri",Gate,16.84,"5,111",158200617D96BF,Bet Online,9.29568,552
+2025-06-28 00:00:00,TPA,Tampa International Airport,"Tampa-St. Petersburg (Sarasota), Florida",Restaurant/Bar/Newsstand,16.84,"5,111",158200617D96BF,Bet Online,1.684,100
+2025-06-30 00:00:00,ATL,Hartsfield-Jackson Atlanta International Airport,"Atlanta, Georgia",Restaurant/Bar/Newsstand,16.84,"5,264",1552019EAF0BAF,Bet Online,35.364,2100
+2025-06-30 00:00:00,ATL,Hartsfield-Jackson Atlanta International Airport,"Atlanta, Georgia",Gate,16.84,"5,264",1552019EAF0BAF,Bet Online,44.18816,2624
+2025-06-30 00:00:00,AUS,Austin-Bergstrom International Airport,"Austin, Texas",Restaurant/Bar/Newsstand,16.84,"5,264",1552019EAF0BAF,Bet Online,2.89648,172
+2025-06-30 00:00:00,BHM,Birmingham-Shuttlesworth International Airport,"Birmingham (Anniston and Tuscaloosa), Alabama",Gate,16.84,"5,264",1552019EAF0BAF,Bet Online,2.32392,138
+2025-06-30 00:00:00,DAL,Dallas Love Field,"Dallas-Fort Worth, Texas",Restaurant/Bar/Newsstand,16.84,"5,264",1552019EAF0BAF,Bet Online,3.368,200
+2025-06-30 00:00:00,DAL,Dallas Love Field,"Dallas-Fort Worth, Texas",Gate,16.84,"5,264",1552019EAF0BAF,Bet Online,3.368,200
+2025-06-30 00:00:00,DCA,Ronald Reagan National Airport,"Washington, D.C. (Hagerstown)",Restaurant/Bar/Newsstand,16.84,"5,264",1552019EAF0BAF,Bet Online,9.262,550
+2025-06-30 00:00:00,DFW,DFW International Airport,"Dallas-Fort Worth, Texas",Restaurant/Bar/Newsstand,16.84,"5,264",1552019EAF0BAF,Bet Online,1.684,100
+2025-06-30 00:00:00,FLL,Fort Lauderdale-Hollywood International Airport,"Miami-Fort Lauderdale, Florida",Restaurant/Bar/Newsstand,16.84,"5,264",1552019EAF0BAF,Bet Online,3.368,200
+2025-06-30 00:00:00,GSP,GSP International Airport,Greenville-Spartanburg-Asheville-Anderson,Gate,16.84,"5,264",1552019EAF0BAF,Bet Online,2.22288,132
+2025-06-30 00:00:00,HNL,Honolulu International Airport,"Honolulu, Hawaii",Restaurant/Bar/Newsstand,16.84,"5,264",1552019EAF0BAF,Bet Online,5.894,350
+2025-06-30 00:00:00,IAH,George Bush Intercontinental Airport,"Houston, Texas",Restaurant/Bar/Newsstand,16.84,"5,264",1552019EAF0BAF,Bet Online,15.35808,912
+2025-06-30 00:00:00,JAN,Jackson-Medgar Wiley Evers International Airport,"Jackson, Mississippi",Restaurant/Bar/Newsstand,16.84,"5,264",1552019EAF0BAF,Bet Online,1.07776,64
+2025-06-30 00:00:00,JAX,Jacksonville International Airport,"Jacksonville, Florida",Restaurant/Bar/Newsstand,16.84,"5,264",1552019EAF0BAF,Bet Online,5.052,300
+2025-06-30 00:00:00,JNU,Juneau Airport,"Juneau, Alaska",Gate,16.84,"5,264",1552019EAF0BAF,Bet Online,0.40416,24
+2025-06-30 00:00:00,LAX,Los Angeles International Airport,"Los Angeles, California",Restaurant/Bar/Newsstand,16.84,"5,264",1552019EAF0BAF,Bet Online,12.63,750
+2025-06-30 00:00:00,MCI,Kansas City International Airport,"Kansas City, Missouri",Gate,16.84,"5,264",1552019EAF0BAF,Bet Online,8.48736,504
+2025-06-30 00:00:00,MCO,Orlando International Airport,"Orlando-Daytona Beach-Melbourne, Florida",Restaurant/Bar/Newsstand,16.84,"5,264",1552019EAF0BAF,Bet Online,5.894,350
+2025-06-30 00:00:00,MIA,Miami International Airport,"Miami-Fort Lauderdale, Florida",Restaurant/Bar/Newsstand,16.84,"5,264",1552019EAF0BAF,Bet Online,10.104,600
+2025-06-30 00:00:00,MIA,Miami International Airport,"Miami-Fort Lauderdale, Florida",Gate,16.84,"5,264",1552019EAF0BAF,Bet Online,42.48732,2523
+2025-06-30 00:00:00,MKE,Milwaukee Mitchell International Airport,"Milwaukee, Wisconsin",Restaurant/Bar/Newsstand,16.84,"5,264",1552019EAF0BAF,Bet Online,4.21,250
+2025-06-30 00:00:00,MKE,Milwaukee Mitchell International Airport,"Milwaukee, Wisconsin",Gate,16.84,"5,264",1552019EAF0BAF,Bet Online,4.59732,273
+2025-06-30 00:00:00,MSP,Minneapolis-St. Paul International Airport,"Minneapolis-St. Paul, Minnesota",Restaurant/Bar/Newsstand,16.84,"5,264",1552019EAF0BAF,Bet Online,18.32192,1088
+2025-06-30 00:00:00,MSP,Minneapolis-St. Paul International Airport,"Minneapolis-St. Paul, Minnesota",Gate,16.84,"5,264",1552019EAF0BAF,Bet Online,21.23524,1261
+2025-06-30 00:00:00,OGG,Kahului Airport,"Honolulu, Hawaii",Restaurant/Bar/Newsstand,16.84,"5,264",1552019EAF0BAF,Bet Online,8.42,500
+2025-06-30 00:00:00,PBI,Palm Beach International Airport,"West Palm Beach-Fort Pierce, Florida",Restaurant/Bar/Newsstand,16.84,"5,264",1552019EAF0BAF,Bet Online,2.526,150
+2025-06-30 00:00:00,PHL,Philadelphia International Airport,"Philadelphia, Pennsylvania",Restaurant/Bar/Newsstand,16.84,"5,264",1552019EAF0BAF,Bet Online,17.261,1025
+2025-06-30 00:00:00,PHL,Philadelphia International Airport,"Philadelphia, Pennsylvania",Gate,16.84,"5,264",1552019EAF0BAF,Bet Online,20.8816,1240
+2025-06-30 00:00:00,RSW,Southwest Florida International Airport,"Fort Myers-Naples, Naples, Florida",Restaurant/Bar/Newsstand,16.84,"5,264",1552019EAF0BAF,Bet Online,6.736,400
+2025-06-30 00:00:00,SAN,San Diego International Airport,"San Diego, California",Restaurant/Bar/Newsstand,16.84,"5,264",1552019EAF0BAF,Bet Online,2.526,150
+2025-06-30 00:00:00,SAN,San Diego International Airport,"San Diego, California",Gate,16.84,"5,264",1552019EAF0BAF,Bet Online,19.366,1150
+2025-06-30 00:00:00,SAT,San Antonio International Airport,"San Antonio, Texas",Restaurant/Bar/Newsstand,16.84,"5,264",1552019EAF0BAF,Bet Online,2.526,150
+2025-06-30 00:00:00,SAT,San Antonio International Airport,"San Antonio, Texas",Gate,16.84,"5,264",1552019EAF0BAF,Bet Online,8.30212,493
+2025-06-30 00:00:00,SAV,Savannah/Hilton Head International Airport,"Savannah, Georgia",Restaurant/Bar/Newsstand,16.84,"5,264",1552019EAF0BAF,Bet Online,1.684,100
+2025-06-30 00:00:00,SEA,Seattle-Tacoma International Airport,"Seattle-Tacoma, Washington",Gate,16.84,"5,264",1552019EAF0BAF,Bet Online,28.628,1700
+2025-06-30 00:00:00,SFO,San Francisco International Airport,"San Francisco-Oakland-San Jose, California",Restaurant/Bar/Newsstand,16.84,"5,264",1552019EAF0BAF,Bet Online,1.684,100
+2025-06-30 00:00:00,SJC,San Jose Mineta International Airport,"San Francisco-Oakland-San Jose, California",Restaurant/Bar/Newsstand,16.84,"5,264",1552019EAF0BAF,Bet Online,1.684,100
+2025-06-30 00:00:00,SMF,Sacramento International Airport,"Sacramento-Stockton-Modesto, California",Restaurant/Bar/Newsstand,16.84,"5,264",1552019EAF0BAF,Bet Online,3.368,200
+2025-06-30 00:00:00,SNA,John Wayne Airport Orange County,"Los Angeles, California",Restaurant/Bar/Newsstand,16.84,"5,264",1552019EAF0BAF,Bet Online,0.842,50
+2025-06-30 00:00:00,STL,St. Louis Lambert International Airport,"St. Louis, Missouri",Restaurant/Bar/Newsstand,16.84,"5,264",1552019EAF0BAF,Bet Online,8.42,500
+2025-06-30 00:00:00,STL,St. Louis Lambert International Airport,"St. Louis, Missouri",Gate,16.84,"5,264",1552019EAF0BAF,Bet Online,9.29568,552
+2025-06-30 00:00:00,TPA,Tampa International Airport,"Tampa-St. Petersburg (Sarasota), Florida",Restaurant/Bar/Newsstand,16.84,"5,264",1552019EAF0BAF,Bet Online,6.736,400
