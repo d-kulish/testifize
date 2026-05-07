@@ -1,298 +1,481 @@
-# Testifize Data Engineer Technical Assessment
+# Testifize ShareFile Vendor Pipeline
 
-This repository contains the assessment write-up, exploratory profiling, vendor-specific parsing scripts, normalized CSV outputs, and reconciliation checks for three unstable Excel inputs that need to be loaded into a shared marketing schema.
+This project is being reshaped into an automated pipeline for vendor report processing:
 
-## Python setup
+1. connect to ShareFile with the service account;
+2. scan configured ShareFile folders for new or changed vendor files;
+3. download Excel/CSV inputs locally;
+4. parse vendor-specific formats into the shared target schema;
+5. validate and reconcile the parsed outputs;
+6. upload normalized results, logs, or reports back to ShareFile.
 
-Create a local virtual environment and install the project dependencies:
+The old technical-assessment README has been removed because it described a one-off parsing task. Some old directories still exist in the repository, but they should be treated as historical source material until the new project structure is implemented.
 
-```bash
-python3 -m venv .venv
-source .venv/bin/activate
-python -m pip install --upgrade pip
-python -m pip install -r requirements.txt
-```
-To check how preprocessing works, run ```python3 scripts/vendor_a.py```. 
+## Current Status
 
+ShareFile API access has been validated from this machine.
 
-## Inputs
+Validated capabilities:
 
-### Task
+- OAuth password-grant authentication works with the ShareFile service account when using a ShareFile app password.
+- The service account can list folders visible to it.
+- The service account can upload a tiny CSV into a test ShareFile folder after explicit folder permissions are granted.
 
-- [Assessment brief](Inputs/Data_Engineer_Technical_Assessment.md)
+Validated service account:
 
-### Limitations
-
-- The source workbooks are not clean machine-friendly tables. They include title rows, side tables, subtotal rows, footer rows, and presentation-style layout.
-- Not all target-schema fields are available directly in the source files, so some values had to be derived from workbook context.
-- Vendor B and Vendor C are provided at weekly grain, so daily rows had to be proportioned from weekly totals.
-- Vendor C contains inconsistent spend fields, so `Total Spend` could not be trusted as the source of truth.
-
-### Input files
-
-- [Vendor_A_MediaWave_Jan2026.xlsx](Inputs/Vendor_A_MediaWave_Jan2026.xlsx): daily CTV file with mixed date formats, mixed brand naming, and non-numeric impressions.
-- [Vendor_B_StreetLevel_Jan2026.xlsx](Inputs/Vendor_B_StreetLevel_Jan2026.xlsx): DOOH workbook with weekly `StakePoint` detail plus aggregate spend totals for `WagerLine` and `NeonSpin`.
-- [Vendor_C_AudioBlast_Jan2026.xlsx](Inputs/Vendor_C_AudioBlast_Jan2026.xlsx): weekly podcast report with presentation rows, brand-specific spend columns, combined downloads, and unreliable `Total Spend`.
-
-## Write a Python script
-
-The parsing scripts are vendor-specific, use header-based source schema detection from `scripts/schemas/`, and all write into the same standardized output schema.
-
-| Vendor | Script | Output | Parsing summary |
-|--------|--------|--------|-----------------|
-| Vendor A | [scripts/vendor_a.py](scripts/vendor_a.py) | [csv/vendor_a.csv](csv/vendor_a.csv) | Reads the `MediaWave_*` sheet, finds the expected header dynamically, keeps daily rows, and standardizes dates, brands, channel fields, spend, and impressions. |
-| Vendor B | [scripts/vendor_b.py](scripts/vendor_b.py) | [csv/vendor_b.csv](csv/vendor_b.csv) | Reads only the `StakePoint` sheet, expands weekly `StakePoint` detail into 7 daily rows per week, and spreads aggregate `WagerLine` and `NeonSpin` totals across the derived date range. |
-| Vendor C | [scripts/vendor_c.py](scripts/vendor_c.py) | [csv/vendor_c.csv](csv/vendor_c.csv) | Reads the weekly detail table, expands each source row into `StakePoint` and `WagerLine`, allocates downloads by brand spend share, and proportions both spend and impressions across 7 daily rows. |
-
-Validation is available in [scripts/validate_outputs.py](scripts/validate_outputs.py), which reconciles the generated CSV files back to the source Excel totals and date ranges.
-
-## Test
-
-Run the reconciliation checks with:
-
-```bash
-python3 scripts/validate_outputs.py
+```text
+svc.sfdataccess@ptytechnologies.com
 ```
 
-The validator compares the generated CSV files with the original Excel workbooks in two layers:
+Validated tenant:
 
-1. Global output checks:
-   Every CSV is checked against [scripts/schemas/output_schema.json](scripts/schemas/output_schema.json) for exact header order, valid `YYYY-MM-DD` dates, non-negative numeric spend, integer or blank impressions, allowed brand values, allowed marketing channels, and allowed `Spend_Type` values.
-2. Vendor-specific reconciliation:
-   Each output is then compared back to its source workbook using the same business rules as the parser.
-   Vendor A is checked against source row count, net spend total, numeric impressions total, blank-impression count, and date range.
-   Vendor B is checked against weekly `StakePoint` spend and impressions, aggregate `WagerLine` and `NeonSpin` totals, the workbook monthly total, and the derived date range.
-   Vendor C is checked against brand-specific spend columns, combined downloads, expanded row count, and the derived weekly date range.
-3. Warning-only cases:
-   Vendor C does not fail when the raw `Total Spend` column disagrees with `StakePoint Spend + WagerLine Spend`, because the parser intentionally treats the brand-specific spend columns as the source of truth. The validator also warns about note-driven edge cases such as `Cancelled` and `Makeweight`.
+```text
+https://ppfcorp.sharefile.eu
+subdomain: ppfcorp
+API base after authentication: https://ppfcorp.sharefile.com
+```
 
-At the current repo state, the validator returns:
+Validated write target:
 
-- Vendor A: `PASS`
-- Vendor B: `PASS`
-- Vendor C: `PASS with WARN`
+```text
+Shared Folders/test_upload
+folder id: foefd961-ff1d-42b0-a27b-9616cd09dcef
+```
 
-## Document the issues
+Validated upload probe:
 
-## Vendor A - MediaWave
+```text
+testifize_upload_probe_20260507T094214Z.csv
+file id: fi992540-e129-3f6e-a3be-936da6d5ef4c
+```
 
-The file is reasonably structured, but it still contains several data quality issues and a few fields that had to be derived in order to match the required output schema.
+## ShareFile Credentials
 
-### Issues found in the source file
+The API flow needs an app-specific password, not the normal interactive login password.
 
-1. `Date` is not stored in a single consistent format.
-   The same column contains Excel serial dates, `MM/DD/YYYY` strings, and `DD-Mon-YYYY` strings. This required date normalization before loading.
+Required `.env` keys:
 
-2. `Brand` is inconsistent.
-   The file mixes abbreviations and full names, for example: `SP` and `StakePoint`, `WL` and `WagerLine`, `NS` and `NeonSpin`, `MR` and `MegaReels`. These values had to be standardized to the canonical brand names required by the target schema.
+```env
+SHAREFILE_SUBDOMAIN=ppfcorp
+SHAREFILE_USER=svc.sfdataccess@ptytechnologies.com
+SHAREFILE_CLIENT_ID=...
+SHAREFILE_CLIENT_SECRET=...
+SHAREFILE_APP_PASSWORD=...
+```
 
-3. `Impressions` is not fully numeric.
-   The column contains text placeholders such as `N/A` and `Not Available` instead of integers. These values had to be converted to `NULL` in the output.
+Legacy or unrelated keys should not be used by the new downloader:
 
-4. The worksheet contains a footer row that is not data.
-   There is a trailing `TOTAL` row at the bottom of the sheet, which must be excluded from ingestion.
+```env
+SHAREFILE_PWD=...
+SHAREFILE_PASSWORD=...
+SMTP_*
+```
 
-5. The file contains extra source data that does not belong to the target schema.
-   The `Clicks` column is present in the workbook, but there is no matching field in the target output schema, so it was ignored in the final CSV.
+`SHAREFILE_PWD` may still be useful for manual browser login, but the automation should authenticate with `SHAREFILE_APP_PASSWORD`.
 
-6. The file contains both gross and net spend.
-   Both `Gross Spend (USD)` and `Net Spend (USD)` are provided, so a business rule was required. Based on the specification, `Net Spend (USD)` was used for `Daily_Spend`.
+## How ShareFile Access Was Proven
 
-### Hardcoded / derived values needed to produce the target schema
+### 1. OAuth Client Was Required
 
-1. `Vendor` had to be set to `MediaWave`.
-   There is no dedicated vendor column in the sheet, so the vendor value was derived from the file / vendor context.
+A first direct token request using only username and password failed because ShareFile required an OAuth client:
 
-2. `Marketing_Channel` had to be set to `CTV`.
-   The workbook contains `Placement Type`, but not the standardized channel field required by the target schema. Since the assessment describes MediaWave as a CTV vendor, all rows were assigned `CTV`.
+```text
+invalid_request: missing client_id
+```
 
-3. `Sub_Channel` had to be derived from `Placement Type`.
-   The source does not contain a separate `Sub_Channel` field, so `Placement Type` was mapped into that target column.
+The previous engineer's handover folder contained the missing OAuth client information in:
 
-4. `Spend_Type` had to be set to `Actual`.
-   The file is already at daily grain, so no proportioning logic was needed.
+```text
+/Users/dkulish/Documents/Work/Testifize/BOL_Matias_Handover_20260422/01_scripts/05_vendor_onboarding/local.settings.json
+```
 
-### Assumptions made in the parser
+That file proved the expected credential shape:
 
-1. The relevant worksheet is the one whose name starts with `MediaWave_`.
-   This was done to avoid accidentally ingesting unrelated sheets if more tabs are added later.
+```text
+SHAREFILE_CLIENT_ID
+SHAREFILE_CLIENT_SECRET
+SHAREFILE_SUBDOMAIN
+SHAREFILE_USER
+SHAREFILE_PASSWORD
+```
 
-2. The header row is identified by matching the expected source schema.
-   This avoids hardcoding row numbers and makes the parser more resilient if a vendor inserts extra rows above the table.
+The old stored password was stale, so it produced:
 
-3. Invalid spend values should not break the load.
-   The parser converts invalid or negative spend values to `0`, although no negative spend values were observed in this file.
+```text
+invalid_grant: invalid username or password
+```
 
-4. Invalid impression values should not be loaded as text.
-   Non-numeric values are converted to `NULL` rather than preserved as strings.
+### 2. App Password Was Required
 
-## Vendor B - StreetLevel
+The service account has multi-factor authentication enabled. For custom API scripts, a ShareFile app password must be generated under the same service account:
 
-This file is more difficult than Vendor A because it is not a single clean daily table. It mixes a weekly detail table for one brand, aggregated totals for two other brands, and a separate invoice sheet that should not be ingested as campaign data.
+```text
+svc.sfdataccess@ptytechnologies.com
+```
 
-### Issues found in the source file
+The app password was generated from:
 
-1. The workbook contains multiple content regions, not one machine-friendly table.
-   The `StakePoint` sheet contains narrative rows, a weekly detail table, a side table for other brands, and a monthly total row. There is also an `Invoice Summary` sheet that is not campaign performance data.
+```text
+Personal settings -> Sign in options -> Multi-factor authentication -> App passwords -> Generate
+```
 
-2. The detail data is weekly, not daily.
-   The main table uses `Week Starting`, so the source does not satisfy the target schema requirement for daily granularity. The weekly rows had to be proportioned into calendar days.
+App name used:
 
-3. Only `StakePoint` has row-level detail.
-   `WagerLine` and `NeonSpin` are only provided as aggregate spend totals in two cells, without daily dates, markets, venue types, campaigns, or impressions.
+```text
+testifize_vendor_downloader
+```
 
-4. There is no explicit `Campaign` field in the workbook.
-   The source file does not identify which campaign the spend belongs to, so the target schema cannot be populated from source data alone.
+After adding the generated value as `SHAREFILE_APP_PASSWORD`, OAuth authentication succeeded:
 
-5. There is no explicit `Vendor` column in the detail table.
-   The vendor name had to be derived from the file / vendor context.
+```text
+token_status=200
+token=<present>
+expires_in=28800
+token_type=bearer
+```
 
-6. The file labeled `Jan2026` includes a week that starts in February.
-   The detail table contains `2026-02-03` as a week start, so proportioning that row produces daily dates through `2026-02-09`.
+### 3. Folder Listing Was Proven
 
-7. `WagerLine` and `NeonSpin` do not have impression data.
-   Because only aggregate spend totals are provided for these brands, `Daily_Impressions` cannot be populated for them.
+After authentication, the pipeline can call ShareFile API endpoints with:
 
-8. The workbook includes non-data rows that must be excluded.
-   The monthly total row and the invoice sheet are useful for reconciliation, but they should not be loaded as fact rows into the target schema.
+```text
+Authorization: Bearer <access_token>
+```
 
-### Hardcoded / derived values needed to produce the target schema
+The root listing returned:
 
-1. `Vendor` had to be set to `StreetLevel OOH`.
-   There is no vendor column in the source table, so the value was derived from the workbook context.
+```text
+Personal Folders
+Shared Folders
+Favorites
+```
 
-2. `Brand` for the weekly detail table had to be inferred as `StakePoint`.
-   The detail rows do not repeat the brand name on every row; this is implied by the worksheet context.
+The service account initially saw folders under `home`, but `Shared Folders/test_upload` returned `403 Forbidden` until the service account was explicitly added to that folder.
 
-3. `Campaign` had to be set to `March Madness Awareness`.
-   The source file does not contain a campaign column, so this value had to be assumed in order to satisfy the target schema.
+### 4. Folder Permissions Were Required
 
-4. `Marketing_Channel` had to be set to `DOOH`.
-   The file is described as digital out-of-home, but the standardized marketing channel is not explicitly stored in the row-level detail.
+The test upload folder initially failed with:
 
-5. `Sub_Channel` had to be derived from `Venue Type` and `Market`.
-   The source does not provide a dedicated lowest-level sub-channel field, so the combination `Venue Type - Market` was used to preserve the finest available granularity for `StakePoint`.
+```text
+403 Forbidden
+You do not have permission to access the selected item: foefd961-ff1d-42b0-a27b-9616cd09dcef
+```
 
-6. `Spend_Type` had to be set to `Proportioned`.
-   The source is weekly, so both spend and impressions were spread across calendar days.
+After adding `svc.sfdataccess@ptytechnologies.com` to the folder, ShareFile displayed the user as:
 
-7. `WagerLine` and `NeonSpin` required a placeholder `Sub_Channel`.
-   Since only aggregate brand totals were provided, `Sub_Channel` was set to `Aggregated Total` for these rows.
+```text
+Team, Data
+```
 
-### Assumptions made in the parser
+Required folder permissions for this automation:
+
+```text
+View
+Download
+Upload
+```
 
-1. Only the `StakePoint` sheet is used for ingestion.
-   The `Invoice Summary` sheet was treated as reference / reconciliation data only.
+Delete/Admin are not required for the normal downloader/parser/uploader flow unless the pipeline will clean up remote files or manage permissions.
+
+### 5. Upload Was Proven
+
+The upload probe used this flow:
+
+1. Authenticate with `SHAREFILE_APP_PASSWORD`.
+2. `GET /sf/v3/Items(<folder_id>)` to confirm folder access.
+3. `POST /sf/v3/Items(<folder_id>)/Upload?...` to prepare a standard raw upload.
+4. `POST` the CSV bytes to the returned `ChunkUri`.
+5. `GET /sf/v3/Items(<folder_id>)/Children` to verify the uploaded file exists.
 
-2. The weekly detail table is identified by matching the expected header schema.
-   This avoids hardcoding the table position and makes the parser more resilient if extra rows are added above the data.
+The successful probe returned:
 
-3. Weekly `StakePoint` rows are split evenly across 7 days.
-   Spend and impressions are proportioned day by day while preserving the original weekly totals exactly.
+```text
+folder_status=200 name=test_upload
+upload_prepare_status=200
+upload_chunk_status=200 response='OK'
+upload_verified=True
+```
 
-4. `WagerLine` and `NeonSpin` aggregate spend is spread across all unique daily dates created from the `StakePoint` timeline.
-   This was necessary because those brands do not have their own weekly or daily date structure in the source file.
+## Target Project Shape
 
-5. `Daily_Impressions` for `WagerLine` and `NeonSpin` is left as `NULL`.
-   The workbook does not provide impression totals for these two brands.
+The current `final/`, `test/`, and `vendors/` folders came from the older assessment/vendor-parser work. They can still be mined for parser examples, schemas, and sample files, but they should not define the long-term architecture.
 
-6. The monthly total row is used as a QA check, not as an input row.
-   The `StakePoint` detailed spend plus the `WagerLine` and `NeonSpin` aggregate totals reconcile to the reported monthly total of `239,097.44`, which is a useful validation step.
+The first new project layer now lives under:
 
-## Vendor C - AudioBlast
+```text
+src/testifize_pipeline/sharefile/
+src/testifize_pipeline/assets/
+```
 
-This is the messiest file of the three. It is a presentation-style weekly report, not a clean flat table, and several business fields are encoded indirectly or inconsistently.
+`sharefile/` owns API communication. `assets/` owns the local catalogue of remote files, statuses, provenance, and processing state.
 
-### Issues found in the source file
+Recommended structure:
 
-1. The workbook is not a machine-friendly table.
-   It contains report title rows, a prepared-for row, a report date row, merged week section headers, subtotal rows, and a grand total banner row.
+```text
+testifize/
+  README.md
+  requirements.txt
+  .env
+  .gitignore
 
-2. The data is weekly, not daily.
-   The source uses values like `Week of Jan 6`, so daily output rows had to be created by proportioning each weekly record into 7 calendar days.
+  config/
+    sharefile_folders.example.json
+    vendors.example.json
 
-3. Brand is not stored as a single field.
-   Instead, the file has two separate spend columns: `StakePoint Spend` and `WagerLine Spend`. This means the source rows must be expanded into two branded outputs.
+  schemas/
+    target_schema.json
+    vendor_inputs/
 
-4. `Total Spend` is not reliable.
-   At least two rows have a mismatch between `StakePoint Spend + WagerLine Spend` and `Total Spend`. Example: `StakePoint Spend = 0.00`, `WagerLine Spend = 2660.62`, but `Total Spend = 0.00`. Because of this, `Total Spend` cannot be treated as the source of truth.
+  src/
+    testifize_pipeline/
+      __init__.py
+      cli.py
+      config.py
+      state.py
 
-5. `Downloads (est.)` is aggregated across both brands.
-   The file does not provide brand-level impression / download counts, so downloads had to be allocated proportionally to brand spend.
+      assets/
+        __init__.py
+        catalog.py
 
-6. The file contains note-driven edge cases.
-   There are cancelled rows with zero spend but non-zero downloads, and makeweight rows where spend and `Total Spend` do not align cleanly.
+      sharefile/
+        __init__.py
+        client.py
+        downloader.py
+        uploader.py
+        scanner.py
 
-7. There is no explicit `Campaign` field.
-   The workbook is clearly a podcast campaign report, but there is no row-level campaign column matching the target schema.
+      parsers/
+        __init__.py
+        base.py
+        registry.py
+        adtaxi.py
+        loop.py
+        tvm.py
 
-8. There is no explicit standardized `Marketing_Channel` field.
-   The file is clearly podcast / audio data, but the target marketing channel value had to be derived from workbook context.
+      validation/
+        __init__.py
+        schema.py
+        reconciliation.py
 
-### Hardcoded / derived values needed to produce the target schema
+      io/
+        __init__.py
+        excel.py
+        csv.py
+        paths.py
 
-1. `Vendor` had to be set to `AudioBlast Media`.
-   There is no dedicated vendor column in the detail rows, so the value was derived from the report context.
+  data/
+    inbox/
+    processed/
+    output/
+    state/
 
-2. `Campaign` had to be set to `Podcast Campaign`.
-   The source does not provide a target-schema-ready campaign field, so a standard campaign value had to be assigned.
+  docs/
+    sharefile_access.md
+    vendor_onboarding.md
+    operations.md
 
-3. `Marketing_Channel` had to be set to `Podcast/Audio`.
-   The channel is implied by the vendor and report type rather than explicitly stored in a standardized field.
+  tests/
+    fixtures/
+    unit/
+    integration/
+```
 
-4. `Sub_Channel` had to be derived from `Show / Placement` and `Host`.
-   The file does not provide a single sub-channel field, so the combination `Show / Placement - Host` was used as the most granular available placement identifier.
+### Core Concepts
 
-5. `Spend_Type` had to be set to `Proportioned`.
-   The source is weekly, so spend and downloads had to be allocated across daily dates.
+`sharefile/client.py`
 
-### Assumptions made in the parser
+Owns OAuth token acquisition, token refresh if needed, low-level GET/POST/PATCH calls, retries, and safe error messages.
 
-1. Only rows matching the expected detail header and containing a parseable `Week` value are treated as data rows.
-   This excludes presentation rows, merged week banners, subtotals, and the grand total label.
+`sharefile/scanner.py`
 
-2. `StakePoint Spend` and `WagerLine Spend` are treated as the source of truth for spend.
-   Because `Total Spend` is inconsistent in some rows, effective total spend is recalculated as `StakePoint Spend + WagerLine Spend`.
+Lists configured folders, filters files by extension and modification time, and compares remote files against local state.
 
-3. `Downloads (est.)` is allocated to each brand in proportion to that brand's share of recalculated spend.
-   This produces brand-level `Daily_Impressions` even though the source only provides downloads at the combined row level.
+`sharefile/downloader.py`
 
-4. If both brand spend columns are zero, downloads are split 50/50.
-   This neutral fallback is used for cancelled rows where the file provides downloads but no spend signal for either brand.
+Downloads remote Excel/CSV files into a deterministic local folder, preserving remote metadata such as ShareFile item ID, file name, modified timestamp, and source folder.
 
-5. Makeweight rows are preserved rather than dropped.
-   The parser keeps them and uses the brand-specific spend columns even when the raw `Total Spend` column is incorrect.
+`parsers/`
 
-## Produce three clean CSV output files
+Contains one parser module per vendor or vendor-format family. Each parser should take a local input file and return rows in the target schema.
 
-- [csv/vendor_a.csv](csv/vendor_a.csv)
-- [csv/vendor_b.csv](csv/vendor_b.csv)
-- [csv/vendor_c.csv](csv/vendor_c.csv)
+`validation/`
 
-## Approach
+Checks exact target headers, required fields, numeric types, date formats, and optional vendor-specific reconciliation rules.
 
-1. Excel files should be treated as row-based inputs, not assumed to be clean database-style tables.
-2. Each vendor file should have its own expected input schema so headers can be identified dynamically rather than by hardcoded row numbers.
-3. The normalized outputs should be forced into one shared output schema with explicit field-level transformation rules.
-4. Reconciliation checks should be run after parsing to compare output totals, row counts, and date ranges back to the source.
-5. The processing pipeline should produce a short QA report so data issues are visible immediately.
+`sharefile/uploader.py`
 
-## Production recommendations
+Uploads normalized CSVs, validation reports, or pipeline logs back to a configured output folder.
 
-1. The ingestion should be automated and scheduled.
-   In production, this is a good fit for Airflow: ingest files on a regular schedule, run vendor-specific parsers, validate outputs, and promote only successful runs downstream.
-2. Every run should produce an operational report.
-   A short summary should be sent to Slack, Teams, or email with file names, row counts, validation status, warnings, totals, and any rows or files sent for manual review.
-3. Normalized outputs should be checked for anomalies.
-   After schema validation, the pipeline should also look for unusual patterns such as missing dates, duplicate rows, sudden spend spikes, zero-impression anomalies, or major deviations from historical brand or channel distributions.
-4. Data should land in a quarantine or staging layer first.
-   Before loading into the final fact table, each run should write to a temporary review table so failed or suspicious records can be inspected and approved without polluting downstream reporting.
+`state.py`
 
-## Challenges
+Tracks what has already been processed. The state should include remote item ID, file name, modified timestamp, content hash if available, local path, parser version, output path, and upload result.
 
-1. In production, access to source files has to be organized first, whether they arrive through shared storage, email ingestion, or another upstream system.
-2. Some basic data infrastructure is needed for a scalable workflow:
-   - workflow orchestration such as Airflow
-   - durable storage for inbound files
-   - a temporary or operational database for review and QA if needed
-   - access to downstream systems such as a DWH or campaign data stores
+`assets/catalog.py`
+
+Stores the local asset catalogue in SQLite. This is where the project tracks whether a ShareFile file is `new`, `downloaded`, `processing`, `processed`, `uploaded`, `superseded`, `ignored`, or `failed`.
+
+## Proposed Pipeline Flow
+
+The first production workflow should be deliberately simple:
+
+```text
+scan -> download -> parse -> validate -> upload -> record state
+```
+
+Recommended command surface once implemented:
+
+```bash
+python -m testifize_pipeline scan
+python -m testifize_pipeline download
+python -m testifize_pipeline process
+python -m testifize_pipeline upload
+python -m testifize_pipeline run
+```
+
+Recommended dry-run behavior:
+
+```bash
+python -m testifize_pipeline run --dry-run
+```
+
+Dry run should authenticate, list candidate files, and report intended downloads/uploads without mutating ShareFile.
+
+## ShareFile Folder Configuration
+
+Folder mapping should be configuration-driven, not hardcoded inside parser code.
+
+Example shape:
+
+```json
+{
+  "vendors": {
+    "AdTaxi": {
+      "input_folder_id": "fo...",
+      "output_folder_id": "fo...",
+      "parser": "adtaxi",
+      "file_patterns": ["*.xlsx", "*.csv"]
+    }
+  }
+}
+```
+
+Use folder IDs rather than display paths where possible. ShareFile item IDs are stable even if folders are renamed.
+
+## Local File Policy
+
+Recommended local layout:
+
+```text
+data/inbox/<vendor>/<sharefile_item_id>/<original_filename>
+data/output/<vendor>/<run_id>/<normalized_csv>
+data/processed/<vendor>/<run_id>/<reports>
+data/state/pipeline_state.sqlite
+```
+
+The `data/` directory should be ignored by git unless a small fixture is intentionally committed for tests.
+
+## Asset Catalogue
+
+The asset catalogue is the answer to the overlap problem: there may be many remote files that look similar, cover the same period, or were uploaded more than once. The pipeline should not silently choose or skip files based only on a filename.
+
+Catalogue every matching ShareFile file first, then make processing decisions from local state.
+
+Tracked fields include:
+
+```text
+remote_item_id
+vendor
+status
+name
+source_folder_id
+source_folder_label
+remote_path
+file_size
+remote_created_at
+remote_modified_at
+created_by_name
+created_by_email
+local_path
+output_path
+uploaded_item_id
+parser
+parser_version
+content_hash
+duplicate_group
+status_reason
+first_seen_at
+last_seen_at
+updated_at
+raw_metadata_json
+```
+
+Initial statuses:
+
+```text
+new
+queued
+downloading
+downloaded
+processing
+processed
+uploading
+uploaded
+superseded
+ignored
+failed
+```
+
+`superseded` is important for overlapping files. It lets the pipeline say: "we saw this file, but a newer or more authoritative file replaced it." That is much better than making the file disappear from the workflow.
+
+See [docs/asset_catalog.md](docs/asset_catalog.md) for the catalogue design.
+
+## Current CLI Skeleton
+
+The first CLI commands are intentionally low-level:
+
+```bash
+PYTHONPATH=src python -m testifize_pipeline.cli scan --folders config/sharefile_folders.json
+PYTHONPATH=src python -m testifize_pipeline.cli assets
+PYTHONPATH=src python -m testifize_pipeline.cli upload-test --folder-id foefd961-ff1d-42b0-a27b-9616cd09dcef
+```
+
+Use [config/sharefile_folders.example.json](config/sharefile_folders.example.json) as the template for the local, untracked `config/sharefile_folders.json`.
+
+## Parser Policy
+
+Vendor parsers should not know about ShareFile. They should only handle local files and target-schema rows.
+
+Good parser boundary:
+
+```text
+local file path -> normalized rows + parser diagnostics
+```
+
+Bad parser boundary:
+
+```text
+ShareFile folder -> download -> parse -> upload
+```
+
+Keeping ShareFile outside the parser layer makes it easier to test vendors independently and rerun parsers on local files.
+
+## Immediate Next Steps
+
+1. Fill in local `config/sharefile_folders.json` with the real vendor folder IDs.
+2. Run `scan` to populate `data/state/asset_catalog.sqlite`.
+3. Review overlapping files in the catalogue and define the first rules for `superseded` vs `queued`.
+4. Add download commands for catalogued `new` or `queued` assets.
+5. Move the current target schema into `schemas/target_schema.json`.
+6. Decide which existing vendor parser should be migrated first.
+
+## Historical Material
+
+The existing directories are not the final architecture:
+
+```text
+final/
+test/
+vendors/
+```
+
+They contain useful examples, existing vendor files, old outputs, and parser experiments. During the reshaping phase, treat them as source material to migrate from, not as the structure to preserve forever.

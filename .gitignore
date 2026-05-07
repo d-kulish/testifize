@@ -145,6 +145,10 @@ ENV/
 env.bak/
 venv.bak/
 
+# Testifize local pipeline state and downloaded vendor assets
+data/
+config/sharefile_folders.json
+
 # Spyder project settings
 .spyderproject
 .spyproject
@@ -206,3 +210,4 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+_old/
