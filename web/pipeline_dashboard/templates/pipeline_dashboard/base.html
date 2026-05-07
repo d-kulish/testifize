@@ -1,3 +1,4 @@
+{% load static %}
 <!doctype html>
 <html lang="en">
 <head>
@@ -64,15 +65,11 @@
       min-height: 36px;
     }
 
-    .brand-mark {
-      width: 28px;
-      height: 28px;
-      border-radius: 6px;
-      background: #38bdf8;
-      color: #0f172a;
-      display: grid;
-      place-items: center;
-      font-weight: 800;
+    .brand-logo {
+      display: block;
+      width: 150px;
+      max-width: 100%;
+      height: auto;
     }
 
     .nav {
@@ -128,6 +125,10 @@
       gap: 8px;
     }
 
+    .actions form {
+      margin: 0;
+    }
+
     .button {
       display: inline-flex;
       align-items: center;
@@ -157,7 +158,7 @@
 
     .metrics {
       display: grid;
-      grid-template-columns: repeat(6, minmax(120px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
       gap: 12px;
       margin-bottom: 20px;
     }
@@ -186,6 +187,12 @@
       margin-top: 8px;
       font-size: 26px;
       font-weight: 780;
+    }
+
+    .metric-value.compact {
+      font-size: 14px;
+      line-height: 1.35;
+      overflow-wrap: anywhere;
     }
 
     .grid {
@@ -287,6 +294,166 @@
       color: var(--ok);
     }
 
+    .status-green {
+      color: #087443;
+    }
+
+    .status-blue {
+      color: #175cd3;
+    }
+
+    .status-red {
+      color: var(--danger);
+    }
+
+    .mirror-table {
+      display: grid;
+      min-width: 860px;
+    }
+
+    .mirror-head,
+    .mirror-summary {
+      display: grid;
+      grid-template-columns: minmax(280px, 1fr) 120px 120px 120px 130px;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .mirror-head {
+      padding: 10px 12px;
+      color: var(--muted);
+      background: var(--panel-subtle);
+      border-bottom: 1px solid #edf0f4;
+      font-size: 12px;
+      text-transform: uppercase;
+      font-weight: 750;
+    }
+
+    .mirror-folder {
+      border-bottom: 1px solid #edf0f4;
+    }
+
+    .mirror-folder:last-child {
+      border-bottom: 0;
+    }
+
+    .mirror-summary {
+      min-height: 48px;
+      padding: 10px 12px;
+      cursor: pointer;
+      list-style: none;
+      font-size: 14px;
+    }
+
+    .mirror-summary::-webkit-details-marker {
+      display: none;
+    }
+
+    .mirror-summary::before {
+      content: "+";
+      width: 16px;
+      color: var(--muted);
+    }
+
+    .mirror-folder[open] .mirror-summary::before {
+      content: "-";
+    }
+
+    .mirror-summary {
+      grid-template-columns: 16px minmax(264px, 1fr) 120px 120px 120px 130px;
+    }
+
+    .mirror-head {
+      grid-template-columns: 16px minmax(264px, 1fr) 120px 120px 120px 130px;
+    }
+
+    .mirror-head::before {
+      content: "";
+    }
+
+    .mirror-folder-name {
+      font-weight: 720;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .mirror-files {
+      border-top: 1px solid #edf0f4;
+      background: #fbfcfe;
+      overflow-x: auto;
+    }
+
+    .mirror-files table {
+      font-size: 13px;
+    }
+
+    .mirror-file-row.new {
+      background: #f0fdf4;
+    }
+
+    .mirror-file-row.processed {
+      background: #eff6ff;
+    }
+
+    .mirror-file-row.deleted_remote {
+      background: #fef3f2;
+    }
+
+    .mirror-status {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 24px;
+      min-width: 24px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 750;
+      white-space: nowrap;
+    }
+
+    .mirror-status.new {
+      background: #dcfae6;
+      color: #087443;
+    }
+
+    .mirror-status.processed {
+      background: #dbeafe;
+      color: #175cd3;
+    }
+
+    .mirror-status.deleted_remote {
+      background: #fee4e2;
+      color: var(--danger);
+    }
+
+    .mirror-pager {
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 12px;
+      border-top: 1px solid #edf0f4;
+      background: var(--panel);
+    }
+
+    .mirror-pager.single-page {
+      display: none;
+    }
+
+    .mirror-page-status {
+      min-width: 52px;
+      text-align: center;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 650;
+    }
+
+    .button:disabled {
+      cursor: not-allowed;
+      opacity: 0.48;
+    }
+
     .status-list {
       display: grid;
       gap: 1px;
@@ -306,6 +473,33 @@
       padding: 22px 16px;
       color: var(--muted);
       font-size: 14px;
+    }
+
+    .messages {
+      display: grid;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    .message {
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: var(--panel);
+      color: var(--text);
+      font-size: 14px;
+    }
+
+    .message.success {
+      border-color: #abefc6;
+      background: #ecfdf3;
+      color: #087443;
+    }
+
+    .message.error {
+      border-color: #fecdca;
+      background: #fef3f2;
+      color: var(--danger);
     }
 
     .filterbar {
@@ -372,19 +566,25 @@
   <div class="shell">
     <aside class="sidebar">
       <div class="brand">
-        <div class="brand-mark">T</div>
-        <div>Testifize</div>
+        <img class="brand-logo" src="{% static 'pics/cropped-Testifize_Logo.webp' %}" alt="Testifize">
       </div>
       <nav class="nav" aria-label="Primary">
         <a class="{% if active_nav == 'dashboard' %}active{% endif %}" href="{% url 'pipeline_dashboard:dashboard' %}">Dashboard</a>
         <a class="{% if active_nav == 'assets' %}active{% endif %}" href="{% url 'pipeline_dashboard:assets' %}">Assets</a>
-        <a class="{% if active_nav == 'folders' %}active{% endif %}" href="{% url 'pipeline_dashboard:folders' %}">ShareFile folders</a>
+        <a class="{% if active_nav == 'folders' %}active{% endif %}" href="{% url 'pipeline_dashboard:folders' %}">SF folders</a>
         <a class="{% if active_nav == 'vendors' %}active{% endif %}" href="{% url 'pipeline_dashboard:vendors' %}">Vendors</a>
         <a href="{% url 'admin:index' %}">Django admin</a>
       </nav>
     </aside>
 
     <main class="content">
+      {% if messages %}
+        <div class="messages">
+          {% for message in messages %}
+            <div class="message {{ message.tags }}">{{ message }}</div>
+          {% endfor %}
+        </div>
+      {% endif %}
       {% block content %}{% endblock %}
     </main>
   </div>

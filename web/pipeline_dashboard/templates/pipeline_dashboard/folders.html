@@ -1,55 +1,150 @@
 {% extends "pipeline_dashboard/base.html" %}
 
-{% block title %}ShareFile Folders{% endblock %}
+{% block title %}SF folders{% endblock %}
 
 {% block content %}
   <section class="topbar">
     <div>
-      <h1>ShareFile Folders</h1>
-      <p class="subtitle">Input and output folders that the pipeline can scan or write to.</p>
+      <h1>SF folders</h1>
+      <p class="subtitle">Local mirror of loaded ShareFile folders and files.</p>
     </div>
     <div class="actions">
-      <a class="button" href="{{ admin_urls.folder_add }}">Add folder</a>
-      <a class="button primary" href="{{ admin_urls.folders }}">Scan selected</a>
+      <form method="post" action="{% url 'pipeline_dashboard:update_folders' %}">
+        {% csrf_token %}
+        <button class="button primary" type="submit">Update</button>
+      </form>
+      <a class="button" href="{{ admin_urls.index }}">Admin</a>
+    </div>
+  </section>
+
+  <section class="metrics">
+    <div class="metric">
+      <div class="metric-label">Folders</div>
+      <div class="metric-value">{{ mirror_summary.folder_count }}</div>
+    </div>
+    <div class="metric">
+      <div class="metric-label">Files</div>
+      <div class="metric-value">{{ mirror_summary.file_count }}</div>
+    </div>
+    <div class="metric">
+      <div class="metric-label">New</div>
+      <div class="metric-value status-green">{{ mirror_summary.new_count }}</div>
+    </div>
+    <div class="metric">
+      <div class="metric-label">Processed</div>
+      <div class="metric-value status-blue">{{ mirror_summary.processed_count }}</div>
+    </div>
+    <div class="metric">
+      <div class="metric-label">Deleted in SF</div>
+      <div class="metric-value status-red">{{ mirror_summary.deleted_count }}</div>
+    </div>
+    <div class="metric">
+      <div class="metric-label">Duplicate Names</div>
+      <div class="metric-value">{{ mirror_summary.duplicate_name_count }}</div>
+    </div>
+    <div class="metric">
+      <div class="metric-label">Last Sync</div>
+      <div class="metric-value compact">{{ mirror_summary.last_sync_at|default:"-" }}</div>
     </div>
   </section>
 
   <section class="panel">
     <div class="panel-header">
-      <h2 class="panel-title">Configured Folders</h2>
-      <span class="muted">{{ folders|length }} total</span>
+      <h2 class="panel-title">Loaded Folders</h2>
+      <span class="muted">{{ mirror_summary.file_count }} files in data/inbox</span>
     </div>
     <div class="panel-body">
       {% if folders %}
-        <table>
-          <thead>
-            <tr>
-              <th>Folder</th>
-              <th>Role</th>
-              <th>Vendor</th>
-              <th>Patterns</th>
-              <th>Active</th>
-              <th>Assets</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for folder in folders %}
-              <tr>
-                <td class="file-name">{{ folder.label }}</td>
-                <td>{{ folder.get_role_display }}</td>
-                <td>{{ folder.vendor|default:"-" }}</td>
-                <td>{{ folder.file_patterns|default:"-" }}</td>
-                <td>{{ folder.is_active|yesno:"Yes,No" }}</td>
-                <td>{{ folder.asset_count }}</td>
-                <td><a href="{% url 'admin:pipeline_dashboard_sharefilefolder_change' folder.id %}">Edit</a></td>
-              </tr>
-            {% endfor %}
-          </tbody>
-        </table>
+        <div class="mirror-table" role="table" aria-label="ShareFile mirror folders">
+          <div class="mirror-head" role="row">
+            <div role="columnheader">Folder</div>
+            <div role="columnheader">Total Files</div>
+            <div role="columnheader">Processed</div>
+            <div role="columnheader">New</div>
+            <div role="columnheader">Deleted in SF</div>
+          </div>
+          {% for folder in folders %}
+            <details class="mirror-folder" {% if forloop.first %}open{% endif %}>
+              <summary class="mirror-summary" role="row">
+                <span class="mirror-folder-name" role="cell">{{ folder.display_name }}</span>
+                <span role="cell">{{ folder.counts.total }}</span>
+                <span class="status-blue" role="cell">{{ folder.counts.processed }}</span>
+                <span class="status-green" role="cell">{{ folder.counts.new }}</span>
+                <span class="status-red" role="cell">{{ folder.counts.deleted }}</span>
+              </summary>
+              <div class="mirror-files" data-mirror-pager data-page-size="10">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Status</th>
+                      <th>File</th>
+                      <th>Type</th>
+                      <th>Sheets</th>
+                      <th>Modified</th>
+                      <th>Size</th>
+                      <th>Uploader</th>
+                      <th>Mail</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for file in folder.files %}
+                      <tr class="mirror-file-row {{ file.status }}" data-file-row>
+                        <td><span class="mirror-status {{ file.status }}">{{ file.status_label }}</span></td>
+                        <td class="file-name" title="{{ file.name }}">{{ file.name }}</td>
+                        <td>{{ file.extension }}{% if file.profile_kind %} · {{ file.profile_kind }}{% endif %}</td>
+                        <td>{{ file.sheet_count|default:"-" }}</td>
+                        <td>{{ file.modified_at|default:"-" }}</td>
+                        <td>{{ file.size|filesizeformat }}</td>
+                        <td>{{ file.uploaded_by|default:"-" }}</td>
+                        <td>{{ file.uploader_email|default:"-" }}</td>
+                      </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+                <div class="mirror-pager" aria-label="{{ folder.display_name }} files pagination">
+                  <button class="button mirror-page-prev" type="button">Prev</button>
+                  <span class="mirror-page-status">1 / 1</span>
+                  <button class="button mirror-page-next" type="button">Next</button>
+                </div>
+              </div>
+            </details>
+          {% endfor %}
+        </div>
       {% else %}
-        <div class="empty">No ShareFile folders configured yet.</div>
+        <div class="empty">No local ShareFile mirror has been loaded yet.</div>
       {% endif %}
     </div>
   </section>
+  <script>
+    document.querySelectorAll("[data-mirror-pager]").forEach((pager) => {
+      const rows = Array.from(pager.querySelectorAll("[data-file-row]"));
+      const pageSize = Number(pager.dataset.pageSize || 10);
+      const prev = pager.querySelector(".mirror-page-prev");
+      const next = pager.querySelector(".mirror-page-next");
+      const status = pager.querySelector(".mirror-page-status");
+      const totalPages = Math.max(1, Math.ceil(rows.length / pageSize));
+      let page = 1;
+
+      function render() {
+        rows.forEach((row, index) => {
+          const visible = index >= (page - 1) * pageSize && index < page * pageSize;
+          row.hidden = !visible;
+        });
+        status.textContent = `${page} / ${totalPages}`;
+        prev.disabled = page === 1;
+        next.disabled = page === totalPages;
+        pager.classList.toggle("single-page", totalPages <= 1);
+      }
+
+      prev.addEventListener("click", () => {
+        page = Math.max(1, page - 1);
+        render();
+      });
+      next.addEventListener("click", () => {
+        page = Math.min(totalPages, page + 1);
+        render();
+      });
+      render();
+    });
+  </script>
 {% endblock %}

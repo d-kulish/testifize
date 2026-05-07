@@ -1,10 +1,18 @@
 from __future__ import annotations
 
+import os
+import subprocess
+import sys
+
+from django.conf import settings
+from django.contrib import messages
 from django.db.models import Count
-from django.shortcuts import render
+from django.shortcuts import redirect, render
 from django.urls import reverse
+from django.views.decorators.http import require_POST
 
 from .models import Asset, AssetStatus, ShareFileFolder, Vendor
+from .sharefile_mirror import load_sharefile_mirror
 
 
 REVIEW_STATUSES = [
@@ -121,18 +129,36 @@ def assets(request):
 
 
 def folders(request):
-    folder_queryset = (
-        ShareFileFolder.objects.select_related("vendor")
-        .annotate(asset_count=Count("assets"))
-        .order_by("label")
-    )
+    mirror = load_sharefile_mirror()
     context = {
-        "title": "ShareFile Folders",
-        "folders": folder_queryset,
+        "title": "SF folders",
+        "folders": mirror.folders,
+        "mirror_summary": mirror.summary,
         "admin_urls": admin_urls_context(),
         "active_nav": "folders",
     }
     return render(request, "pipeline_dashboard/folders.html", context)
+
+
+@require_POST
+def update_folders(request):
+    env = dict(os.environ)
+    env["PYTHONPATH"] = "src"
+    result = subprocess.run(
+        [sys.executable, "scripts/update_sharefile_mirror.py", "--repo-root", str(settings.REPO_ROOT)],
+        cwd=settings.REPO_ROOT,
+        env=env,
+        text=True,
+        capture_output=True,
+        check=False,
+        timeout=900,
+    )
+    if result.returncode == 0:
+        messages.success(request, "SF folders updated.")
+    else:
+        detail = (result.stderr or result.stdout or "No output").strip().splitlines()[-1]
+        messages.error(request, f"SF folders update failed: {detail}")
+    return redirect("pipeline_dashboard:folders")
 
 
 def vendors(request):

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Intro"
+  short_description: "Testifize repo orientation and ShareFile pipeline context"
+  default_prompt: "Use $intro to orient yourself to the Testifize ShareFile vendor pipeline, local Django app, credentials checklist, architecture boundaries, and safety rules before making changes."

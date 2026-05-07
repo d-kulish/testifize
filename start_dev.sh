@@ -15,6 +15,14 @@ fi
 echo "Applying Django migrations..."
 .venv/bin/python web/manage.py migrate
 
+if [[ "${SYNC_ON_START:-1}" != "0" ]]; then
+  echo
+  echo "Syncing ShareFile mirror..."
+  if ! PYTHONPATH=src .venv/bin/python scripts/update_sharefile_mirror.py; then
+    echo "ShareFile sync failed; starting the app with the latest local state." >&2
+  fi
+fi
+
 HOST="${HOST:-127.0.0.1}"
 PORT="${PORT:-8000}"
 START_PORT="$PORT"
