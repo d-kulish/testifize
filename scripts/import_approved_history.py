@@ -5,6 +5,11 @@ import shutil
 from pathlib import Path
 
 
+CANONICAL_VENDOR_NAMES = {
+    "Taiv": "TAIV",
+}
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="Import approved historical vendor CSVs into data/processed.")
     parser.add_argument("--repo-root", type=Path, default=Path.cwd())
@@ -20,8 +25,8 @@ def main() -> int:
 
     imported = 0
     for source_path in sorted(source_root.glob("*.csv")):
-        vendor = source_path.stem
-        destination = processed_root / vendor / source_path.name
+        vendor = CANONICAL_VENDOR_NAMES.get(source_path.stem, source_path.stem)
+        destination = processed_root / vendor / f"{vendor}.csv"
         destination.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(source_path, destination)
         imported += 1

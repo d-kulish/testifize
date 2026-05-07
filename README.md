@@ -495,6 +495,14 @@ First v1 workflow:
 4. Review `Asset` rows and assign vendor/status/parser fields.
 5. Use `Asset` admin actions to mark files queued, ignored, superseded, or download selected files.
 
+The SF folders review modal can restrict the vendor dropdown by source folder. The current rule for `home/josh` allows only:
+
+```text
+PodcastOne, Octopus, Loop, TVM, TAIV
+```
+
+The same rule is enforced server-side when moving a file from SF folders into Processing, so bypassing the UI cannot assign a disallowed vendor.
+
 Downloaded files land under:
 
 ```text
@@ -519,6 +527,8 @@ git diff --check
 ```
 
 ## Parser Policy
+
+Detailed vendor migration steps live in `docs/parser_migration.md`.
 
 Vendor parsers should not know about ShareFile. They should only handle local files and target-schema rows.
 
@@ -561,7 +571,9 @@ Approval-review parser outputs are versioned under:
 data/output/<Vendor>/<Vendor>_<Month>_<Year>_vN.csv
 ```
 
-The first migrated parser is `Loop`. On `/process/`, `Parse` validates the input schema and shows overlapping period-day charts for the parsed candidate against the latest approved vendor history. It does not write the final CSV.
+The first migrated parsers are `Loop`, `TVM`, `TAIV`, and `PodcastOne`. TAIV combines the Prime and Retail tables on `Spend By Day` into one daily row per date, matching the approved TAIV history shape. PodcastOne combines the BASE daily sheet and WC daily sheet by `Day`. On `/process/`, `Parse` validates the input schema and shows overlapping period-day charts for the parsed candidate against the latest approved vendor history. It does not write the final CSV.
+
+The approved-history importer canonicalizes `_old/final/Taiv.csv` into `data/processed/TAIV/TAIV.csv` so the parser workflow can find TAIV history by the app vendor name.
 
 The modal `Approval` action writes the versioned parsed CSV under `data/output/<Vendor>/`, uploads that same versioned CSV to ShareFile `Approval/<Current_Month>/<Vendor>/`, stores the ShareFile item ID, creates a `ParsedOutput` record, and moves the source `Asset` into Review.
 
@@ -585,7 +597,7 @@ Approval/<Current_Month>/<Vendor>/<Vendor>_<Current_Month>_<Current_Year>_vN.csv
 
 1. Add the post-ShareFile approval step that promotes an externally approved CSV from `data/output/<Vendor>/` into `data/processed/<Vendor>/`.
 2. Decide how external approval should be signaled back to the app: manual button, ShareFile folder scan, or metadata/status file.
-3. Migrate the next vendor parser after Loop, starting with its `_old/final/<Vendor>.csv` benchmark and real inbox files.
+3. Migrate the next vendor parser after Loop, TVM, TAIV, and PodcastOne, starting with its `_old/final/<Vendor>.csv` benchmark and real inbox files.
 4. Define the shared target schema location and validation rules for final approved outputs.
 5. Add anomaly/comparison summaries beyond the current overlapping Spend, Impressions, and CPM charts.
 

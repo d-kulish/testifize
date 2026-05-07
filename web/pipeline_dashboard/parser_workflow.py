@@ -249,16 +249,45 @@ def validate_excel_schema(source_path: Path, schema: dict[str, Any]) -> list[str
     from openpyxl import load_workbook
 
     errors: list[str] = []
-    sheet_name = schema.get("sheet_name")
-    if not sheet_name:
-        return ["Input schema is missing sheet_name."]
-    header = schema.get("header") or {}
-    header_row = header.get("row")
-    if not header_row:
-        return ["Input schema is missing header.row."]
-
     workbook = load_workbook(source_path, read_only=True, data_only=True)
     try:
+        worksheets = schema.get("worksheets") or []
+        if worksheets:
+            selected_columns = schema.get("selected_columns") or {}
+            for worksheet in worksheets:
+                sheet_name = worksheet.get("name")
+                if not sheet_name:
+                    errors.append("Input schema worksheet is missing name.")
+                    continue
+                if sheet_name not in workbook.sheetnames:
+                    errors.append(f"Sheet {sheet_name!r} was not found.")
+                    continue
+                header_row = worksheet.get("header_row")
+                if not header_row:
+                    errors.append(f"Input schema worksheet {sheet_name!r} is missing header_row.")
+                    continue
+                sheet = workbook[sheet_name]
+                for field, letter in (worksheet.get("columns") or {}).items():
+                    expected = selected_columns.get(field)
+                    if not expected:
+                        continue
+                    column_index = column_letter_to_index(letter)
+                    actual = sheet.cell(header_row, column_index).value
+                    if actual != expected:
+                        errors.append(
+                            f"Header mismatch in {sheet_name!r} at {letter}{header_row}: "
+                            f"expected {expected!r}, found {actual!r}."
+                        )
+            return errors
+
+        sheet_name = schema.get("sheet_name")
+        if not sheet_name:
+            return ["Input schema is missing sheet_name."]
+        header = schema.get("header") or {}
+        header_row = header.get("row")
+        if not header_row:
+            return ["Input schema is missing header.row."]
+
         if sheet_name not in workbook.sheetnames:
             return [f"Sheet {sheet_name!r} was not found."]
         sheet = workbook[sheet_name]

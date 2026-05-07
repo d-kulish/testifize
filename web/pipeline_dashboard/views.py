@@ -38,6 +38,10 @@ REVIEW_STATUSES = [
     AssetStatus.IGNORED,
 ]
 
+FOLDER_VENDOR_RULES = {
+    "josh": ("PodcastOne", "Octopus", "Loop", "TVM", "TAIV"),
+}
+
 
 def admin_urls_context() -> dict[str, str]:
     return {
@@ -173,11 +177,13 @@ def process(request):
 
 def folders(request):
     mirror = load_sharefile_mirror()
+    vendors = list(Vendor.objects.filter(is_active=True).order_by("name"))
+    _apply_folder_vendor_rules(mirror.folders, vendors)
     context = {
         "title": "SF folders",
         "folders": mirror.folders,
         "mirror_summary": mirror.summary,
-        "vendors": Vendor.objects.filter(is_active=True).order_by("name"),
+        "vendors": vendors,
         "admin_urls": admin_urls_context(),
         "active_nav": "folders",
     }
@@ -239,6 +245,8 @@ def process_review_file(request):
         vendor = Vendor.objects.get(pk=vendor_id, is_active=True)
     except (Vendor.DoesNotExist, ValueError):
         return JsonResponse({"error": "Choose an active vendor before processing."}, status=400)
+    if not _vendor_allowed_for_file(vendor, file_row):
+        return JsonResponse({"error": f"{vendor.name} is not available for this folder."}, status=400)
 
     source_folder = _source_folder_for_file(file_row)
     existing = Asset.objects.filter(remote_item_id=file_row["remote_item_id"]).first()
@@ -477,6 +485,36 @@ def vendors(request):
         "active_nav": "vendors",
     }
     return render(request, "pipeline_dashboard/vendors.html", context)
+
+
+def _apply_folder_vendor_rules(folders: list[dict], vendors: list[Vendor]) -> None:
+    vendors_by_name = {vendor.name.casefold(): vendor for vendor in vendors}
+    for folder in folders:
+        names = _allowed_vendor_names_for_folder(folder.get("path", ""))
+        allowed_vendors = [vendors_by_name[name.casefold()] for name in names if name.casefold() in vendors_by_name]
+        folder["allowed_vendor_ids"] = ",".join(str(vendor.id) for vendor in allowed_vendors)
+        folder["allowed_vendor_names"] = ", ".join(vendor.name for vendor in allowed_vendors)
+
+
+def _vendor_allowed_for_file(vendor: Vendor, file_row: dict) -> bool:
+    names = _allowed_vendor_names_for_folder(file_row.get("source_folder_path", ""))
+    if not names:
+        return True
+    return vendor.name.casefold() in {name.casefold() for name in names}
+
+
+def _allowed_vendor_names_for_folder(folder_path: str) -> tuple[str, ...]:
+    key = _folder_rule_key(folder_path)
+    return FOLDER_VENDOR_RULES.get(key, ())
+
+
+def _folder_rule_key(folder_path: str) -> str:
+    normalized = (folder_path or "").strip().strip("/")
+    for prefix in ("home/", "allshared/"):
+        if normalized.startswith(prefix):
+            normalized = normalized.removeprefix(prefix)
+            break
+    return normalized.casefold()
 
 
 def _mirror_file_by_local_path(local_path: str) -> dict | None:

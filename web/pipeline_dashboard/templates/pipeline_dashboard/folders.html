@@ -90,6 +90,8 @@
                 data-page-size="10"
                 data-preview-url="{% url 'pipeline_dashboard:review_file_preview' %}"
                 data-process-url="{% url 'pipeline_dashboard:process_review_file' %}"
+                data-allowed-vendors="{{ folder.allowed_vendor_ids }}"
+                data-allowed-vendor-names="{{ folder.allowed_vendor_names }}"
               >
                 <table>
                   <thead>
@@ -222,6 +224,23 @@
     const csrfToken = document.querySelector("[name=csrfmiddlewaretoken]")?.value || "";
     let activeReview = null;
 
+    function applyVendorFilter(container) {
+      const allowed = (container.dataset.allowedVendors || "").split(",").filter(Boolean);
+      const allowedNames = container.dataset.allowedVendorNames || "all active vendors";
+      reviewVendor.querySelectorAll("option").forEach((option) => {
+        if (!option.value) {
+          option.hidden = false;
+          option.disabled = false;
+          option.textContent = allowed.length ? `Choose vendor (${allowedNames})` : "Choose vendor";
+          return;
+        }
+        const available = !allowed.length || allowed.includes(option.value);
+        option.hidden = !available;
+        option.disabled = !available;
+      });
+      reviewVendor.value = "";
+    }
+
     function showReviewMessage(message, keepTabs = false) {
       if (!keepTabs) {
         reviewTabs.replaceChildren();
@@ -345,7 +364,7 @@
           processUrl: container.dataset.processUrl,
         };
         processButton.disabled = false;
-        reviewVendor.value = "";
+        applyVendorFilter(container);
         reviewModal.hidden = false;
         reviewTitle.textContent = "Loading...";
         reviewDetails.replaceChildren();

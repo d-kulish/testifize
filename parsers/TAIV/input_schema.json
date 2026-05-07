@@ -1,0 +1,82 @@
+{
+  "source_file": "data/inbox/home/josh/TAIV_April 2026 FINAL REPORT.xlsx",
+  "sheet_name": "Spend By Day",
+  "file_type": "xlsx",
+  "header": {
+    "row": 2,
+    "columns": [
+      {
+        "letter": "A",
+        "name": "date"
+      },
+      {
+        "letter": "B",
+        "name": "impressions"
+      },
+      {
+        "letter": "C",
+        "name": "spend"
+      },
+      {
+        "letter": "E",
+        "name": "date"
+      },
+      {
+        "letter": "F",
+        "name": "impressions"
+      },
+      {
+        "letter": "G",
+        "name": "spend"
+      }
+    ]
+  },
+  "tables": [
+    {
+      "name": "Prime",
+      "label_cell": "A1",
+      "header_row": 2,
+      "first_data_row": 3,
+      "columns": {
+        "date": "A",
+        "impressions": "B",
+        "spend": "C"
+      }
+    },
+    {
+      "name": "Retail",
+      "label_cell": "E1",
+      "header_row": 2,
+      "first_data_row": 3,
+      "columns": {
+        "date": "E",
+        "impressions": "F",
+        "spend": "G"
+      }
+    }
+  ],
+  "selected_columns": {
+    "date": "date",
+    "impressions": "impressions",
+    "spend": "spend"
+  },
+  "skip_rules": [
+    "Use the Prime table in columns A:C and the Retail table in columns E:G.",
+    "Aggregate Prime and Retail into one daily row because the approved TAIV history is one row per date.",
+    "Skip the total row where date is blank and impressions/spend are populated.",
+    "Skip trailing blank rows."
+  ],
+  "comparison_window": {
+    "start_date": "2026-04-01",
+    "end_date": "2026-04-30"
+  },
+  "output_defaults": {
+    "Vendor": "TAIV",
+    "Brand": "Unknown",
+    "Channel": "Unknown",
+    "Platform": "Unknown",
+    "Data_Grain": "daily",
+    "Processed_At": "generated",
+    "Source_File": "TAIV_April 2026 FINAL REPORT.xlsx"
+  }
+}

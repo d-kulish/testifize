@@ -1,0 +1,81 @@
+{
+  "source_file": "data/inbox/home/josh/PODCASTONE_April 2026 FINAL REPORT.xlsx",
+  "sheet_name": "Week 1-5 BASE DLY 4.1-4.30",
+  "file_type": "xlsx",
+  "header": {
+    "row": 5,
+    "columns": [
+      {
+        "letter": "A",
+        "name": "Order ID"
+      },
+      {
+        "letter": "B",
+        "name": "Order"
+      },
+      {
+        "letter": "C",
+        "name": "Campaign"
+      },
+      {
+        "letter": "D",
+        "name": "Day"
+      },
+      {
+        "letter": "E",
+        "name": "Audio Impressions"
+      },
+      {
+        "letter": "F",
+        "name": "$ By Day"
+      }
+    ]
+  },
+  "worksheets": [
+    {
+      "name": "Week 1-5 BASE DLY 4.1-4.30",
+      "header_row": 5,
+      "first_data_row": 6,
+      "columns": {
+        "date": "D",
+        "impressions": "E",
+        "spend": "F"
+      }
+    },
+    {
+      "name": "WC Week 1-5 DLY 4.1-4.30",
+      "header_row": 5,
+      "first_data_row": 6,
+      "columns": {
+        "date": "D",
+        "impressions": "E",
+        "spend": "F"
+      }
+    }
+  ],
+  "selected_columns": {
+    "date": "Day",
+    "impressions": "Audio Impressions",
+    "spend": "$ By Day"
+  },
+  "skip_rules": [
+    "Use the BASE daily sheet and WC daily sheet.",
+    "Group rows by Day across both sheets.",
+    "Sum Audio Impressions into Impressions.",
+    "Sum $ By Day into Spend.",
+    "Skip the TOTAL rows where Day is blank."
+  ],
+  "comparison_window": {
+    "start_date": "2026-04-01",
+    "end_date": "2026-04-30"
+  },
+  "output_defaults": {
+    "Vendor": "PodcastOne",
+    "Brand": "BetOnline",
+    "Channel": "Audio",
+    "Platform": "PodcastOne",
+    "Data_Grain": "daily",
+    "Processed_At": "generated",
+    "Source_File": "PODCASTONE_April 2026 FINAL REPORT.xlsx"
+  }
+}
