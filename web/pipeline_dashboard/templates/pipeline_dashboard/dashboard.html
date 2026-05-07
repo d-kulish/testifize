@@ -1,0 +1,197 @@
+{% extends "pipeline_dashboard/base.html" %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+  <section class="topbar">
+    <div>
+      <h1>Pipeline Dashboard</h1>
+      <p class="subtitle">Review ShareFile assets, assign vendors, and move files through the processing flow.</p>
+    </div>
+    <div class="actions">
+      <a class="button" href="{{ admin_urls.folder_add }}">Add folder</a>
+      <a class="button" href="{{ admin_urls.vendor_add }}">Add vendor</a>
+      <a class="button primary" href="{{ admin_urls.folders }}">Scan folders</a>
+    </div>
+  </section>
+
+  <section class="metrics" aria-label="Pipeline totals">
+    <div class="metric">
+      <div class="metric-label">Assets</div>
+      <div class="metric-value">{{ totals.assets }}</div>
+    </div>
+    <div class="metric">
+      <div class="metric-label">Needs Review</div>
+      <div class="metric-value">{{ totals.needs_review }}</div>
+    </div>
+    <div class="metric">
+      <div class="metric-label">Downloaded</div>
+      <div class="metric-value">{{ totals.downloaded }}</div>
+    </div>
+    <div class="metric">
+      <div class="metric-label">Uploaded</div>
+      <div class="metric-value">{{ totals.uploaded }}</div>
+    </div>
+    <div class="metric">
+      <div class="metric-label">Vendors</div>
+      <div class="metric-value">{{ totals.vendors }}</div>
+    </div>
+    <div class="metric">
+      <div class="metric-label">Folders</div>
+      <div class="metric-value">{{ totals.folders }}</div>
+    </div>
+  </section>
+
+  <section class="grid">
+    <div class="stack">
+      <section class="panel">
+        <div class="panel-header">
+          <h2 class="panel-title">Review Queue</h2>
+          <a href="{% url 'pipeline_dashboard:assets' %}?status=new">Open assets</a>
+        </div>
+        <div class="panel-body">
+          {% if review_assets %}
+            <table>
+              <thead>
+                <tr>
+                  <th>Status</th>
+                  <th>File</th>
+                  <th>Vendor</th>
+                  <th>Modified</th>
+                  <th>Folder</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for asset in review_assets %}
+                  <tr>
+                    <td><span class="badge {{ asset.status }}">{{ asset.get_status_display }}</span></td>
+                    <td class="file-name">
+                      <a href="{% url 'admin:pipeline_dashboard_asset_change' asset.remote_item_id %}">{{ asset.name }}</a>
+                    </td>
+                    <td>{{ asset.vendor|default:"Unassigned" }}</td>
+                    <td>{{ asset.remote_modified_at|date:"Y-m-d H:i"|default:"-" }}</td>
+                    <td>{{ asset.source_folder|default:asset.source_folder_label|default:"-" }}</td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          {% else %}
+            <div class="empty">No assets need review yet. Add a ShareFile folder, then run Scan folders.</div>
+          {% endif %}
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-header">
+          <h2 class="panel-title">Recent Assets</h2>
+          <a href="{% url 'pipeline_dashboard:assets' %}">View all</a>
+        </div>
+        <div class="panel-body">
+          {% if recent_assets %}
+            <table>
+              <thead>
+                <tr>
+                  <th>Status</th>
+                  <th>File</th>
+                  <th>Vendor</th>
+                  <th>Seen</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for asset in recent_assets %}
+                  <tr>
+                    <td><span class="badge {{ asset.status }}">{{ asset.get_status_display }}</span></td>
+                    <td class="file-name">
+                      <a href="{% url 'admin:pipeline_dashboard_asset_change' asset.remote_item_id %}">{{ asset.name }}</a>
+                    </td>
+                    <td>{{ asset.vendor|default:"Unassigned" }}</td>
+                    <td>{{ asset.last_seen_at|date:"Y-m-d H:i" }}</td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          {% else %}
+            <div class="empty">No assets have been catalogued yet.</div>
+          {% endif %}
+        </div>
+      </section>
+    </div>
+
+    <div class="stack">
+      <section class="panel">
+        <div class="panel-header">
+          <h2 class="panel-title">Status</h2>
+        </div>
+        <div class="status-list">
+          {% for row in status_rows %}
+            <a class="status-row" href="{{ row.url }}">
+              <span>{{ row.label }}</span>
+              <strong>{{ row.count }}</strong>
+            </a>
+          {% endfor %}
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-header">
+          <h2 class="panel-title">Folders</h2>
+          <a href="{{ admin_urls.folder_add }}">Add</a>
+        </div>
+        <div class="panel-body">
+          {% if folders %}
+            <table>
+              <thead>
+                <tr>
+                  <th>Folder</th>
+                  <th>Vendor</th>
+                  <th>Role</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for folder in folders %}
+                  <tr>
+                    <td class="file-name">
+                      <a href="{% url 'admin:pipeline_dashboard_sharefilefolder_change' folder.id %}">{{ folder.label }}</a>
+                    </td>
+                    <td>{{ folder.vendor|default:"-" }}</td>
+                    <td>{{ folder.get_role_display }}</td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          {% else %}
+            <div class="empty">No ShareFile folders configured yet.</div>
+          {% endif %}
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-header">
+          <h2 class="panel-title">Assets By Vendor</h2>
+        </div>
+        <div class="panel-body">
+          {% if vendor_counts %}
+            <table>
+              <thead>
+                <tr>
+                  <th>Vendor</th>
+                  <th>Assets</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for row in vendor_counts %}
+                  <tr>
+                    <td>{{ row.vendor__name|default:"Unassigned" }}</td>
+                    <td>{{ row.count }}</td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          {% else %}
+            <div class="empty">Vendor counts will appear after scanning files.</div>
+          {% endif %}
+        </div>
+      </section>
+    </div>
+  </section>
+{% endblock %}

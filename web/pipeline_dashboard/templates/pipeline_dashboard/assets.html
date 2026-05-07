@@ -1,0 +1,63 @@
+{% extends "pipeline_dashboard/base.html" %}
+
+{% block title %}Assets{% endblock %}
+
+{% block content %}
+  <section class="topbar">
+    <div>
+      <h1>Assets</h1>
+      <p class="subtitle">Catalogue of ShareFile files discovered by scans.</p>
+    </div>
+    <div class="actions">
+      <a class="button" href="{{ admin_urls.assets }}">Admin actions</a>
+    </div>
+  </section>
+
+  <nav class="filterbar" aria-label="Asset status filters">
+    <a class="{% if not active_status %}active{% endif %}" href="{% url 'pipeline_dashboard:assets' %}">All</a>
+    {% for row in status_rows %}
+      <a class="{% if row.active %}active{% endif %}" href="{{ row.url }}">{{ row.label }} {{ row.count }}</a>
+    {% endfor %}
+  </nav>
+
+  <section class="panel">
+    <div class="panel-header">
+      <h2 class="panel-title">Asset List</h2>
+      <span class="muted">Showing latest 200</span>
+    </div>
+    <div class="panel-body">
+      {% if assets %}
+        <table>
+          <thead>
+            <tr>
+              <th>Status</th>
+              <th>File</th>
+              <th>Vendor</th>
+              <th>Folder</th>
+              <th>Creator</th>
+              <th>Modified</th>
+              <th>Local Path</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for asset in assets %}
+              <tr>
+                <td><span class="badge {{ asset.status }}">{{ asset.get_status_display }}</span></td>
+                <td class="file-name">{{ asset.name }}</td>
+                <td>{{ asset.vendor|default:"Unassigned" }}</td>
+                <td>{{ asset.source_folder|default:asset.source_folder_label|default:"-" }}</td>
+                <td>{{ asset.created_by_display|default:"-" }}</td>
+                <td>{{ asset.remote_modified_at|date:"Y-m-d H:i"|default:"-" }}</td>
+                <td class="file-name">{{ asset.local_path|default:"-" }}</td>
+                <td><a href="{% url 'admin:pipeline_dashboard_asset_change' asset.remote_item_id %}">Edit</a></td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      {% else %}
+        <div class="empty">No assets match this view yet.</div>
+      {% endif %}
+    </div>
+  </section>
+{% endblock %}

@@ -263,6 +263,11 @@ testifize/
         csv.py
         paths.py
 
+  web/
+    manage.py
+    testifize_web/
+    pipeline_dashboard/
+
   data/
     inbox/
     processed/
@@ -308,11 +313,11 @@ Uploads normalized CSVs, validation reports, or pipeline logs back to a configur
 
 `state.py`
 
-Tracks what has already been processed. The state should include remote item ID, file name, modified timestamp, content hash if available, local path, parser version, output path, and upload result.
+Provides shared filesystem/path helpers for pipeline state. The canonical catalogue is now the Django database, not a separate hand-rolled state file.
 
 `assets/catalog.py`
 
-Stores the local asset catalogue in SQLite. This is where the project tracks whether a ShareFile file is `new`, `downloaded`, `processing`, `processed`, `uploaded`, `superseded`, `ignored`, or `failed`.
+Historical plain-Python catalogue work. Keep it as source material for CLI compatibility, but do not treat `data/state/asset_catalog.sqlite` as the production source of truth.
 
 ## Proposed Pipeline Flow
 
@@ -369,14 +374,14 @@ Recommended local layout:
 data/inbox/<vendor>/<sharefile_item_id>/<original_filename>
 data/output/<vendor>/<run_id>/<normalized_csv>
 data/processed/<vendor>/<run_id>/<reports>
-data/state/pipeline_state.sqlite
+data/state/testifize_web.sqlite3
 ```
 
 The `data/` directory should be ignored by git unless a small fixture is intentionally committed for tests.
 
 ## Asset Catalogue
 
-The asset catalogue is the answer to the overlap problem: there may be many remote files that look similar, cover the same period, or were uploaded more than once. The pipeline should not silently choose or skip files based only on a filename.
+The Django asset catalogue is the answer to the overlap problem: there may be many remote files that look similar, cover the same period, or were uploaded more than once. The pipeline should not silently choose or skip files based only on a filename.
 
 Catalogue every matching ShareFile file first, then make processing decisions from local state.
 
@@ -387,7 +392,7 @@ remote_item_id
 vendor
 status
 name
-source_folder_id
+sharefile_folder_id
 source_folder_label
 remote_path
 file_size
@@ -441,6 +446,77 @@ PYTHONPATH=src python -m testifize_pipeline.cli upload-test --folder-id foefd961
 
 Use [config/sharefile_folders.example.json](config/sharefile_folders.example.json) as the template for the local, untracked `config/sharefile_folders.json`.
 
+## Django Control Panel
+
+The project now includes a local Django control panel under `web/`.
+Django owns the operational catalogue going forward; the earlier `data/state/asset_catalog.sqlite` file is historical scratch state.
+
+Install dependencies and create the local Django database:
+
+```bash
+source .venv/bin/activate
+python -m pip install -r requirements.txt
+python web/manage.py migrate
+python web/manage.py createsuperuser
+```
+
+Start the local app:
+
+```bash
+./start_dev.sh
+```
+
+The app opens at:
+
+```text
+http://127.0.0.1:8000/
+```
+
+If port `8000` is busy, `start_dev.sh` automatically moves to the next available port and prints the URL.
+
+App pages:
+
+```text
+/          dashboard
+/assets/   asset catalogue
+/folders/  ShareFile folder catalogue
+/vendors/  vendor catalogue
+/admin/    Django Admin back office
+```
+
+The app pages are read-focused operational views. Admin remains the place for edits and synchronous actions such as scanning folders and downloading selected files.
+
+First v1 workflow:
+
+1. Create `Vendor` rows for each vendor.
+2. Create `ShareFileFolder` rows with the ShareFile folder ID, role, file patterns, and optional vendor.
+3. Use the `Scan selected folders` admin action on `ShareFileFolder`.
+4. Review `Asset` rows and assign vendor/status/parser fields.
+5. Use `Asset` admin actions to mark files queued, ignored, superseded, or download selected files.
+
+Downloaded files land under:
+
+```text
+data/inbox/<vendor-or-unassigned>/<sharefile_item_id>/<original_filename>
+```
+
+The Django database lives at:
+
+```text
+data/state/testifize_web.sqlite3
+```
+
+Local admin user setup is machine-specific. Do not commit local users or the SQLite database.
+
+Development checks:
+
+```bash
+.venv/bin/python web/manage.py check
+.venv/bin/python web/manage.py test pipeline_dashboard
+PYTHONPATH=src .venv/bin/python -m compileall -q src web
+git diff --check
+```
+
 ## Parser Policy
 
 Vendor parsers should not know about ShareFile. They should only handle local files and target-schema rows.
@@ -461,12 +537,12 @@ Keeping ShareFile outside the parser layer makes it easier to test vendors indep
 
 ## Immediate Next Steps
 
-1. Fill in local `config/sharefile_folders.json` with the real vendor folder IDs.
-2. Run `scan` to populate `data/state/asset_catalog.sqlite`.
-3. Review overlapping files in the catalogue and define the first rules for `superseded` vs `queued`.
-4. Add download commands for catalogued `new` or `queued` assets.
-5. Move the current target schema into `schemas/target_schema.json`.
-6. Decide which existing vendor parser should be migrated first.
+1. Add real `Vendor` and `ShareFileFolder` rows in Django Admin.
+2. Scan folders from Admin and review the resulting `Asset` catalogue in `/assets/`.
+3. Define the first rules for `superseded` vs `queued`.
+4. Move the current target schema into `schemas/target_schema.json`.
+5. Decide which existing vendor parser should be migrated first.
+6. Design the parser-result and upload-review models before adding upload actions to the app UI.
 
 ## Historical Material
 

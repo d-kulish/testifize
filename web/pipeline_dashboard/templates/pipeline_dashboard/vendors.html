@@ -1,0 +1,54 @@
+{% extends "pipeline_dashboard/base.html" %}
+
+{% block title %}Vendors{% endblock %}
+
+{% block content %}
+  <section class="topbar">
+    <div>
+      <h1>Vendors</h1>
+      <p class="subtitle">Vendor definitions and parser keys used to classify incoming files.</p>
+    </div>
+    <div class="actions">
+      <a class="button primary" href="{{ admin_urls.vendor_add }}">Add vendor</a>
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="panel-header">
+      <h2 class="panel-title">Vendor List</h2>
+      <span class="muted">{{ vendors|length }} total</span>
+    </div>
+    <div class="panel-body">
+      {% if vendors %}
+        <table>
+          <thead>
+            <tr>
+              <th>Vendor</th>
+              <th>Parser Key</th>
+              <th>Active</th>
+              <th>Folders</th>
+              <th>Assets</th>
+              <th>Notes</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for vendor in vendors %}
+              <tr>
+                <td>{{ vendor.name }}</td>
+                <td>{{ vendor.parser_key|default:"-" }}</td>
+                <td>{{ vendor.is_active|yesno:"Yes,No" }}</td>
+                <td>{{ vendor.folder_count }}</td>
+                <td>{{ vendor.asset_count }}</td>
+                <td class="file-name">{{ vendor.notes|default:"-" }}</td>
+                <td><a href="{% url 'admin:pipeline_dashboard_vendor_change' vendor.id %}">Edit</a></td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      {% else %}
+        <div class="empty">No vendors configured yet.</div>
+      {% endif %}
+    </div>
+  </section>
+{% endblock %}

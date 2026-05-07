@@ -1,0 +1,55 @@
+{% extends "pipeline_dashboard/base.html" %}
+
+{% block title %}ShareFile Folders{% endblock %}
+
+{% block content %}
+  <section class="topbar">
+    <div>
+      <h1>ShareFile Folders</h1>
+      <p class="subtitle">Input and output folders that the pipeline can scan or write to.</p>
+    </div>
+    <div class="actions">
+      <a class="button" href="{{ admin_urls.folder_add }}">Add folder</a>
+      <a class="button primary" href="{{ admin_urls.folders }}">Scan selected</a>
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="panel-header">
+      <h2 class="panel-title">Configured Folders</h2>
+      <span class="muted">{{ folders|length }} total</span>
+    </div>
+    <div class="panel-body">
+      {% if folders %}
+        <table>
+          <thead>
+            <tr>
+              <th>Folder</th>
+              <th>Role</th>
+              <th>Vendor</th>
+              <th>Patterns</th>
+              <th>Active</th>
+              <th>Assets</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for folder in folders %}
+              <tr>
+                <td class="file-name">{{ folder.label }}</td>
+                <td>{{ folder.get_role_display }}</td>
+                <td>{{ folder.vendor|default:"-" }}</td>
+                <td>{{ folder.file_patterns|default:"-" }}</td>
+                <td>{{ folder.is_active|yesno:"Yes,No" }}</td>
+                <td>{{ folder.asset_count }}</td>
+                <td><a href="{% url 'admin:pipeline_dashboard_sharefilefolder_change' folder.id %}">Edit</a></td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      {% else %}
+        <div class="empty">No ShareFile folders configured yet.</div>
+      {% endif %}
+    </div>
+  </section>
+{% endblock %}

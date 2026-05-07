@@ -10,13 +10,32 @@ It answers operational questions that ShareFile alone does not answer cleanly fo
 - Which file is downloaded, processing, processed, uploaded, superseded, ignored, or failed?
 - Which output file was produced from which input file?
 
-The catalogue is a local SQLite database:
+The canonical catalogue is now the Django database:
 
 ```text
-data/state/asset_catalog.sqlite
+data/state/testifize_web.sqlite3
 ```
 
-It is intentionally ignored by git.
+It is intentionally ignored by git. The older `data/state/asset_catalog.sqlite` file can remain locally as historical scratch state, but new operational work should use the Django models.
+
+The Django app owns these catalogue models:
+
+```text
+Vendor
+ShareFileFolder
+Asset
+AssetEvent
+```
+
+The local app pages are:
+
+```text
+/          dashboard
+/assets/   asset catalogue
+/folders/  ShareFile folder catalogue
+/vendors/  vendor catalogue
+/admin/    Django Admin back office for edits and actions
+```
 
 ## Statuses
 
@@ -52,7 +71,7 @@ remote_item_id
 vendor
 status
 name
-source_folder_id
+sharefile_folder_id
 source_folder_label
 remote_path
 file_size
@@ -91,7 +110,9 @@ This keeps auditability: we can explain why a file was skipped instead of silent
 
 ## Commands
 
-After implementation, scan configured folders:
+For the current Django workflow, configure folders in Admin and run the `Scan selected folders` action from the `ShareFileFolder` changelist.
+
+The older CLI commands are useful for low-level checks and compatibility work:
 
 ```bash
 PYTHONPATH=src python -m testifize_pipeline.cli scan --folders config/sharefile_folders.json

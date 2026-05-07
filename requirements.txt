@@ -3,3 +3,4 @@ ipykernel
 pandas
 openpyxl
 matplotlib
+Django>=5.2.8,<5.3
