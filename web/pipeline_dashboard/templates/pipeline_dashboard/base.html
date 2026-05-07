@@ -18,6 +18,7 @@
       --accent-strong: #1e40af;
       --danger: #b42318;
       --warn: #a15c07;
+      --active: #b54708;
       --ok: #13795b;
       --shadow: 0 1px 2px rgba(16, 24, 40, 0.06);
     }
@@ -129,6 +130,13 @@
       margin: 0;
     }
 
+    .inline-form {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin: 0;
+    }
+
     .button {
       display: inline-flex;
       align-items: center;
@@ -149,6 +157,12 @@
       border-color: var(--accent);
       background: var(--accent);
       color: white;
+    }
+
+    .button.small {
+      min-height: 30px;
+      padding: 5px 10px;
+      font-size: 12px;
     }
 
     .button:hover {
@@ -306,15 +320,19 @@
       color: var(--danger);
     }
 
+    .status-orange {
+      color: var(--active);
+    }
+
     .mirror-table {
       display: grid;
-      min-width: 860px;
+      min-width: 1060px;
     }
 
     .mirror-head,
     .mirror-summary {
       display: grid;
-      grid-template-columns: minmax(280px, 1fr) 120px 120px 120px 130px;
+      grid-template-columns: minmax(280px, 1fr) 120px 120px 120px 120px 130px;
       align-items: center;
       gap: 12px;
     }
@@ -360,11 +378,11 @@
     }
 
     .mirror-summary {
-      grid-template-columns: 16px minmax(264px, 1fr) 120px 120px 120px 130px;
+      grid-template-columns: 16px minmax(264px, 1fr) 120px 120px 120px 120px 130px;
     }
 
     .mirror-head {
-      grid-template-columns: 16px minmax(264px, 1fr) 120px 120px 120px 130px;
+      grid-template-columns: 16px minmax(264px, 1fr) 120px 120px 120px 120px 130px;
     }
 
     .mirror-head::before {
@@ -395,6 +413,10 @@
       background: #eff6ff;
     }
 
+    .mirror-file-row.active {
+      background: #fff7ed;
+    }
+
     .mirror-file-row.deleted_remote {
       background: #fef3f2;
     }
@@ -420,6 +442,11 @@
     .mirror-status.processed {
       background: #dbeafe;
       color: #175cd3;
+    }
+
+    .mirror-status.active {
+      background: #fedf89;
+      color: #93370d;
     }
 
     .mirror-status.deleted_remote {
@@ -452,6 +479,179 @@
     .button:disabled {
       cursor: not-allowed;
       opacity: 0.48;
+    }
+
+    .review-modal[hidden] {
+      display: none;
+    }
+
+    .review-modal {
+      position: fixed;
+      inset: 0;
+      z-index: 30;
+      display: grid;
+      place-items: center;
+      padding: 24px;
+    }
+
+    .review-backdrop {
+      position: absolute;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.42);
+    }
+
+    .review-dialog {
+      position: relative;
+      z-index: 1;
+      display: grid;
+      grid-template-rows: auto minmax(0, 1fr) auto;
+      width: min(1180px, 100%);
+      max-height: min(820px, calc(100vh - 48px));
+      overflow: hidden;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      box-shadow: 0 24px 64px rgba(15, 23, 42, 0.24);
+    }
+
+    .review-header,
+    .review-footer {
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .review-header {
+      display: grid;
+      gap: 12px;
+    }
+
+    .review-titlebar,
+    .review-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .review-title {
+      margin: 0;
+      max-width: 880px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-size: 18px;
+      font-weight: 760;
+    }
+
+    .review-details {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 8px 14px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .review-details strong {
+      display: block;
+      margin-bottom: 2px;
+      color: var(--text);
+      font-size: 13px;
+      font-weight: 700;
+      overflow-wrap: anywhere;
+    }
+
+    .review-body {
+      min-height: 0;
+      overflow: hidden;
+      background: #fbfcfe;
+    }
+
+    .review-sheet-tabs {
+      display: flex;
+      gap: 6px;
+      overflow-x: auto;
+      padding: 10px 12px;
+      border-bottom: 1px solid #edf0f4;
+      background: var(--panel);
+    }
+
+    .review-sheet-tabs button {
+      min-height: 30px;
+      padding: 5px 10px;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      background: var(--panel);
+      color: var(--text);
+      font-size: 12px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .review-sheet-tabs button.active {
+      border-color: var(--accent);
+      background: #eff6ff;
+      color: var(--accent-strong);
+    }
+
+    .review-preview {
+      max-height: 540px;
+      overflow: auto;
+    }
+
+    .review-preview table {
+      min-width: 760px;
+      font-size: 12px;
+    }
+
+    .review-preview td,
+    .review-preview th {
+      max-width: 240px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .review-message {
+      padding: 16px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .review-vendor {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 650;
+    }
+
+    .review-vendor select {
+      min-width: 220px;
+      min-height: 36px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: var(--panel);
+      color: var(--text);
+      padding: 6px 8px;
+      font: inherit;
+    }
+
+    .table-select {
+      min-width: 170px;
+      min-height: 32px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: var(--panel);
+      color: var(--text);
+      padding: 5px 8px;
+      font: inherit;
+      font-size: 13px;
+    }
+
+    .review-footer {
+      border-top: 1px solid var(--border);
+      border-bottom: 0;
     }
 
     .status-list {
@@ -559,6 +759,24 @@
       .metrics {
         grid-template-columns: repeat(2, minmax(0, 1fr));
       }
+
+      .review-modal {
+        padding: 12px;
+      }
+
+      .review-dialog {
+        max-height: calc(100vh - 24px);
+      }
+
+      .review-footer {
+        align-items: stretch;
+        flex-wrap: wrap;
+      }
+
+      .review-vendor,
+      .review-vendor select {
+        width: 100%;
+      }
     }
   </style>
 </head>
@@ -571,6 +789,7 @@
       <nav class="nav" aria-label="Primary">
         <a class="{% if active_nav == 'dashboard' %}active{% endif %}" href="{% url 'pipeline_dashboard:dashboard' %}">Dashboard</a>
         <a class="{% if active_nav == 'assets' %}active{% endif %}" href="{% url 'pipeline_dashboard:assets' %}">Assets</a>
+        <a class="{% if active_nav == 'process' %}active{% endif %}" href="{% url 'pipeline_dashboard:process' %}">Process</a>
         <a class="{% if active_nav == 'folders' %}active{% endif %}" href="{% url 'pipeline_dashboard:folders' %}">SF folders</a>
         <a class="{% if active_nav == 'vendors' %}active{% endif %}" href="{% url 'pipeline_dashboard:vendors' %}">Vendors</a>
         <a href="{% url 'admin:index' %}">Django admin</a>

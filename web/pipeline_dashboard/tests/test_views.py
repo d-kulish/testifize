@@ -117,6 +117,19 @@ class DashboardViewTests(TestCase):
                                 "creator": "Uploader Two",
                                 "raw_metadata": {"LastModifiedByUserID": "user-2"},
                             },
+                            {
+                                "remote_item_id": "fi-active",
+                                "name": "m-active.csv",
+                                "remote_path": "home/josh/m-active.csv",
+                                "local_path": "data/inbox/home/josh/m-active.csv",
+                                "source_folder_path": "home/josh",
+                                "source_folder_id": "fo-josh",
+                                "extension": ".csv",
+                                "size": 30,
+                                "modified_at": "2026-05-05T12:00:00Z",
+                                "creator": "Uploader Two",
+                                "raw_metadata": {"LastModifiedByUserID": "user-2"},
+                            },
                         ],
                     }
                 )
@@ -135,6 +148,12 @@ class DashboardViewTests(TestCase):
                             {
                                 "local_path": "data/inbox/home/josh/a-processed.csv",
                                 "name": "a-processed.csv",
+                                "kind": "csv",
+                                "status": "profiled",
+                            },
+                            {
+                                "local_path": "data/inbox/home/josh/m-active.csv",
+                                "name": "m-active.csv",
                                 "kind": "csv",
                                 "status": "profiled",
                             },
@@ -165,6 +184,12 @@ class DashboardViewTests(TestCase):
             (state_root / "sharefile_sync_state.json").write_text(
                 json.dumps({"status": "success", "finished_at": "2026-05-07T12:00:00+00:00"})
             )
+            Asset.objects.create(
+                remote_item_id="fi-active",
+                status=AssetStatus.PROCESSING,
+                name="m-active.csv",
+                local_path="data/inbox/home/josh/m-active.csv",
+            )
 
             with override_settings(REPO_ROOT=repo_root):
                 response = self.client.get(reverse("pipeline_dashboard:folders"))
@@ -174,6 +199,7 @@ class DashboardViewTests(TestCase):
         self.assertContains(response, "josh")
         self.assertContains(response, "z-new.xlsx")
         self.assertContains(response, "a-processed.csv")
+        self.assertContains(response, "m-active.csv")
         self.assertContains(response, "deleted.xlsx")
         self.assertContains(response, "Uploader")
         self.assertContains(response, "Mail")
@@ -187,9 +213,119 @@ class DashboardViewTests(TestCase):
         self.assertContains(response, "Next")
         self.assertLess(response.content.decode().index("z-new.xlsx"), response.content.decode().index("a-processed.csv"))
         self.assertContains(response, ">N<", html=False)
+        self.assertContains(response, ">A<", html=False)
         self.assertContains(response, ">P<", html=False)
         self.assertContains(response, ">D<", html=False)
+        self.assertContains(response, "Active")
+        self.assertContains(response, "Review")
         self.assertContains(response, "Deleted in SF")
+
+    def test_review_file_preview_returns_csv_rows(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            repo_root = Path(tmpdir)
+            local_path = self._write_review_fixture(repo_root)
+
+            with override_settings(REPO_ROOT=repo_root):
+                response = self.client.get(
+                    reverse("pipeline_dashboard:review_file_preview"),
+                    {"local_path": local_path},
+                )
+
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertEqual(payload["file"]["name"], "new-report.csv")
+        self.assertEqual(payload["file"]["kind"], "csv")
+        self.assertEqual(payload["file"]["sheets"][0]["headers"], ["Date", "Campaign", "Spend"])
+        self.assertEqual(payload["file"]["sheets"][0]["rows"][1], ["2026-05-07", "Spring", "10"])
+
+    def test_process_review_file_marks_asset_active_with_vendor(self):
+        vendor = Vendor.objects.create(name="AdTaxi", parser_key="adtaxi")
+        with tempfile.TemporaryDirectory() as tmpdir:
+            repo_root = Path(tmpdir)
+            local_path = self._write_review_fixture(repo_root)
+
+            with override_settings(REPO_ROOT=repo_root):
+                response = self.client.post(
+                    reverse("pipeline_dashboard:process_review_file"),
+                    {"local_path": local_path, "vendor_id": vendor.id},
+                )
+
+        self.assertEqual(response.status_code, 200)
+        asset = Asset.objects.get(remote_item_id="fi-review")
+        self.assertEqual(asset.status, AssetStatus.PROCESSING)
+        self.assertEqual(asset.vendor, vendor)
+        self.assertEqual(asset.local_path, local_path)
+        self.assertEqual(asset.parser_key, "adtaxi")
+        self.assertTrue(asset.events.filter(event_type="review_started").exists())
+
+    def test_process_page_renders_processing_assets(self):
+        loop, _ = Vendor.objects.get_or_create(name="Loop", defaults={"parser_key": "loop"})
+        podcastone, _ = Vendor.objects.get_or_create(name="PodcastOne", defaults={"parser_key": "podcastone"})
+        Asset.objects.create(
+            remote_item_id="fi-processing",
+            vendor=loop,
+            status=AssetStatus.PROCESSING,
+            name="Loop report.csv",
+            created_by_name="Uploader One",
+            file_size=25,
+        )
+        Asset.objects.create(
+            remote_item_id="fi-new-hidden",
+            vendor=podcastone,
+            status=AssetStatus.NEW,
+            name="PodcastOne new.csv",
+        )
+
+        response = self.client.get(reverse("pipeline_dashboard:process"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Processing Files")
+        self.assertContains(response, "Loop report.csv")
+        self.assertContains(response, "Loop")
+        self.assertContains(response, "PodcastOne")
+        self.assertContains(response, "Cancel")
+        self.assertNotContains(response, "PodcastOne new.csv")
+
+    def test_update_process_vendor_changes_asset_vendor(self):
+        loop, _ = Vendor.objects.get_or_create(name="Loop", defaults={"parser_key": "loop"})
+        podcastone, _ = Vendor.objects.get_or_create(name="PodcastOne", defaults={"parser_key": "podcastone"})
+        asset = Asset.objects.create(
+            remote_item_id="fi-processing",
+            vendor=loop,
+            parser_key="loop",
+            status=AssetStatus.PROCESSING,
+            name="Loop report.csv",
+        )
+
+        response = self.client.post(
+            reverse("pipeline_dashboard:update_process_vendor", args=[asset.remote_item_id]),
+            {"vendor_id": podcastone.id},
+        )
+
+        self.assertRedirects(response, reverse("pipeline_dashboard:process"))
+        asset.refresh_from_db()
+        self.assertEqual(asset.vendor, podcastone)
+        self.assertEqual(asset.parser_key, "podcastone")
+        self.assertTrue(asset.events.filter(event_type="vendor_changed").exists())
+
+    def test_cancel_process_file_clears_vendor_and_returns_to_new(self):
+        loop, _ = Vendor.objects.get_or_create(name="Loop", defaults={"parser_key": "loop"})
+        asset = Asset.objects.create(
+            remote_item_id="fi-processing",
+            vendor=loop,
+            parser_key="loop",
+            status=AssetStatus.PROCESSING,
+            name="Loop report.csv",
+        )
+
+        response = self.client.post(reverse("pipeline_dashboard:cancel_process_file", args=[asset.remote_item_id]))
+
+        self.assertRedirects(response, reverse("pipeline_dashboard:process"))
+        asset.refresh_from_db()
+        self.assertEqual(asset.status, AssetStatus.NEW)
+        self.assertIsNone(asset.vendor)
+        self.assertEqual(asset.parser_key, "")
+        self.assertTrue(asset.events.filter(event_type="processing_cancelled").exists())
 
     @patch("pipeline_dashboard.views.subprocess.run")
     def test_update_folders_runs_update_script(self, run_mock):
@@ -211,3 +347,56 @@ class DashboardViewTests(TestCase):
         self.assertContains(response, "Vendor List")
         self.assertContains(response, "AdTaxi")
         self.assertContains(response, "adtaxi")
+
+    def _write_review_fixture(self, repo_root: Path) -> str:
+        local_path = "data/inbox/home/josh/new-report.csv"
+        state_root = repo_root / "data" / "state"
+        file_path = repo_root / local_path
+        state_root.mkdir(parents=True)
+        file_path.parent.mkdir(parents=True)
+        file_path.write_text("Date,Campaign,Spend\n2026-05-07,Spring,10\n", encoding="utf-8")
+        (state_root / "sharefile_snapshot_latest.json").write_text(
+            json.dumps(
+                {
+                    "run_id": "snapshot-review",
+                    "created_at": "2026-05-07T10:00:00Z",
+                    "files": [
+                        {
+                            "remote_item_id": "fi-review",
+                            "name": "new-report.csv",
+                            "remote_path": "home/josh/new-report.csv",
+                            "local_path": local_path,
+                            "source_folder_path": "home/josh",
+                            "source_folder_id": "fo-josh",
+                            "extension": ".csv",
+                            "size": file_path.stat().st_size,
+                            "created_at": "2026-05-07T09:00:00Z",
+                            "modified_at": "2026-05-07T10:00:00Z",
+                            "creator": "Uploader One",
+                            "raw_metadata": {"LastModifiedByUserID": "user-1"},
+                        },
+                    ],
+                }
+            ),
+            encoding="utf-8",
+        )
+        (state_root / "inbox_profile_latest.json").write_text(
+            json.dumps(
+                {
+                    "files": [
+                        {
+                            "local_path": local_path,
+                            "name": "new-report.csv",
+                            "kind": "csv",
+                            "status": "profiled",
+                        }
+                    ]
+                }
+            ),
+            encoding="utf-8",
+        )
+        (state_root / "sharefile_users_latest.json").write_text(
+            json.dumps({"users_by_id": {"user-1": {"full_name": "Uploader One", "email": "one@example.com"}}}),
+            encoding="utf-8",
+        )
+        return local_path

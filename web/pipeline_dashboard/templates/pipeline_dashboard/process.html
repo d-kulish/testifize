@@ -1,0 +1,97 @@
+{% extends "pipeline_dashboard/base.html" %}
+
+{% block title %}Process{% endblock %}
+
+{% block content %}
+  <section class="topbar">
+    <div>
+      <h1>Process</h1>
+      <p class="subtitle">Files currently marked Active and ready for processing work.</p>
+    </div>
+    <div class="actions">
+      <a class="button" href="{% url 'pipeline_dashboard:folders' %}">SF folders</a>
+      <a class="button" href="{{ admin_urls.assets }}">Admin actions</a>
+    </div>
+  </section>
+
+  <section class="metrics">
+    <div class="metric">
+      <div class="metric-label">Processing</div>
+      <div class="metric-value status-orange">{{ assets|length }}</div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="panel-header">
+      <h2 class="panel-title">Processing Files</h2>
+      <span class="muted">Only files with Processing status</span>
+    </div>
+    <div class="panel-body">
+      {% if assets %}
+        <table>
+          <thead>
+            <tr>
+              <th>File</th>
+              <th>Vendor</th>
+              <th>Created</th>
+              <th>Modified</th>
+              <th>Uploader</th>
+              <th>Folder</th>
+              <th>Size</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for asset in assets %}
+              <tr>
+                <td class="file-name" title="{{ asset.name }}">{{ asset.name }}</td>
+                <td>
+                  <form class="inline-form" method="post" action="{% url 'pipeline_dashboard:update_process_vendor' asset.remote_item_id %}">
+                    {% csrf_token %}
+                    <select class="table-select" name="vendor_id" aria-label="Vendor for {{ asset.name }}">
+                      {% for vendor in vendors %}
+                        <option value="{{ vendor.id }}" {% if asset.vendor_id == vendor.id %}selected{% endif %}>{{ vendor.name }}</option>
+                      {% endfor %}
+                    </select>
+                    <button class="button small" type="submit">Save</button>
+                  </form>
+                </td>
+                <td>{{ asset.remote_created_at|date:"Y-m-d H:i"|default:"-" }}</td>
+                <td>{{ asset.remote_modified_at|date:"Y-m-d H:i"|default:"-" }}</td>
+                <td>{{ asset.created_by_display|default:"-" }}</td>
+                <td>{{ asset.source_folder|default:asset.source_folder_label|default:"-" }}</td>
+                <td>{{ asset.file_size|filesizeformat }}</td>
+                <td>
+                  <form
+                    class="inline-form"
+                    method="post"
+                    action="{% url 'pipeline_dashboard:cancel_process_file' asset.remote_item_id %}"
+                    data-cancel-process-form
+                  >
+                    {% csrf_token %}
+                    <button class="button small" type="submit">Cancel</button>
+                  </form>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      {% else %}
+        <div class="empty">No files are currently in processing.</div>
+      {% endif %}
+    </div>
+  </section>
+
+  <script>
+    document.querySelectorAll("[data-cancel-process-form]").forEach((form) => {
+      form.addEventListener("submit", (event) => {
+        const row = form.closest("tr");
+        const fileName = row?.querySelector(".file-name")?.textContent?.trim() || "this file";
+        const confirmed = window.confirm(`Cancel processing for ${fileName} and return it to New?`);
+        if (!confirmed) {
+          event.preventDefault();
+        }
+      });
+    });
+  </script>
+{% endblock %}

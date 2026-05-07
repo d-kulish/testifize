@@ -31,6 +31,10 @@
       <div class="metric-value status-green">{{ mirror_summary.new_count }}</div>
     </div>
     <div class="metric">
+      <div class="metric-label">Active</div>
+      <div class="metric-value status-orange">{{ mirror_summary.active_count }}</div>
+    </div>
+    <div class="metric">
       <div class="metric-label">Processed</div>
       <div class="metric-value status-blue">{{ mirror_summary.processed_count }}</div>
     </div>
@@ -61,6 +65,7 @@
             <div role="columnheader">Total Files</div>
             <div role="columnheader">Processed</div>
             <div role="columnheader">New</div>
+            <div role="columnheader">Active</div>
             <div role="columnheader">Deleted in SF</div>
           </div>
           {% for folder in folders %}
@@ -70,9 +75,16 @@
                 <span role="cell">{{ folder.counts.total }}</span>
                 <span class="status-blue" role="cell">{{ folder.counts.processed }}</span>
                 <span class="status-green" role="cell">{{ folder.counts.new }}</span>
+                <span class="status-orange" role="cell">{{ folder.counts.active }}</span>
                 <span class="status-red" role="cell">{{ folder.counts.deleted }}</span>
               </summary>
-              <div class="mirror-files" data-mirror-pager data-page-size="10">
+              <div
+                class="mirror-files"
+                data-mirror-pager
+                data-page-size="10"
+                data-preview-url="{% url 'pipeline_dashboard:review_file_preview' %}"
+                data-process-url="{% url 'pipeline_dashboard:process_review_file' %}"
+              >
                 <table>
                   <thead>
                     <tr>
@@ -84,6 +96,7 @@
                       <th>Size</th>
                       <th>Uploader</th>
                       <th>Mail</th>
+                      <th>Action</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -97,6 +110,17 @@
                         <td>{{ file.size|filesizeformat }}</td>
                         <td>{{ file.uploaded_by|default:"-" }}</td>
                         <td>{{ file.uploader_email|default:"-" }}</td>
+                        <td>
+                          <button
+                            class="button small"
+                            type="button"
+                            data-review-button
+                            data-local-path="{{ file.local_path }}"
+                            {% if not file.review_enabled %}disabled{% endif %}
+                          >
+                            Review
+                          </button>
+                        </td>
                       </tr>
                     {% endfor %}
                   </tbody>
@@ -115,6 +139,41 @@
       {% endif %}
     </div>
   </section>
+
+  <div class="review-modal" data-review-modal hidden>
+    <div class="review-backdrop" data-review-close></div>
+    <section class="review-dialog" role="dialog" aria-modal="true" aria-labelledby="review-title">
+      <header class="review-header">
+        <div class="review-titlebar">
+          <h2 class="review-title" id="review-title">Review file</h2>
+          <button class="button small" type="button" data-review-close>Close</button>
+        </div>
+        <div class="review-details" data-review-details></div>
+      </header>
+      <div class="review-body">
+        <div class="review-sheet-tabs" data-review-tabs></div>
+        <div class="review-preview" data-review-preview>
+          <div class="review-message">Choose a file to preview.</div>
+        </div>
+      </div>
+      <footer class="review-footer">
+        <label class="review-vendor">
+          Vendor
+          <select data-review-vendor>
+            <option value="">Choose vendor</option>
+            {% for vendor in vendors %}
+              <option value="{{ vendor.id }}">{{ vendor.name }}</option>
+            {% endfor %}
+          </select>
+        </label>
+        <div class="actions">
+          <button class="button" type="button" data-review-close>Cancel</button>
+          <button class="button primary" type="button" data-review-process>Process</button>
+        </div>
+      </footer>
+    </section>
+  </div>
+
   <script>
     document.querySelectorAll("[data-mirror-pager]").forEach((pager) => {
       const rows = Array.from(pager.querySelectorAll("[data-file-row]"));
@@ -145,6 +204,184 @@
         render();
       });
       render();
+    });
+
+    const reviewModal = document.querySelector("[data-review-modal]");
+    const reviewTitle = document.querySelector("#review-title");
+    const reviewDetails = document.querySelector("[data-review-details]");
+    const reviewTabs = document.querySelector("[data-review-tabs]");
+    const reviewPreview = document.querySelector("[data-review-preview]");
+    const reviewVendor = document.querySelector("[data-review-vendor]");
+    const processButton = document.querySelector("[data-review-process]");
+    const csrfToken = document.querySelector("[name=csrfmiddlewaretoken]")?.value || "";
+    let activeReview = null;
+
+    function showReviewMessage(message, keepTabs = false) {
+      if (!keepTabs) {
+        reviewTabs.replaceChildren();
+      }
+      reviewPreview.replaceChildren();
+      const element = document.createElement("div");
+      element.className = "review-message";
+      element.textContent = message;
+      reviewPreview.appendChild(element);
+    }
+
+    function formatBytes(value) {
+      const bytes = Number(value || 0);
+      if (!bytes) return "-";
+      const units = ["bytes", "KB", "MB", "GB"];
+      let size = bytes;
+      let unit = 0;
+      while (size >= 1024 && unit < units.length - 1) {
+        size = size / 1024;
+        unit += 1;
+      }
+      return `${size.toFixed(unit === 0 ? 0 : 1)} ${units[unit]}`;
+    }
+
+    function setReviewDetails(file) {
+      reviewTitle.textContent = file.name || "Review file";
+      const details = [
+        ["Folder", file.folder || "-"],
+        ["Size", formatBytes(file.size)],
+        ["Type", file.kind || file.extension || "-"],
+        ["Pages", file.sheet_count || "-"],
+        ["Created", file.created_at || "-"],
+        ["Modified", file.modified_at || "-"],
+        ["Uploader", file.uploaded_by || "-"],
+        ["Mail", file.uploader_email || "-"],
+      ];
+      reviewDetails.replaceChildren();
+      details.forEach(([label, value]) => {
+        const item = document.createElement("div");
+        const strong = document.createElement("strong");
+        strong.textContent = value;
+        item.appendChild(strong);
+        item.append(label);
+        reviewDetails.appendChild(item);
+      });
+    }
+
+    function renderSheet(sheet) {
+      reviewPreview.replaceChildren();
+      if (!sheet.rows || !sheet.rows.length) {
+        showReviewMessage("No previewable rows were found.", true);
+        return;
+      }
+      const table = document.createElement("table");
+      const thead = document.createElement("thead");
+      const tbody = document.createElement("tbody");
+      const width = Math.max(...sheet.rows.map((row) => row.length), sheet.headers?.length || 0, 1);
+      const headerRow = document.createElement("tr");
+      for (let index = 0; index < width; index += 1) {
+        const th = document.createElement("th");
+        th.textContent = sheet.headers?.[index] || `Column ${index + 1}`;
+        headerRow.appendChild(th);
+      }
+      thead.appendChild(headerRow);
+      sheet.rows.forEach((row) => {
+        const tr = document.createElement("tr");
+        for (let index = 0; index < width; index += 1) {
+          const td = document.createElement("td");
+          td.textContent = row[index] || "";
+          tr.appendChild(td);
+        }
+        tbody.appendChild(tr);
+      });
+      table.append(thead, tbody);
+      reviewPreview.appendChild(table);
+    }
+
+    function renderSheets(file) {
+      reviewTabs.replaceChildren();
+      if (file.warning) {
+        showReviewMessage(file.warning);
+        return;
+      }
+      if (!file.sheets || !file.sheets.length) {
+        showReviewMessage("No preview is available for this file.");
+        return;
+      }
+      file.sheets.forEach((sheet, index) => {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.textContent = `${sheet.name} (${sheet.row_count || 0} x ${sheet.column_count || 0})`;
+        button.addEventListener("click", () => {
+          reviewTabs.querySelectorAll("button").forEach((tab) => tab.classList.remove("active"));
+          button.classList.add("active");
+          renderSheet(sheet);
+        });
+        reviewTabs.appendChild(button);
+        if (index === 0) {
+          button.classList.add("active");
+          renderSheet(sheet);
+        }
+      });
+    }
+
+    function closeReview() {
+      reviewModal.hidden = true;
+      activeReview = null;
+    }
+
+    document.querySelectorAll("[data-review-close]").forEach((button) => {
+      button.addEventListener("click", closeReview);
+    });
+
+    document.querySelectorAll("[data-review-button]").forEach((button) => {
+      button.addEventListener("click", async () => {
+        const container = button.closest("[data-mirror-pager]");
+        const previewUrl = container.dataset.previewUrl;
+        const localPath = button.dataset.localPath;
+        activeReview = {
+          localPath,
+          processUrl: container.dataset.processUrl,
+        };
+        processButton.disabled = false;
+        reviewVendor.value = "";
+        reviewModal.hidden = false;
+        reviewTitle.textContent = "Loading...";
+        reviewDetails.replaceChildren();
+        showReviewMessage("Loading preview...");
+        const url = new URL(previewUrl, window.location.origin);
+        url.searchParams.set("local_path", localPath);
+        try {
+          const response = await fetch(url);
+          const payload = await response.json();
+          if (!response.ok) throw new Error(payload.error || "Preview failed.");
+          setReviewDetails(payload.file);
+          renderSheets(payload.file);
+        } catch (error) {
+          reviewTitle.textContent = "Review file";
+          showReviewMessage(error.message);
+        }
+      });
+    });
+
+    processButton.addEventListener("click", async () => {
+      if (!activeReview) return;
+      if (!reviewVendor.value) {
+        showReviewMessage("Choose a vendor before processing.", true);
+        return;
+      }
+      const body = new FormData();
+      body.append("local_path", activeReview.localPath);
+      body.append("vendor_id", reviewVendor.value);
+      processButton.disabled = true;
+      try {
+        const response = await fetch(activeReview.processUrl, {
+          method: "POST",
+          headers: {"X-CSRFToken": csrfToken},
+          body,
+        });
+        const payload = await response.json();
+        if (!response.ok) throw new Error(payload.error || "Process failed.");
+        window.location.reload();
+      } catch (error) {
+        showReviewMessage(error.message, true);
+        processButton.disabled = false;
+      }
     });
   </script>
 {% endblock %}

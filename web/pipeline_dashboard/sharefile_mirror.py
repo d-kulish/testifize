@@ -9,6 +9,8 @@ from typing import Any
 
 from django.conf import settings
 
+from .models import Asset, AssetStatus
+
 
 MIRROR_STATE_PATH = Path("data/state/file_processing_state.json")
 PROFILE_PATH = Path("data/state/inbox_profile_latest.json")
@@ -29,6 +31,14 @@ def load_sharefile_mirror() -> MirrorData:
     processing_state = _load_json(MIRROR_STATE_PATH, default={})
     sync_state = _load_json(SYNC_STATE_PATH, default={})
     user_cache = _load_json(USERS_PATH, default={})
+    assets_by_local_path = {
+        asset.local_path: asset
+        for asset in Asset.objects.exclude(local_path="")
+    }
+    assets_by_remote_item_id = {
+        asset.remote_item_id: asset
+        for asset in Asset.objects.exclude(remote_item_id="")
+    }
 
     remote_by_local_path = {
         row.get("local_path"): row
@@ -47,7 +57,13 @@ def load_sharefile_mirror() -> MirrorData:
         remote = remote_by_local_path.get(local_path, {})
         profile_row = profile_by_local_path.get(local_path, {})
         folder_path = _folder_path_for(local_path, remote)
-        status = _file_status(local_path, remote, processing_state)
+        status = _file_status(
+            local_path,
+            remote,
+            processing_state,
+            assets_by_local_path,
+            assets_by_remote_item_id,
+        )
         grouped[folder_path].append(_file_row(local_path, remote, profile_row, status, user_cache))
 
     folders = []
@@ -55,6 +71,7 @@ def load_sharefile_mirror() -> MirrorData:
         counts = {
             "total": len(files),
             "new": sum(1 for row in files if row["status"] == "new"),
+            "active": sum(1 for row in files if row["status"] == "active"),
             "processed": sum(1 for row in files if row["status"] == "processed"),
             "deleted": sum(1 for row in files if row["status"] == "deleted_remote"),
             "duplicate_names": duplicate_name_count(files),
@@ -75,6 +92,7 @@ def load_sharefile_mirror() -> MirrorData:
         "folder_count": len(folders),
         "file_count": sum(row["counts"]["total"] for row in folders),
         "new_count": sum(row["counts"]["new"] for row in folders),
+        "active_count": sum(row["counts"]["active"] for row in folders),
         "processed_count": sum(row["counts"]["processed"] for row in folders),
         "deleted_count": sum(row["counts"]["deleted"] for row in folders),
         "duplicate_name_count": sum(row["counts"]["duplicate_names"] for row in folders),
@@ -97,16 +115,20 @@ def _file_row(
     return {
         "status": status,
         "status_label": _status_label(status),
-        "status_sort": {"new": 0, "processed": 1, "deleted_remote": 2}.get(status, 9),
+        "status_sort": {"new": 0, "active": 1, "processed": 2, "deleted_remote": 3}.get(status, 9),
+        "review_enabled": status == "new",
         "name": remote.get("name") or profile.get("name") or Path(local_path).name,
         "extension": remote.get("extension") or profile.get("extension") or Path(local_path).suffix.lower(),
         "size": remote.get("size") or profile.get("size") or 0,
+        "created_at": remote.get("created_at") or "",
         "modified_at": remote.get("modified_at") or "",
         "modified_sort": modified_sort_value(remote.get("modified_at") or ""),
         "uploaded_by": uploader["name"],
         "uploader_email": uploader["email"],
         "remote_item_id": remote.get("remote_item_id") or "",
         "remote_path": remote.get("remote_path") or "",
+        "source_folder_id": remote.get("source_folder_id") or "",
+        "source_folder_path": remote.get("source_folder_path") or "",
         "local_path": local_path,
         "profile_kind": profile.get("kind") or "",
         "profile_status": profile.get("status") or "",
@@ -115,16 +137,28 @@ def _file_row(
     }
 
 
-def _file_status(local_path: str, remote: dict[str, Any], processing_state: dict[str, Any]) -> str:
+def _file_status(
+    local_path: str,
+    remote: dict[str, Any],
+    processing_state: dict[str, Any],
+    assets_by_local_path: dict[str, Asset],
+    assets_by_remote_item_id: dict[str, Asset],
+) -> str:
     remote_item_id = remote.get("remote_item_id")
     processed_ids = set(processing_state.get("processed_remote_item_ids", []))
     processed_paths = set(processing_state.get("processed_local_paths", []))
+    if not remote:
+        return "deleted_remote"
+    asset = assets_by_local_path.get(local_path) or assets_by_remote_item_id.get(remote_item_id or "")
+    if asset:
+        if asset.status == AssetStatus.PROCESSING:
+            return "active"
+        if asset.status in {AssetStatus.PROCESSED, AssetStatus.UPLOADED}:
+            return "processed"
     if local_path in processed_paths:
         return "processed"
     if not processed_paths and remote_item_id in processed_ids:
         return "processed"
-    if not remote:
-        return "deleted_remote"
     return "new"
 
 
@@ -148,6 +182,7 @@ def _display_folder_name(folder_path: str) -> str:
 def _status_label(status: str) -> str:
     return {
         "new": "N",
+        "active": "A",
         "processed": "P",
         "deleted_remote": "D",
     }.get(status, status[:1].upper())
