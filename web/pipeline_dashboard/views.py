@@ -16,7 +16,14 @@ from django.utils.dateparse import parse_datetime
 from django.views.decorators.http import require_GET, require_POST
 
 from .file_review import ReviewPreviewError, build_file_preview, inbox_file_path
-from .models import Asset, AssetEvent, AssetStatus, ShareFileFolder, Vendor
+from .models import Asset, AssetEvent, AssetStatus, ParsedOutput, ShareFileFolder, Vendor
+from .parser_workflow import (
+    ParserWorkflowError,
+    build_parse_preview,
+    build_parse_result_preview,
+    stage_asset_parser,
+    upload_approved_output,
+)
 from .sharefile_mirror import load_sharefile_mirror
 from .services import set_asset_status
 
@@ -26,6 +33,7 @@ REVIEW_STATUSES = [
     AssetStatus.FAILED,
     AssetStatus.QUEUED,
     AssetStatus.DOWNLOADED,
+    AssetStatus.REVIEW,
     AssetStatus.SUPERSEDED,
     AssetStatus.IGNORED,
 ]
@@ -135,15 +143,28 @@ def assets(request):
 
 
 def process(request):
-    processing_assets = (
+    processing_assets = list(
         Asset.objects.select_related("vendor", "source_folder")
         .filter(status=AssetStatus.PROCESSING)
         .order_by("-remote_modified_at", "-last_seen_at", "name")
     )
+    grouped_assets = []
+    active_vendors = list(Vendor.objects.filter(is_active=True).order_by("name"))
+    for vendor in active_vendors:
+        vendor_assets = [asset for asset in processing_assets if asset.vendor_id == vendor.id]
+        if vendor_assets:
+            grouped_assets.append({"vendor": vendor, "assets": vendor_assets})
+    unassigned_assets = [asset for asset in processing_assets if not asset.vendor_id]
+    if unassigned_assets:
+        grouped_assets.append({"vendor": None, "assets": unassigned_assets})
     context = {
         "title": "Process",
         "assets": processing_assets,
-        "vendors": Vendor.objects.filter(is_active=True).order_by("name"),
+        "grouped_assets": grouped_assets,
+        "vendors": active_vendors,
+        "parsed_outputs": ParsedOutput.objects.select_related("asset", "vendor")
+        .exclude(comparison_status="cancelled")
+        .order_by("-created_at")[:50],
         "admin_urls": admin_urls_context(),
         "active_nav": "process",
     }
@@ -314,6 +335,134 @@ def cancel_process_file(request, remote_item_id: str):
     )
     messages.success(request, f"{asset.name}: returned to New.")
     return redirect("pipeline_dashboard:process")
+
+
+@require_GET
+def parse_file_preview(request, remote_item_id: str):
+    asset = get_object_or_404(
+        Asset.objects.select_related("vendor", "source_folder"),
+        remote_item_id=remote_item_id,
+        status=AssetStatus.PROCESSING,
+    )
+    try:
+        payload = build_parse_preview(asset)
+    except (ParserWorkflowError, ReviewPreviewError) as exc:
+        return JsonResponse({"error": str(exc)}, status=400)
+    return JsonResponse(payload)
+
+
+@require_POST
+@transaction.atomic
+def parse_process_file(request, remote_item_id: str):
+    asset = get_object_or_404(
+        Asset.objects.select_related("vendor", "source_folder"),
+        remote_item_id=remote_item_id,
+        status=AssetStatus.PROCESSING,
+    )
+    try:
+        payload = build_parse_result_preview(asset)
+    except (ParserWorkflowError, ReviewPreviewError, ValueError) as exc:
+        return JsonResponse({"error": str(exc)}, status=400)
+
+    return JsonResponse(payload)
+
+
+@require_POST
+@transaction.atomic
+def approve_process_file(request, remote_item_id: str):
+    asset = get_object_or_404(
+        Asset.objects.select_for_update().select_related("vendor", "source_folder"),
+        remote_item_id=remote_item_id,
+        status=AssetStatus.PROCESSING,
+    )
+    parsed = None
+    try:
+        parsed = stage_asset_parser(asset)
+        upload_item = upload_approved_output(settings.REPO_ROOT / parsed.output_path, parsed.vendor, parsed.comparison_summary)
+    except (ParserWorkflowError, ReviewPreviewError, ValueError) as exc:
+        _remove_staged_output(parsed)
+        transaction.set_rollback(True)
+        return JsonResponse({"error": str(exc)}, status=400)
+    except Exception as exc:
+        _remove_staged_output(parsed)
+        transaction.set_rollback(True)
+        return JsonResponse({"error": str(exc)}, status=400)
+
+    parsed.comparison_status = "sent_for_approval"
+    parsed.comparison_summary = {
+        **(parsed.comparison_summary or {}),
+        "sharefile_item_id": upload_item.id,
+        "sharefile_filename": upload_item.name,
+    }
+    parsed.save(update_fields=["comparison_status", "comparison_summary"])
+
+    asset.output_path = parsed.output_path
+    asset.uploaded_item_id = upload_item.id
+    asset.status_reason = "Parsed output sent to ShareFile Approval for external review."
+    asset.save(update_fields=["output_path", "uploaded_item_id", "status_reason", "updated_at"])
+    set_asset_status(asset, AssetStatus.REVIEW, "Parsed output sent to ShareFile Approval for external review.")
+    AssetEvent.objects.create(
+        asset=asset,
+        event_type="approval_sent",
+        from_status=AssetStatus.PROCESSING,
+        to_status=AssetStatus.REVIEW,
+        message=f"Parsed output sent to ShareFile Approval as {upload_item.name}.",
+        metadata={
+            "parsed_output_id": parsed.id,
+            "comparison_status": parsed.comparison_status,
+            "sharefile_item_id": upload_item.id,
+            "sharefile_filename": upload_item.name,
+        },
+    )
+    return JsonResponse(
+        {
+            "status": "review",
+            "asset_id": asset.remote_item_id,
+            "output_path": parsed.output_path,
+            "comparison_status": parsed.comparison_status,
+            "uploaded_item_id": upload_item.id,
+            "uploaded_name": upload_item.name,
+        }
+    )
+
+
+@require_POST
+@transaction.atomic
+def cancel_parsed_output(request, parsed_output_id: int):
+    parsed = get_object_or_404(
+        ParsedOutput.objects.select_for_update().select_related("asset", "vendor"),
+        pk=parsed_output_id,
+    )
+    asset = Asset.objects.select_for_update().get(pk=parsed.asset_id)
+    previous_status = asset.status
+
+    parsed.comparison_status = "cancelled"
+    parsed.comparison_summary = {
+        **(parsed.comparison_summary or {}),
+        "cancelled_at": timezone.now().isoformat(),
+    }
+    parsed.save(update_fields=["comparison_status", "comparison_summary"])
+
+    asset.output_path = ""
+    asset.uploaded_item_id = ""
+    asset.status_reason = "Parsed CSV approval was cancelled; file returned to Processing."
+    asset.save(update_fields=["output_path", "uploaded_item_id", "status_reason", "updated_at"])
+    set_asset_status(asset, AssetStatus.PROCESSING, "Parsed CSV approval cancelled from Approval area.")
+    AssetEvent.objects.create(
+        asset=asset,
+        event_type="parsed_output_cancelled",
+        from_status=previous_status,
+        to_status=AssetStatus.PROCESSING,
+        message="Parsed CSV approval cancelled from Approval area.",
+        metadata={"parsed_output_id": parsed.id, "output_path": parsed.output_path},
+    )
+    messages.success(request, f"{asset.name}: returned to Processing Files.")
+    return redirect("pipeline_dashboard:process")
+
+
+def _remove_staged_output(parsed: ParsedOutput | None) -> None:
+    if parsed and parsed.output_path:
+        (settings.REPO_ROOT / parsed.output_path).unlink(missing_ok=True)
 
 
 def vendors(request):

@@ -1,14 +1,38 @@
 from __future__ import annotations
 
 import json
+import shutil
 import tempfile
 from pathlib import Path
+from types import SimpleNamespace
 from unittest.mock import patch
 
 from django.test import TestCase, override_settings
 from django.urls import reverse
+from openpyxl import Workbook
 
-from pipeline_dashboard.models import Asset, AssetStatus, ShareFileFolder, Vendor
+from pipeline_dashboard.models import Asset, AssetStatus, ParsedOutput, ShareFileFolder, Vendor
+from pipeline_dashboard.parser_workflow import approval_root_id
+
+
+class FakeApprovalClient:
+    def __init__(self):
+        from datetime import datetime
+
+        self.current_month = datetime.now().strftime("%B_%Y")
+        self.folder_parts = []
+        self.uploaded_name = ""
+
+    def ensure_folder_path(self, root_id, parts):
+        self.root_id = root_id
+        self.folder_parts = parts
+        return SimpleNamespace(id="fo-approval")
+
+    def upload_bytes(self, folder_id, filename, content, content_type, notify, overwrite):
+        self.folder_id = folder_id
+        self.uploaded_name = filename
+        self.uploaded_content = content
+        return SimpleNamespace(id="fi-uploaded", name=filename)
 
 
 class DashboardViewTests(TestCase):
@@ -284,6 +308,7 @@ class DashboardViewTests(TestCase):
         self.assertContains(response, "Loop")
         self.assertContains(response, "PodcastOne")
         self.assertContains(response, "Cancel")
+        self.assertContains(response, "Approval")
         self.assertNotContains(response, "PodcastOne new.csv")
 
     def test_update_process_vendor_changes_asset_vendor(self):
@@ -326,6 +351,108 @@ class DashboardViewTests(TestCase):
         self.assertIsNone(asset.vendor)
         self.assertEqual(asset.parser_key, "")
         self.assertTrue(asset.events.filter(event_type="processing_cancelled").exists())
+
+    def test_parse_file_preview_validates_loop_schema(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            repo_root = Path(tmpdir)
+            asset = self._write_loop_parse_fixture(repo_root)
+
+            with override_settings(REPO_ROOT=repo_root):
+                response = self.client.get(reverse("pipeline_dashboard:parse_file_preview", args=[asset.remote_item_id]))
+
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertTrue(payload["validation"]["ok"])
+        self.assertEqual(payload["validation"]["vendor"], "Loop")
+        self.assertEqual(payload["validation"]["sheet_name"], "Daily Spend")
+        self.assertEqual(payload["file"]["sheets"][0]["name"], "Daily Spend")
+
+    def test_parse_process_file_returns_chart_preview_without_writing_output(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            repo_root = Path(tmpdir)
+            asset = self._write_loop_parse_fixture(repo_root)
+
+            with override_settings(REPO_ROOT=repo_root):
+                response = self.client.post(reverse("pipeline_dashboard:parse_process_file", args=[asset.remote_item_id]))
+                output_exists = (repo_root / "data" / "output" / "Loop" / "Loop_May_2026_v1.csv").exists()
+
+        self.assertEqual(response.status_code, 200)
+        asset.refresh_from_db()
+        payload = response.json()
+        self.assertEqual(asset.status, AssetStatus.PROCESSING)
+        self.assertFalse(output_exists)
+        self.assertEqual(payload["candidate"]["summary"]["period_label"], "May_2026")
+        self.assertEqual(payload["candidate"]["summary"]["row_count"], 2)
+        self.assertEqual(payload["charts"]["series"][0]["label"], "Parsed May_2026")
+        self.assertEqual(payload["charts"]["series"][0]["points"][0]["day"], 1)
+        self.assertEqual(ParsedOutput.objects.filter(asset=asset).count(), 0)
+
+    def test_approve_process_file_sends_versioned_output_for_external_approval(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            repo_root = Path(tmpdir)
+            asset = self._write_loop_parse_fixture(repo_root)
+            fake_client = FakeApprovalClient()
+
+            with (
+                override_settings(REPO_ROOT=repo_root),
+                patch("pipeline_dashboard.parser_workflow.approval_root_id", return_value="fo-root"),
+                patch("pipeline_dashboard.parser_workflow.build_sharefile_client", return_value=fake_client),
+            ):
+                response = self.client.post(reverse("pipeline_dashboard:approve_process_file", args=[asset.remote_item_id]))
+                output_exists = (repo_root / "data" / "output" / "Loop" / "Loop_May_2026_v1.csv").exists()
+                processed_exists = (repo_root / "data" / "processed" / "Loop" / "Loop_May_2026.csv").exists()
+
+        self.assertEqual(response.status_code, 200)
+        asset.refresh_from_db()
+        parsed = ParsedOutput.objects.get(asset=asset)
+        self.assertEqual(asset.status, AssetStatus.REVIEW)
+        self.assertEqual(asset.uploaded_item_id, "fi-uploaded")
+        self.assertEqual(asset.output_path, "data/output/Loop/Loop_May_2026_v1.csv")
+        self.assertEqual(parsed.reporting_period, "May_2026")
+        self.assertEqual(parsed.row_count, 2)
+        self.assertEqual(parsed.comparison_status, "sent_for_approval")
+        self.assertEqual(parsed.comparison_summary["sharefile_item_id"], "fi-uploaded")
+        self.assertTrue(output_exists)
+        self.assertFalse(processed_exists)
+        self.assertEqual(fake_client.folder_parts, ["Approval", fake_client.current_month, "Loop"])
+        self.assertEqual(fake_client.uploaded_name, "Loop_May_2026_v1.csv")
+        self.assertTrue(asset.events.filter(event_type="approval_sent").exists())
+
+    def test_cancel_parsed_output_returns_asset_to_processing(self):
+        loop, _ = Vendor.objects.get_or_create(name="Loop", defaults={"parser_key": "loop"})
+        asset = Asset.objects.create(
+            remote_item_id="fi-loop-review",
+            vendor=loop,
+            parser_key="loop",
+            status=AssetStatus.REVIEW,
+            name="Loop review.xlsx",
+            output_path="data/output/Loop/Loop_May_2026_v1.csv",
+        )
+        parsed = ParsedOutput.objects.create(
+            asset=asset,
+            vendor=loop,
+            output_path="data/output/Loop/Loop_May_2026_v1.csv",
+            reporting_period="May_2026",
+            comparison_status="no_matching_history",
+        )
+
+        response = self.client.post(reverse("pipeline_dashboard:cancel_parsed_output", args=[parsed.id]))
+
+        self.assertRedirects(response, reverse("pipeline_dashboard:process"))
+        asset.refresh_from_db()
+        parsed.refresh_from_db()
+        self.assertEqual(asset.status, AssetStatus.PROCESSING)
+        self.assertEqual(asset.output_path, "")
+        self.assertEqual(parsed.comparison_status, "cancelled")
+        self.assertTrue(asset.events.filter(event_type="parsed_output_cancelled").exists())
+
+    def test_approval_root_defaults_to_allshared(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            repo_root = Path(tmpdir)
+            (repo_root / ".env").write_text("SHAREFILE_CLIENT_ID=example\n", encoding="utf-8")
+
+            with override_settings(REPO_ROOT=repo_root):
+                self.assertEqual(approval_root_id(), "allshared")
 
     @patch("pipeline_dashboard.views.subprocess.run")
     def test_update_folders_runs_update_script(self, run_mock):
@@ -400,3 +527,53 @@ class DashboardViewTests(TestCase):
             encoding="utf-8",
         )
         return local_path
+
+    def _write_loop_parse_fixture(self, repo_root: Path) -> Asset:
+        project_root = Path(__file__).resolve().parents[3]
+        parser_root = repo_root / "parsers" / "Loop"
+        parser_root.mkdir(parents=True)
+        shutil.copy2(project_root / "parsers" / "Loop" / "input_schema.json", parser_root / "input_schema.json")
+        shutil.copy2(project_root / "parsers" / "Loop" / "parser.py", parser_root / "parser.py")
+
+        approved_path = repo_root / "data" / "processed" / "Loop" / "Loop.csv"
+        approved_path.parent.mkdir(parents=True)
+        approved_path.write_text(
+            "\n".join(
+                [
+                    "Date,Vendor,Brand,Channel,Platform,Spend,Impressions,Data_Grain,Processed_At,Source_File",
+                    "2026-05-01,Loop,BetOnline,DOOH,Loop TV,10,100,daily,approved,baseline.csv",
+                    "2026-05-02,Loop,BetOnline,DOOH,Loop TV,20,200,daily,approved,baseline.csv",
+                    "",
+                ]
+            ),
+            encoding="utf-8",
+        )
+
+        local_path = "data/inbox/home/josh/LOOP MAY 2026.xlsx"
+        workbook_path = repo_root / local_path
+        workbook_path.parent.mkdir(parents=True)
+        workbook = Workbook()
+        sheet = workbook.active
+        sheet.title = "Daily Spend"
+        sheet["A5"] = "Date"
+        sheet["B5"] = "Impressions"
+        sheet["C5"] = "Spend"
+        sheet["A6"] = "2026-05-01"
+        sheet["B6"] = 100
+        sheet["C6"] = 10
+        sheet["A7"] = "2026-05-02"
+        sheet["B7"] = 200
+        sheet["C7"] = 20
+        workbook.save(workbook_path)
+        workbook.close()
+
+        loop, _ = Vendor.objects.get_or_create(name="Loop", defaults={"parser_key": "loop"})
+        return Asset.objects.create(
+            remote_item_id="fi-loop-parse",
+            vendor=loop,
+            parser_key="loop",
+            status=AssetStatus.PROCESSING,
+            name="LOOP MAY 2026.xlsx",
+            local_path=local_path,
+            file_size=workbook_path.stat().st_size,
+        )

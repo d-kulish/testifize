@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from django.contrib import admin, messages
 
-from .models import Asset, AssetEvent, AssetStatus, ShareFileFolder, Vendor
+from .models import Asset, AssetEvent, AssetStatus, ParsedOutput, ShareFileFolder, Vendor
 from .services import download_asset, scan_folder, set_asset_status
 
 
@@ -155,4 +155,39 @@ class AssetEventAdmin(admin.ModelAdmin):
         return False
 
     def has_change_permission(self, request, obj=None):
+        return False
+
+
+@admin.register(ParsedOutput)
+class ParsedOutputAdmin(admin.ModelAdmin):
+    list_display = [
+        "output_path",
+        "vendor",
+        "asset",
+        "reporting_period",
+        "version",
+        "row_count",
+        "comparison_status",
+        "created_at",
+    ]
+    list_filter = ["vendor", "comparison_status", "reporting_period"]
+    search_fields = ["output_path", "approved_path", "asset__name", "vendor__name"]
+    readonly_fields = [
+        "asset",
+        "vendor",
+        "output_path",
+        "approved_path",
+        "reporting_period",
+        "period_start",
+        "period_end",
+        "version",
+        "row_count",
+        "total_spend",
+        "total_impressions",
+        "comparison_status",
+        "comparison_summary",
+        "created_at",
+    ]
+
+    def has_add_permission(self, request):
         return False

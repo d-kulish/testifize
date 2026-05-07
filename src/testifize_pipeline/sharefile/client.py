@@ -130,6 +130,29 @@ class ShareFileClient:
             raise ShareFileError(f"Could not list folder {folder_id}: status={status} body={body}")
         return [ShareFileItem.from_api(item, parent_id=folder_id) for item in body.get("value", [])]
 
+    def create_folder(self, parent_id: str, name: str, description: str = "") -> ShareFileItem:
+        status, body, _ = self._request_json(
+            "POST",
+            f"{self.base_url}/sf/v3/Items({parent_id})/Folder?overwrite=false&passthrough=false",
+            json_body={"Name": name, "Description": description},
+        )
+        if status not in {200, 201}:
+            raise ShareFileError(f"Could not create folder {name} under {parent_id}: status={status} body={body}")
+        return ShareFileItem.from_api(body, parent_id=parent_id)
+
+    def ensure_folder_path(self, root_id: str, parts: list[str]) -> ShareFileItem:
+        current_id = root_id
+        current_item = self.get_item(root_id)
+        for part in parts:
+            match = None
+            for child in self.list_children(current_id):
+                if child.is_folder and child.name == part:
+                    match = child
+                    break
+            current_item = match or self.create_folder(current_id, part)
+            current_id = current_item.id
+        return current_item
+
     def download_file(self, item_id: str, destination: Path) -> Path:
         destination.parent.mkdir(parents=True, exist_ok=True)
         status, body, _ = self._request_json(

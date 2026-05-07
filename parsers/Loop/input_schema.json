@@ -1,0 +1,49 @@
+{
+  "source_file": "data/inbox/home/josh/LOOP-EAGLE II_April 2026 FINAL REPORT.xlsx",
+  "sheet_name": "Daily Spend",
+  "file_type": "xlsx",
+  "metadata": {
+    "date_range_cell": "B1",
+    "advertiser_cell": "B2"
+  },
+  "header": {
+    "row": 5,
+    "columns": [
+      {
+        "letter": "A",
+        "name": "Date"
+      },
+      {
+        "letter": "B",
+        "name": "Impressions"
+      },
+      {
+        "letter": "C",
+        "name": "Spend"
+      }
+    ]
+  },
+  "selected_columns": {
+    "date": "Date",
+    "impressions": "Impressions",
+    "spend": "Spend"
+  },
+  "skip_rules": [
+    "Skip report metadata rows above the header.",
+    "Skip the subtotal row where Date is blank and Impressions/Spend are populated.",
+    "Skip trailing blank rows."
+  ],
+  "comparison_window": {
+    "start_date": "2026-04-01",
+    "end_date": "2026-04-30"
+  },
+  "output_defaults": {
+    "Vendor": "Loop",
+    "Brand": "BetOnline",
+    "Channel": "DOOH",
+    "Platform": "Loop TV",
+    "Data_Grain": "daily",
+    "Processed_At": "generated",
+    "Source_File": "LOOP-EAGLE II_April 2026 FINAL REPORT.xlsx"
+  }
+}

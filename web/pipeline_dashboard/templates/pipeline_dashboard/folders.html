@@ -35,6 +35,10 @@
       <div class="metric-value status-orange">{{ mirror_summary.active_count }}</div>
     </div>
     <div class="metric">
+      <div class="metric-label">Review</div>
+      <div class="metric-value status-purple">{{ mirror_summary.review_count }}</div>
+    </div>
+    <div class="metric">
       <div class="metric-label">Processed</div>
       <div class="metric-value status-blue">{{ mirror_summary.processed_count }}</div>
     </div>
@@ -66,6 +70,7 @@
             <div role="columnheader">Processed</div>
             <div role="columnheader">New</div>
             <div role="columnheader">Active</div>
+            <div role="columnheader">Review</div>
             <div role="columnheader">Deleted in SF</div>
           </div>
           {% for folder in folders %}
@@ -76,6 +81,7 @@
                 <span class="status-blue" role="cell">{{ folder.counts.processed }}</span>
                 <span class="status-green" role="cell">{{ folder.counts.new }}</span>
                 <span class="status-orange" role="cell">{{ folder.counts.active }}</span>
+                <span class="status-purple" role="cell">{{ folder.counts.review }}</span>
                 <span class="status-red" role="cell">{{ folder.counts.deleted }}</span>
               </summary>
               <div

@@ -72,6 +72,7 @@ def load_sharefile_mirror() -> MirrorData:
             "total": len(files),
             "new": sum(1 for row in files if row["status"] == "new"),
             "active": sum(1 for row in files if row["status"] == "active"),
+            "review": sum(1 for row in files if row["status"] == "review"),
             "processed": sum(1 for row in files if row["status"] == "processed"),
             "deleted": sum(1 for row in files if row["status"] == "deleted_remote"),
             "duplicate_names": duplicate_name_count(files),
@@ -93,6 +94,7 @@ def load_sharefile_mirror() -> MirrorData:
         "file_count": sum(row["counts"]["total"] for row in folders),
         "new_count": sum(row["counts"]["new"] for row in folders),
         "active_count": sum(row["counts"]["active"] for row in folders),
+        "review_count": sum(row["counts"]["review"] for row in folders),
         "processed_count": sum(row["counts"]["processed"] for row in folders),
         "deleted_count": sum(row["counts"]["deleted"] for row in folders),
         "duplicate_name_count": sum(row["counts"]["duplicate_names"] for row in folders),
@@ -115,7 +117,7 @@ def _file_row(
     return {
         "status": status,
         "status_label": _status_label(status),
-        "status_sort": {"new": 0, "active": 1, "processed": 2, "deleted_remote": 3}.get(status, 9),
+        "status_sort": {"new": 0, "active": 1, "review": 2, "processed": 3, "deleted_remote": 4}.get(status, 9),
         "review_enabled": status == "new",
         "name": remote.get("name") or profile.get("name") or Path(local_path).name,
         "extension": remote.get("extension") or profile.get("extension") or Path(local_path).suffix.lower(),
@@ -153,6 +155,8 @@ def _file_status(
     if asset:
         if asset.status == AssetStatus.PROCESSING:
             return "active"
+        if asset.status == AssetStatus.REVIEW:
+            return "review"
         if asset.status in {AssetStatus.PROCESSED, AssetStatus.UPLOADED}:
             return "processed"
     if local_path in processed_paths:
@@ -183,6 +187,7 @@ def _status_label(status: str) -> str:
     return {
         "new": "N",
         "active": "A",
+        "review": "R",
         "processed": "P",
         "deleted_remote": "D",
     }.get(status, status[:1].upper())

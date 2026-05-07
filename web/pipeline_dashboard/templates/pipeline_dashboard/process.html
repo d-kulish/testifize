@@ -27,60 +27,184 @@
       <span class="muted">Only files with Processing status</span>
     </div>
     <div class="panel-body">
-      {% if assets %}
+      {% if grouped_assets %}
+        <div class="mirror-table" role="table" aria-label="Processing files grouped by vendor">
+          <div class="mirror-head" role="row">
+            <div role="columnheader">Vendor</div>
+            <div role="columnheader">Files</div>
+            <div role="columnheader">Ready</div>
+            <div role="columnheader">Status</div>
+            <div role="columnheader">Review</div>
+            <div role="columnheader">Cancel</div>
+            <div role="columnheader"></div>
+          </div>
+          {% for group in grouped_assets %}
+            <details class="mirror-folder" open>
+              <summary class="mirror-summary" role="row">
+                <span class="mirror-folder-name" role="cell">{{ group.vendor.name|default:"Unassigned" }}</span>
+                <span role="cell">{{ group.assets|length }}</span>
+                <span class="status-orange" role="cell">{{ group.assets|length }}</span>
+                <span role="cell">Processing</span>
+                <span role="cell">Click file</span>
+                <span role="cell">Per row</span>
+                <span role="cell"></span>
+              </summary>
+              <div class="mirror-files">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>File</th>
+                      <th>Vendor</th>
+                      <th>Created</th>
+                      <th>Modified</th>
+                      <th>Uploader</th>
+                      <th>Folder</th>
+                      <th>Size</th>
+                      <th>Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for asset in group.assets %}
+                      <tr
+                        class="mirror-file-row active"
+                        data-parse-row
+                        data-preview-url="{% url 'pipeline_dashboard:parse_file_preview' asset.remote_item_id %}"
+                        data-parse-url="{% url 'pipeline_dashboard:parse_process_file' asset.remote_item_id %}"
+                        data-approve-url="{% url 'pipeline_dashboard:approve_process_file' asset.remote_item_id %}"
+                      >
+                        <td class="file-name" title="{{ asset.name }}">{{ asset.name }}</td>
+                        <td>
+                          <form class="inline-form" method="post" action="{% url 'pipeline_dashboard:update_process_vendor' asset.remote_item_id %}">
+                            {% csrf_token %}
+                            <select class="table-select" name="vendor_id" aria-label="Vendor for {{ asset.name }}">
+                              {% for vendor in vendors %}
+                                <option value="{{ vendor.id }}" {% if asset.vendor_id == vendor.id %}selected{% endif %}>{{ vendor.name }}</option>
+                              {% endfor %}
+                            </select>
+                            <button class="button small" type="submit">Save</button>
+                          </form>
+                        </td>
+                        <td>{{ asset.remote_created_at|date:"Y-m-d H:i"|default:"-" }}</td>
+                        <td>{{ asset.remote_modified_at|date:"Y-m-d H:i"|default:"-" }}</td>
+                        <td>{{ asset.created_by_display|default:"-" }}</td>
+                        <td>{{ asset.source_folder|default:asset.source_folder_label|default:"-" }}</td>
+                        <td>{{ asset.file_size|filesizeformat }}</td>
+                        <td>
+                          <form
+                            class="inline-form"
+                            method="post"
+                            action="{% url 'pipeline_dashboard:cancel_process_file' asset.remote_item_id %}"
+                            data-cancel-process-form
+                          >
+                            {% csrf_token %}
+                            <button class="button small" type="submit">Cancel</button>
+                          </form>
+                        </td>
+                      </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            </details>
+            {% endfor %}
+        </div>
+      {% else %}
+        <div class="empty">No files are currently in processing.</div>
+      {% endif %}
+    </div>
+  </section>
+
+  <section class="panel" style="margin-top: 16px;">
+    <div class="panel-header">
+      <h2 class="panel-title">Approval</h2>
+      <span class="muted">Parsed CSV outputs sent to ShareFile for external review</span>
+    </div>
+    <div class="panel-body">
+      {% if parsed_outputs %}
         <table>
           <thead>
             <tr>
-              <th>File</th>
               <th>Vendor</th>
-              <th>Created</th>
-              <th>Modified</th>
-              <th>Uploader</th>
-              <th>Folder</th>
-              <th>Size</th>
+              <th>Period</th>
+              <th>Parsed CSV</th>
+              <th>Source File</th>
+              <th>Rows</th>
+              <th>Spend</th>
+              <th>Impressions</th>
+              <th>Comparison</th>
               <th>Action</th>
             </tr>
           </thead>
           <tbody>
-            {% for asset in assets %}
+            {% for parsed in parsed_outputs %}
               <tr>
-                <td class="file-name" title="{{ asset.name }}">{{ asset.name }}</td>
+                <td>{{ parsed.vendor|default:"-" }}</td>
+                <td>{{ parsed.reporting_period|default:"-" }}</td>
+                <td class="file-name" title="{{ parsed.output_path }}">{{ parsed.output_path }}</td>
+                <td class="file-name" title="{{ parsed.asset.name }}">{{ parsed.asset.name }}</td>
+                <td>{{ parsed.row_count }}</td>
+                <td>{{ parsed.total_spend }}</td>
+                <td>{{ parsed.total_impressions }}</td>
+                <td><span class="badge {{ parsed.comparison_status }}">{{ parsed.comparison_status }}</span></td>
                 <td>
-                  <form class="inline-form" method="post" action="{% url 'pipeline_dashboard:update_process_vendor' asset.remote_item_id %}">
-                    {% csrf_token %}
-                    <select class="table-select" name="vendor_id" aria-label="Vendor for {{ asset.name }}">
-                      {% for vendor in vendors %}
-                        <option value="{{ vendor.id }}" {% if asset.vendor_id == vendor.id %}selected{% endif %}>{{ vendor.name }}</option>
-                      {% endfor %}
-                    </select>
-                    <button class="button small" type="submit">Save</button>
-                  </form>
-                </td>
-                <td>{{ asset.remote_created_at|date:"Y-m-d H:i"|default:"-" }}</td>
-                <td>{{ asset.remote_modified_at|date:"Y-m-d H:i"|default:"-" }}</td>
-                <td>{{ asset.created_by_display|default:"-" }}</td>
-                <td>{{ asset.source_folder|default:asset.source_folder_label|default:"-" }}</td>
-                <td>{{ asset.file_size|filesizeformat }}</td>
-                <td>
-                  <form
-                    class="inline-form"
-                    method="post"
-                    action="{% url 'pipeline_dashboard:cancel_process_file' asset.remote_item_id %}"
-                    data-cancel-process-form
-                  >
-                    {% csrf_token %}
-                    <button class="button small" type="submit">Cancel</button>
-                  </form>
+                  <div class="actions">
+                    <form
+                      class="inline-form"
+                      method="post"
+                      action="{% url 'pipeline_dashboard:cancel_parsed_output' parsed.id %}"
+                      data-cancel-approval-form
+                    >
+                      {% csrf_token %}
+                      <button class="button small" type="submit">Cancel</button>
+                    </form>
+                  </div>
                 </td>
               </tr>
             {% endfor %}
           </tbody>
         </table>
       {% else %}
-        <div class="empty">No files are currently in processing.</div>
+        <div class="empty">No parsed CSV outputs are waiting for approval.</div>
       {% endif %}
     </div>
   </section>
+
+  <div class="review-modal" data-parse-modal hidden>
+    <div class="review-backdrop" data-parse-close></div>
+    <section class="review-dialog" role="dialog" aria-modal="true" aria-labelledby="parse-title">
+      <header class="review-header">
+        <div class="review-titlebar">
+          <h2 class="review-title" id="parse-title">Parse file</h2>
+          <button class="button small" type="button" data-parse-close>Close</button>
+        </div>
+        <div class="review-details" data-parse-details></div>
+        <div class="review-message" data-parse-validation></div>
+      </header>
+      <div class="review-body">
+        <div class="review-sheet-tabs" data-parse-tabs></div>
+        <div class="review-preview" data-parse-preview>
+          <div class="review-message">Choose a processing file to preview.</div>
+        </div>
+        <div class="review-preview" data-chart-preview hidden>
+          <div class="review-sheet-tabs">
+            <button class="active" type="button" data-chart-mode="spend">Spend</button>
+            <button type="button" data-chart-mode="impressions">Impressions</button>
+            <button type="button" data-chart-mode="cpm">Spend/Impressions</button>
+          </div>
+          <div data-chart-summary class="review-message"></div>
+          <svg data-approval-chart viewBox="0 0 920 360" role="img" aria-label="Approval comparison chart"></svg>
+        </div>
+      </div>
+      <footer class="review-footer">
+        <span class="muted" data-parse-footer>Parser validation runs before CSV creation.</span>
+        <div class="actions">
+          <button class="button" type="button" data-parse-close>Cancel</button>
+          <button class="button primary" type="button" data-parse-submit>Parse</button>
+          <button class="button primary" type="button" data-approval-submit hidden>Approval</button>
+        </div>
+      </footer>
+    </section>
+  </div>
 
   <script>
     document.querySelectorAll("[data-cancel-process-form]").forEach((form) => {
@@ -92,6 +216,316 @@
           event.preventDefault();
         }
       });
+    });
+
+    document.querySelectorAll("[data-cancel-approval-form]").forEach((form) => {
+      form.addEventListener("submit", (event) => {
+        const row = form.closest("tr");
+        const fileName = row?.querySelectorAll(".file-name")?.[1]?.textContent?.trim() || "this parsed file";
+        const confirmed = window.confirm(`Cancel approval for ${fileName} and return it to Processing Files?`);
+        if (!confirmed) {
+          event.preventDefault();
+        }
+      });
+    });
+
+    const parseModal = document.querySelector("[data-parse-modal]");
+    const parseTitle = document.querySelector("#parse-title");
+    const parseDetails = document.querySelector("[data-parse-details]");
+    const parseValidation = document.querySelector("[data-parse-validation]");
+    const parseTabs = document.querySelector("[data-parse-tabs]");
+    const parsePreview = document.querySelector("[data-parse-preview]");
+    const chartPreview = document.querySelector("[data-chart-preview]");
+    const chartSvg = document.querySelector("[data-approval-chart]");
+    const chartSummary = document.querySelector("[data-chart-summary]");
+    const parseSubmit = document.querySelector("[data-parse-submit]");
+    const approvalSubmit = document.querySelector("[data-approval-submit]");
+    const parseFooter = document.querySelector("[data-parse-footer]");
+    const csrfToken = document.querySelector("[name=csrfmiddlewaretoken]")?.value || "";
+    let activeParse = null;
+
+    function closeParseModal() {
+      parseModal.hidden = true;
+      activeParse = null;
+      chartPreview.hidden = true;
+      parsePreview.hidden = false;
+      approvalSubmit.hidden = true;
+      parseSubmit.hidden = false;
+    }
+
+    document.querySelectorAll("[data-parse-close]").forEach((button) => {
+      button.addEventListener("click", closeParseModal);
+    });
+
+    function showParseMessage(message, keepTabs = false) {
+      if (!keepTabs) {
+        parseTabs.replaceChildren();
+      }
+      parsePreview.replaceChildren();
+      const element = document.createElement("div");
+      element.className = "review-message";
+      element.textContent = message;
+      parsePreview.appendChild(element);
+    }
+
+    function resetParseModal() {
+      chartPreview.hidden = true;
+      parsePreview.hidden = false;
+      approvalSubmit.hidden = true;
+      approvalSubmit.disabled = true;
+      parseSubmit.hidden = false;
+      parseSubmit.disabled = true;
+      chartSvg.replaceChildren();
+      chartSummary.textContent = "";
+    }
+
+    function formatBytes(value) {
+      const bytes = Number(value || 0);
+      if (!bytes) return "-";
+      const units = ["bytes", "KB", "MB", "GB"];
+      let size = bytes;
+      let unit = 0;
+      while (size >= 1024 && unit < units.length - 1) {
+        size = size / 1024;
+        unit += 1;
+      }
+      return `${size.toFixed(unit === 0 ? 0 : 1)} ${units[unit]}`;
+    }
+
+    function setParseDetails(file, validation) {
+      parseTitle.textContent = file.name || "Parse file";
+      const details = [
+        ["Vendor", validation.vendor || "-"],
+        ["Size", formatBytes(file.size)],
+        ["Type", file.kind || file.extension || "-"],
+        ["Pages", file.sheet_count || "-"],
+        ["Modified", file.modified_at || "-"],
+        ["Uploader", file.uploaded_by || "-"],
+        ["Schema", validation.schema_path || "-"],
+        ["Approved", validation.approved_path || "-"],
+      ];
+      parseDetails.replaceChildren();
+      details.forEach(([label, value]) => {
+        const item = document.createElement("div");
+        const strong = document.createElement("strong");
+        strong.textContent = value;
+        item.appendChild(strong);
+        item.append(label);
+        parseDetails.appendChild(item);
+      });
+    }
+
+    function setValidation(validation) {
+      parseValidation.textContent = "";
+      parseValidation.classList.toggle("status-red", !validation.ok);
+      parseValidation.classList.toggle("status-green", validation.ok);
+      const lines = [];
+      if (validation.ok) {
+        lines.push("Parser and input schema are valid for this file.");
+      }
+      validation.errors?.forEach((error) => lines.push(`Error: ${error}`));
+      validation.warnings?.forEach((warning) => lines.push(`Warning: ${warning}`));
+      parseValidation.textContent = lines.join(" ");
+      parseSubmit.disabled = !validation.ok;
+      parseFooter.textContent = validation.ok ? "Ready to create a parsed CSV." : "Resolve validation errors before parsing.";
+    }
+
+    function renderSheet(sheet) {
+      parsePreview.replaceChildren();
+      if (!sheet.rows || !sheet.rows.length) {
+        showParseMessage("No previewable rows were found.", true);
+        return;
+      }
+      const table = document.createElement("table");
+      const thead = document.createElement("thead");
+      const tbody = document.createElement("tbody");
+      const width = Math.max(...sheet.rows.map((row) => row.length), sheet.headers?.length || 0, 1);
+      const headerRow = document.createElement("tr");
+      for (let index = 0; index < width; index += 1) {
+        const th = document.createElement("th");
+        th.textContent = sheet.headers?.[index] || `Column ${index + 1}`;
+        headerRow.appendChild(th);
+      }
+      thead.appendChild(headerRow);
+      sheet.rows.forEach((row) => {
+        const tr = document.createElement("tr");
+        for (let index = 0; index < width; index += 1) {
+          const td = document.createElement("td");
+          td.textContent = row[index] || "";
+          tr.appendChild(td);
+        }
+        tbody.appendChild(tr);
+      });
+      table.append(thead, tbody);
+      parsePreview.appendChild(table);
+    }
+
+    function renderSheets(file) {
+      parseTabs.replaceChildren();
+      if (file.warning) {
+        showParseMessage(file.warning);
+        return;
+      }
+      if (!file.sheets || !file.sheets.length) {
+        showParseMessage("No preview is available for this file.");
+        return;
+      }
+      file.sheets.forEach((sheet, index) => {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.textContent = `${sheet.name} (${sheet.row_count || 0} x ${sheet.column_count || 0})`;
+        button.addEventListener("click", () => {
+          parseTabs.querySelectorAll("button").forEach((tab) => tab.classList.remove("active"));
+          button.classList.add("active");
+          renderSheet(sheet);
+        });
+        parseTabs.appendChild(button);
+        if (index === 0) {
+          button.classList.add("active");
+          renderSheet(sheet);
+        }
+      });
+    }
+
+    document.querySelectorAll("[data-parse-row]").forEach((row) => {
+      row.addEventListener("click", async (event) => {
+        if (event.target.closest("form, button, select, a")) {
+          return;
+        }
+        activeParse = {parseUrl: row.dataset.parseUrl};
+        activeParse.approveUrl = row.dataset.approveUrl;
+        resetParseModal();
+        parseModal.hidden = false;
+        parseTitle.textContent = "Loading...";
+        parseDetails.replaceChildren();
+        parseValidation.textContent = "";
+        showParseMessage("Loading parser preview...");
+        try {
+          const response = await fetch(row.dataset.previewUrl);
+          const payload = await response.json();
+          if (!response.ok) throw new Error(payload.error || "Preview failed.");
+          setParseDetails(payload.file, payload.validation);
+          setValidation(payload.validation);
+          renderSheets(payload.file);
+        } catch (error) {
+          parseTitle.textContent = "Parse file";
+          showParseMessage(error.message);
+          parseSubmit.disabled = true;
+        }
+      });
+    });
+
+    parseSubmit.addEventListener("click", async () => {
+      if (!activeParse) return;
+      parseSubmit.disabled = true;
+      parseFooter.textContent = "Parsing...";
+      try {
+        const response = await fetch(activeParse.parseUrl, {
+          method: "POST",
+          headers: {"X-CSRFToken": csrfToken},
+        });
+        const payload = await response.json();
+        if (!response.ok) throw new Error(payload.error || "Parse failed.");
+        activeParse.chartPayload = payload;
+        parsePreview.hidden = true;
+        chartPreview.hidden = false;
+        parseSubmit.hidden = true;
+        approvalSubmit.hidden = false;
+        approvalSubmit.disabled = false;
+        renderChart("spend");
+        parseFooter.textContent = "Review the comparison, then approve or cancel.";
+      } catch (error) {
+        showParseMessage(error.message, true);
+        parseFooter.textContent = "Parse failed.";
+        parseSubmit.disabled = false;
+      }
+    });
+
+    document.querySelectorAll("[data-chart-mode]").forEach((button) => {
+      button.addEventListener("click", () => {
+        document.querySelectorAll("[data-chart-mode]").forEach((item) => item.classList.remove("active"));
+        button.classList.add("active");
+        renderChart(button.dataset.chartMode);
+      });
+    });
+
+    function renderChart(mode) {
+      if (!activeParse?.chartPayload?.charts) return;
+      const payload = activeParse.chartPayload;
+      const series = payload.charts.series || [];
+      const values = series.flatMap((item) => item.points.map((point) => Number(point[mode] || 0)));
+      const maxValue = Math.max(...values, 1);
+      const maxDay = Math.max(payload.charts.max_day || 0, 1);
+      const width = 920;
+      const height = 360;
+      const left = 52;
+      const right = 24;
+      const top = 24;
+      const bottom = 44;
+      const plotWidth = width - left - right;
+      const plotHeight = height - top - bottom;
+      const colors = ["#2563eb", "#b54708", "#13795b"];
+      chartSvg.replaceChildren();
+
+      const axis = document.createElementNS("http://www.w3.org/2000/svg", "path");
+      axis.setAttribute("d", `M${left},${top} V${top + plotHeight} H${left + plotWidth}`);
+      axis.setAttribute("fill", "none");
+      axis.setAttribute("stroke", "#98a2b3");
+      chartSvg.appendChild(axis);
+
+      series.forEach((item, index) => {
+        const points = item.points.map((point) => {
+          const x = left + ((Number(point.day) - 1) / Math.max(maxDay - 1, 1)) * plotWidth;
+          const y = top + plotHeight - (Number(point[mode] || 0) / maxValue) * plotHeight;
+          return `${x.toFixed(2)},${y.toFixed(2)}`;
+        });
+        if (!points.length) return;
+        const line = document.createElementNS("http://www.w3.org/2000/svg", "polyline");
+        line.setAttribute("points", points.join(" "));
+        line.setAttribute("fill", "none");
+        line.setAttribute("stroke", colors[index % colors.length]);
+        line.setAttribute("stroke-width", index === 0 ? "3" : "2");
+        chartSvg.appendChild(line);
+
+        const label = document.createElementNS("http://www.w3.org/2000/svg", "text");
+        label.setAttribute("x", String(left + 12));
+        label.setAttribute("y", String(top + 18 + index * 18));
+        label.setAttribute("fill", colors[index % colors.length]);
+        label.setAttribute("font-size", "13");
+        label.textContent = item.label;
+        chartSvg.appendChild(label);
+      });
+
+      const xLabel = document.createElementNS("http://www.w3.org/2000/svg", "text");
+      xLabel.setAttribute("x", String(left + plotWidth / 2));
+      xLabel.setAttribute("y", String(height - 10));
+      xLabel.setAttribute("text-anchor", "middle");
+      xLabel.setAttribute("fill", "#647184");
+      xLabel.setAttribute("font-size", "12");
+      xLabel.textContent = "Overlapping period day";
+      chartSvg.appendChild(xLabel);
+
+      const metricLabel = mode === "cpm" ? "CPM" : mode[0].toUpperCase() + mode.slice(1);
+      const candidate = payload.candidate?.summary || {};
+      chartSummary.textContent = `${metricLabel}. Parsed rows: ${candidate.row_count || 0}; period: ${candidate.period_start || "-"} to ${candidate.period_end || "-"}; output: ${payload.candidate?.output_filename || "-"}.`;
+    }
+
+    approvalSubmit.addEventListener("click", async () => {
+      if (!activeParse) return;
+      approvalSubmit.disabled = true;
+      parseFooter.textContent = "Uploading parsed CSV to ShareFile Approval...";
+      try {
+        const response = await fetch(activeParse.approveUrl, {
+          method: "POST",
+          headers: {"X-CSRFToken": csrfToken},
+        });
+        const payload = await response.json();
+        if (!response.ok) throw new Error(payload.error || "Approval failed.");
+        window.location.reload();
+      } catch (error) {
+        parseFooter.textContent = error.message;
+        approvalSubmit.disabled = false;
+      }
     });
   </script>
 {% endblock %}

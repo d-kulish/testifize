@@ -319,15 +319,15 @@ Provides shared filesystem/path helpers for pipeline state. The canonical catalo
 
 Historical plain-Python catalogue work. Keep it as source material for CLI compatibility, but do not treat `data/state/asset_catalog.sqlite` as the production source of truth.
 
-## Proposed Pipeline Flow
+## Current Pipeline Flow
 
-The first production workflow should be deliberately simple:
+The current Django workflow is centered on a local ShareFile mirror, a processing queue, parser preview, and a ShareFile Approval handoff:
 
 ```text
-scan -> download -> parse -> validate -> upload -> record state
+SF folders -> Review -> Processing Files -> Parse -> Approval upload -> external review
 ```
 
-Recommended command surface once implemented:
+The older CLI command surface remains useful for low-level checks and future automation:
 
 ```bash
 python -m testifize_pipeline scan
@@ -479,6 +479,7 @@ App pages:
 ```text
 /          dashboard
 /assets/   asset catalogue
+/process/  active parser queue and parsed-output comparisons
 /folders/  ShareFile folder catalogue
 /vendors/  vendor catalogue
 /admin/    Django Admin back office
@@ -535,14 +536,58 @@ ShareFile folder -> download -> parse -> upload
 
 Keeping ShareFile outside the parser layer makes it easier to test vendors independently and rerun parsers on local files.
 
+Tracked vendor parser definitions live under:
+
+```text
+parsers/<Vendor>/input_schema.json
+parsers/<Vendor>/parser.py
+```
+
+Historical approved CSVs from `_old/final/` are imported into local, ignored runtime storage:
+
+```bash
+PYTHONPATH=src .venv/bin/python scripts/import_approved_history.py
+```
+
+The app uses approved files as comparison baselines directly under each vendor folder:
+
+```text
+data/processed/<Vendor>/
+```
+
+Approval-review parser outputs are versioned under:
+
+```text
+data/output/<Vendor>/<Vendor>_<Month>_<Year>_vN.csv
+```
+
+The first migrated parser is `Loop`. On `/process/`, `Parse` validates the input schema and shows overlapping period-day charts for the parsed candidate against the latest approved vendor history. It does not write the final CSV.
+
+The modal `Approval` action writes the versioned parsed CSV under `data/output/<Vendor>/`, uploads that same versioned CSV to ShareFile `Approval/<Current_Month>/<Vendor>/`, stores the ShareFile item ID, creates a `ParsedOutput` record, and moves the source `Asset` into Review.
+
+`data/processed/<Vendor>/` is reserved for files that have actually been approved. The ShareFile Approval upload is only an external review request, so it does not create or update `data/processed/<Vendor>/`.
+
+The Approval table tracks sent review files. `Cancel` cancels that parsed output and returns the source asset to Processing Files.
+
+ShareFile approval upload defaults to the ShareFile `allshared` root, so approved CSVs are uploaded under Shared Folders unless overridden. To use a different root folder, set:
+
+```text
+SHAREFILE_APPROVAL_ROOT_ID=<folder-id-or-alias>
+```
+
+The app ensures this path under the selected root before upload:
+
+```text
+Approval/<Current_Month>/<Vendor>/<Vendor>_<Current_Month>_<Current_Year>_vN.csv
+```
+
 ## Immediate Next Steps
 
-1. Add real `Vendor` and `ShareFileFolder` rows in Django Admin.
-2. Scan folders from Admin and review the resulting `Asset` catalogue in `/assets/`.
-3. Define the first rules for `superseded` vs `queued`.
-4. Move the current target schema into `schemas/target_schema.json`.
-5. Decide which existing vendor parser should be migrated first.
-6. Design the parser-result and upload-review models before adding upload actions to the app UI.
+1. Add the post-ShareFile approval step that promotes an externally approved CSV from `data/output/<Vendor>/` into `data/processed/<Vendor>/`.
+2. Decide how external approval should be signaled back to the app: manual button, ShareFile folder scan, or metadata/status file.
+3. Migrate the next vendor parser after Loop, starting with its `_old/final/<Vendor>.csv` benchmark and real inbox files.
+4. Define the shared target schema location and validation rules for final approved outputs.
+5. Add anomaly/comparison summaries beyond the current overlapping Spend, Impressions, and CPM charts.
 
 ## Historical Material
 

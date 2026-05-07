@@ -11,6 +11,7 @@ class AssetStatus(models.TextChoices):
     DOWNLOADING = "downloading", "Downloading"
     DOWNLOADED = "downloaded", "Downloaded"
     PROCESSING = "processing", "Processing"
+    REVIEW = "review", "Review"
     PROCESSED = "processed", "Processed"
     UPLOADING = "uploading", "Uploading"
     UPLOADED = "uploaded", "Uploaded"
@@ -123,3 +124,30 @@ class AssetEvent(models.Model):
 
     def __str__(self) -> str:
         return f"{self.event_type}: {self.asset_id}"
+
+
+class ParsedOutput(models.Model):
+    asset = models.ForeignKey(Asset, on_delete=models.CASCADE, related_name="parsed_outputs")
+    vendor = models.ForeignKey(Vendor, blank=True, null=True, on_delete=models.SET_NULL, related_name="parsed_outputs")
+    output_path = models.CharField(max_length=1000, unique=True)
+    approved_path = models.CharField(max_length=1000, blank=True)
+    reporting_period = models.CharField(max_length=80, blank=True)
+    period_start = models.DateField(blank=True, null=True)
+    period_end = models.DateField(blank=True, null=True)
+    version = models.PositiveIntegerField(default=1)
+    row_count = models.PositiveIntegerField(default=0)
+    total_spend = models.DecimalField(max_digits=18, decimal_places=6, default=0)
+    total_impressions = models.DecimalField(max_digits=20, decimal_places=6, default=0)
+    comparison_status = models.CharField(max_length=40, default="pending", db_index=True)
+    comparison_summary = models.JSONField(default=dict, blank=True)
+    created_at = models.DateTimeField(default=timezone.now, editable=False)
+
+    class Meta:
+        ordering = ["-created_at", "vendor__name", "output_path"]
+        indexes = [
+            models.Index(fields=["vendor", "comparison_status"], name="parsed_vendor_status_idx"),
+            models.Index(fields=["asset", "created_at"], name="parsed_asset_created_idx"),
+        ]
+
+    def __str__(self) -> str:
+        return self.output_path
