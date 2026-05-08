@@ -154,6 +154,30 @@ class DashboardViewTests(TestCase):
                                 "creator": "Uploader Two",
                                 "raw_metadata": {"LastModifiedByUserID": "user-2"},
                             },
+                            {
+                                "remote_item_id": "fi-approval-internal",
+                                "name": "Loop_May_2026_v1.csv",
+                                "remote_path": "allshared/Approval/May_2026/Loop/Loop_May_2026_v1.csv",
+                                "local_path": "data/inbox/allshared/Approval/May_2026/Loop/Loop_May_2026_v1.csv",
+                                "source_folder_path": "allshared/Approval/May_2026/Loop",
+                                "extension": ".csv",
+                                "size": 40,
+                                "modified_at": "2026-05-04T12:00:00Z",
+                                "creator": "Uploader Two",
+                                "raw_metadata": {"LastModifiedByUserID": "user-2"},
+                            },
+                            {
+                                "remote_item_id": "fi-final-internal",
+                                "name": "Loop_April_2026.csv",
+                                "remote_path": "allshared/Final/April_2026/Loop_April_2026.csv",
+                                "local_path": "data/inbox/allshared/Final/April_2026/Loop_April_2026.csv",
+                                "source_folder_path": "allshared/Final/April_2026",
+                                "extension": ".csv",
+                                "size": 50,
+                                "modified_at": "2026-05-03T12:00:00Z",
+                                "creator": "Uploader Two",
+                                "raw_metadata": {"LastModifiedByUserID": "user-2"},
+                            },
                         ],
                     }
                 )
@@ -187,6 +211,24 @@ class DashboardViewTests(TestCase):
                                 "kind": "excel",
                                 "status": "profiled",
                                 "sheet_count": 2,
+                            },
+                            {
+                                "local_path": "data/inbox/allshared/Approval/May_2026/Loop/Loop_May_2026_v1.csv",
+                                "name": "Loop_May_2026_v1.csv",
+                                "kind": "csv",
+                                "status": "profiled",
+                            },
+                            {
+                                "local_path": "data/inbox/allshared/Final/April_2026/Loop_April_2026.csv",
+                                "name": "Loop_April_2026.csv",
+                                "kind": "csv",
+                                "status": "profiled",
+                            },
+                            {
+                                "local_path": "data/inbox/allshared/Approval/May_2026/profile-only.csv",
+                                "name": "profile-only.csv",
+                                "kind": "csv",
+                                "status": "profiled",
                             },
                         ]
                     }
@@ -246,6 +288,11 @@ class DashboardViewTests(TestCase):
         self.assertContains(response, "Deleted in SF")
         self.assertContains(response, "PodcastOne, Octopus, Loop, TVM, TAIV")
         self.assertNotContains(response, f'data-allowed-vendors="{adtaxi.id}"')
+        self.assertNotContains(response, "Approval/May_2026/Loop")
+        self.assertNotContains(response, "Final/April_2026")
+        self.assertNotContains(response, "Loop_May_2026_v1.csv")
+        self.assertNotContains(response, "Loop_April_2026.csv")
+        self.assertNotContains(response, "profile-only.csv")
 
     def test_review_file_preview_returns_csv_rows(self):
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -329,6 +376,35 @@ class DashboardViewTests(TestCase):
         self.assertContains(response, "Cancel")
         self.assertContains(response, "Approval")
         self.assertNotContains(response, "PodcastOne new.csv")
+
+    def test_process_page_formats_approval_totals_for_readability(self):
+        loop, _ = Vendor.objects.get_or_create(name="Loop", defaults={"parser_key": "loop"})
+        asset = Asset.objects.create(
+            remote_item_id="fi-loop-review-format",
+            vendor=loop,
+            parser_key="loop",
+            status=AssetStatus.REVIEW,
+            name="Loop review.xlsx",
+            output_path="data/output/Loop/Loop_May_2026_v1.csv",
+        )
+        ParsedOutput.objects.create(
+            asset=asset,
+            vendor=loop,
+            output_path="data/output/Loop/Loop_May_2026_v1.csv",
+            reporting_period="April_2026",
+            row_count=30,
+            total_spend="82711.112970",
+            total_impressions="4792893.088630",
+            comparison_status="sent_for_approval",
+        )
+
+        response = self.client.get(reverse("pipeline_dashboard:process"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "82 711")
+        self.assertContains(response, "4 792 893")
+        self.assertNotContains(response, "82711.112970")
+        self.assertNotContains(response, "4792893.088630")
 
     def test_update_process_vendor_changes_asset_vendor(self):
         loop, _ = Vendor.objects.get_or_create(name="Loop", defaults={"parser_key": "loop"})
@@ -571,7 +647,8 @@ class DashboardViewTests(TestCase):
                 response = self.client.post(reverse("pipeline_dashboard:approve_parsed_output", args=[parsed.id]))
                 final_path = repo_root / "data" / "processed" / "Loop" / "Loop_May_2026.csv"
                 final_exists = final_path.exists()
-                final_content = final_path.read_text(encoding="utf-8")
+                reviewed_content = output_path.read_bytes()
+                final_content = final_path.read_bytes()
                 process_response = self.client.get(reverse("pipeline_dashboard:process"))
 
         self.assertRedirects(response, reverse("pipeline_dashboard:process"))
@@ -585,7 +662,9 @@ class DashboardViewTests(TestCase):
         self.assertEqual(parsed.comparison_summary["final_sharefile_filename"], "Loop_May_2026.csv")
         self.assertEqual(parsed.comparison_summary["final_sharefile_path"], "Final/May_2026/Loop_May_2026.csv")
         self.assertTrue(final_exists)
-        self.assertIn("2026-05-01,Loop,BetOnline", final_content)
+        self.assertEqual(final_content, reviewed_content)
+        self.assertEqual(fake_client.uploaded_content, reviewed_content)
+        self.assertIn(b"2026-05-01,Loop,BetOnline", final_content)
         self.assertEqual(fake_client.folder_parts, ["Final", "May_2026"])
         self.assertEqual(fake_client.uploaded_name, "Loop_May_2026.csv")
         self.assertTrue(asset.events.filter(event_type="final_approved").exists())

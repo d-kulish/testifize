@@ -37,6 +37,11 @@ The local app pages are:
 /admin/    Django Admin back office for edits and actions
 ```
 
+The `/folders/` page is limited to incoming vendor-file locations. Internal workflow
+destinations under ShareFile `Approval/` and `Final/` are excluded, including their
+subfolders, because those folders hold review and final output CSVs rather than raw
+incoming Excel files.
+
 ## Statuses
 
 Supported asset statuses:

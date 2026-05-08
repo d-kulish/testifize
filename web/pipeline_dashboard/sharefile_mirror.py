@@ -17,6 +17,7 @@ PROFILE_PATH = Path("data/state/inbox_profile_latest.json")
 SNAPSHOT_PATH = Path("data/state/sharefile_snapshot_latest.json")
 SYNC_STATE_PATH = Path("data/state/sharefile_sync_state.json")
 USERS_PATH = Path("data/state/sharefile_users_latest.json")
+INTERNAL_WORKFLOW_FOLDERS = {"approval", "final"}
 
 
 @dataclass(frozen=True)
@@ -57,6 +58,8 @@ def load_sharefile_mirror() -> MirrorData:
         remote = remote_by_local_path.get(local_path, {})
         profile_row = profile_by_local_path.get(local_path, {})
         folder_path = _folder_path_for(local_path, remote)
+        if _is_internal_workflow_folder(folder_path):
+            continue
         status = _file_status(
             local_path,
             remote,
@@ -181,6 +184,16 @@ def _display_folder_name(folder_path: str) -> str:
         if folder_path.startswith(prefix):
             return folder_path.removeprefix(prefix)
     return folder_path
+
+
+def _is_internal_workflow_folder(folder_path: str) -> bool:
+    normalized = folder_path.strip("/")
+    for prefix in ("home/", "allshared/"):
+        if normalized.casefold().startswith(prefix):
+            normalized = normalized[len(prefix):]
+            break
+    first_part = normalized.split("/", 1)[0].casefold()
+    return first_part in INTERNAL_WORKFLOW_FOLDERS
 
 
 def _status_label(status: str) -> str:

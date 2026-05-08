@@ -1,4 +1,5 @@
 {% extends "pipeline_dashboard/base.html" %}
+{% load pipeline_numbers %}
 
 {% block title %}Process{% endblock %}
 
@@ -143,8 +144,8 @@
                 <td class="file-name" title="{{ parsed.output_path }}">{{ parsed.output_path }}</td>
                 <td class="file-name" title="{{ parsed.asset.name }}">{{ parsed.asset.name }}</td>
                 <td>{{ parsed.row_count }}</td>
-                <td>{{ parsed.total_spend }}</td>
-                <td>{{ parsed.total_impressions }}</td>
+                <td>{{ parsed.total_spend|space_int }}</td>
+                <td>{{ parsed.total_impressions|space_int }}</td>
                 <td><span class="badge {{ parsed.comparison_status }}">{{ parsed.comparison_status }}</span></td>
                 <td>
                   <div class="actions">
