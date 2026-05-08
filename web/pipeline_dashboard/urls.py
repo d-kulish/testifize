@@ -4,6 +4,7 @@ from django.urls import path
 
 from .views import (
     assets,
+    approve_parsed_output,
     approve_process_file,
     cancel_parsed_output,
     cancel_process_file,
@@ -31,6 +32,7 @@ urlpatterns = [
     path("process/<str:remote_item_id>/parse/preview/", parse_file_preview, name="parse_file_preview"),
     path("process/<str:remote_item_id>/parse/", parse_process_file, name="parse_process_file"),
     path("process/<str:remote_item_id>/approve/", approve_process_file, name="approve_process_file"),
+    path("process/approval/<int:parsed_output_id>/approved/", approve_parsed_output, name="approve_parsed_output"),
     path("process/approval/<int:parsed_output_id>/cancel/", cancel_parsed_output, name="cancel_parsed_output"),
     path("folders/", folders, name="folders"),
     path("folders/update/", update_folders, name="update_folders"),

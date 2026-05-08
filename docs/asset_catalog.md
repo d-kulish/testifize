@@ -48,6 +48,7 @@ queued
 downloading
 downloaded
 processing
+review
 processed
 uploading
 uploaded
@@ -61,6 +62,16 @@ failed
 `superseded` should be used when a newer overlapping file replaces an older one.
 
 `ignored` should be used for files that match folder access but should never be processed, such as notes, templates, bad test uploads, or historical duplicates.
+
+`review` means a parsed CSV has been uploaded to ShareFile `Approval/<Current_Month>/<Vendor>/` and is waiting for external approval. The `/process/` Approval table shows only parsed outputs with `comparison_status="sent_for_approval"`.
+
+When an Approval row is green-lighted, the `Approved` action uploads the final CSV to ShareFile:
+
+```text
+Final/<Reporting_Period>/<Vendor>_<Reporting_Period>.csv
+```
+
+The action then marks the source asset `processed`, stores the final ShareFile item metadata on the parsed output, and removes the row from the Approval table.
 
 ## Core Fields
 

@@ -151,6 +151,15 @@
                     <form
                       class="inline-form"
                       method="post"
+                      action="{% url 'pipeline_dashboard:approve_parsed_output' parsed.id %}"
+                      data-approve-final-form
+                    >
+                      {% csrf_token %}
+                      <button class="button small success" type="submit">Approved</button>
+                    </form>
+                    <form
+                      class="inline-form"
+                      method="post"
                       action="{% url 'pipeline_dashboard:cancel_parsed_output' parsed.id %}"
                       data-cancel-approval-form
                     >
@@ -212,6 +221,17 @@
         const row = form.closest("tr");
         const fileName = row?.querySelector(".file-name")?.textContent?.trim() || "this file";
         const confirmed = window.confirm(`Cancel processing for ${fileName} and return it to New?`);
+        if (!confirmed) {
+          event.preventDefault();
+        }
+      });
+    });
+
+    document.querySelectorAll("[data-approve-final-form]").forEach((form) => {
+      form.addEventListener("submit", (event) => {
+        const row = form.closest("tr");
+        const sourceName = row?.querySelectorAll(".file-name")?.[1]?.textContent?.trim() || "this parsed file";
+        const confirmed = window.confirm(`Mark ${sourceName} approved and store the final CSV in ShareFile Final?`);
         if (!confirmed) {
           event.preventDefault();
         }

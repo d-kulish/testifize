@@ -140,6 +140,14 @@ daily aggregates or more detailed rows.
 - `Audio Impressions` becomes `Impressions`
 - `$ By Day` becomes `Spend`
 
+`Octopus` adds multi-table aggregation from one sheet:
+
+- `Daily Spend` sheet
+- `DOOH` table in columns A:C
+- `Rideshare` table in columns A:C later on the same sheet
+- both tables are grouped by date into one daily row
+- `Impressions` and `Spend` are summed across both tables
+
 ## Validation Commands
 
 Use these after adding or changing a parser:

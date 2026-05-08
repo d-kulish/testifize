@@ -434,6 +434,22 @@ class DashboardViewTests(TestCase):
         self.assertEqual(payload["candidate"]["summary"]["total_impressions"], "1000")
         self.assertEqual(payload["charts"]["series"][0]["label"], "Parsed May_2026")
 
+    def test_parse_process_file_combines_octopus_dooh_and_rideshare_tables(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            repo_root = Path(tmpdir)
+            asset = self._write_octopus_parse_fixture(repo_root)
+
+            with override_settings(REPO_ROOT=repo_root):
+                response = self.client.post(reverse("pipeline_dashboard:parse_process_file", args=[asset.remote_item_id]))
+
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertEqual(payload["candidate"]["summary"]["period_label"], "May_2026")
+        self.assertEqual(payload["candidate"]["summary"]["row_count"], 2)
+        self.assertEqual(payload["candidate"]["summary"]["total_spend"], "100")
+        self.assertEqual(payload["candidate"]["summary"]["total_impressions"], "1000")
+        self.assertEqual(payload["charts"]["series"][0]["label"], "Parsed May_2026")
+
     def test_parse_process_file_returns_chart_preview_without_writing_output(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             repo_root = Path(tmpdir)
@@ -512,6 +528,68 @@ class DashboardViewTests(TestCase):
         self.assertEqual(asset.output_path, "")
         self.assertEqual(parsed.comparison_status, "cancelled")
         self.assertTrue(asset.events.filter(event_type="parsed_output_cancelled").exists())
+
+    def test_approve_parsed_output_stores_final_file_and_marks_asset_processed(self):
+        loop, _ = Vendor.objects.get_or_create(name="Loop", defaults={"parser_key": "loop"})
+        with tempfile.TemporaryDirectory() as tmpdir:
+            repo_root = Path(tmpdir)
+            output_path = repo_root / "data" / "output" / "Loop" / "Loop_May_2026_v1.csv"
+            output_path.parent.mkdir(parents=True)
+            output_path.write_text(
+                "\n".join(
+                    [
+                        "Date,Vendor,Brand,Channel,Platform,Spend,Impressions,Data_Grain,Processed_At,Source_File",
+                        "2026-05-01,Loop,BetOnline,DOOH,Loop TV,10,100,daily,generated,source.xlsx",
+                        "",
+                    ]
+                ),
+                encoding="utf-8",
+            )
+            asset = Asset.objects.create(
+                remote_item_id="fi-loop-review-final",
+                vendor=loop,
+                parser_key="loop",
+                status=AssetStatus.REVIEW,
+                name="Loop review.xlsx",
+                output_path="data/output/Loop/Loop_May_2026_v1.csv",
+                uploaded_item_id="fi-approval",
+            )
+            parsed = ParsedOutput.objects.create(
+                asset=asset,
+                vendor=loop,
+                output_path="data/output/Loop/Loop_May_2026_v1.csv",
+                reporting_period="May_2026",
+                comparison_status="sent_for_approval",
+            )
+            fake_client = FakeApprovalClient()
+
+            with (
+                override_settings(REPO_ROOT=repo_root),
+                patch("pipeline_dashboard.parser_workflow.final_root_id", return_value="fo-root"),
+                patch("pipeline_dashboard.parser_workflow.build_sharefile_client", return_value=fake_client),
+            ):
+                response = self.client.post(reverse("pipeline_dashboard:approve_parsed_output", args=[parsed.id]))
+                final_path = repo_root / "data" / "processed" / "Loop" / "Loop_May_2026.csv"
+                final_exists = final_path.exists()
+                final_content = final_path.read_text(encoding="utf-8")
+                process_response = self.client.get(reverse("pipeline_dashboard:process"))
+
+        self.assertRedirects(response, reverse("pipeline_dashboard:process"))
+        asset.refresh_from_db()
+        parsed.refresh_from_db()
+        self.assertEqual(asset.status, AssetStatus.PROCESSED)
+        self.assertEqual(asset.output_path, "data/processed/Loop/Loop_May_2026.csv")
+        self.assertEqual(asset.uploaded_item_id, "fi-uploaded")
+        self.assertEqual(parsed.comparison_status, "approved")
+        self.assertEqual(parsed.comparison_summary["final_sharefile_item_id"], "fi-uploaded")
+        self.assertEqual(parsed.comparison_summary["final_sharefile_filename"], "Loop_May_2026.csv")
+        self.assertEqual(parsed.comparison_summary["final_sharefile_path"], "Final/May_2026/Loop_May_2026.csv")
+        self.assertTrue(final_exists)
+        self.assertIn("2026-05-01,Loop,BetOnline", final_content)
+        self.assertEqual(fake_client.folder_parts, ["Final", "May_2026"])
+        self.assertEqual(fake_client.uploaded_name, "Loop_May_2026.csv")
+        self.assertTrue(asset.events.filter(event_type="final_approved").exists())
+        self.assertNotContains(process_response, "Loop_May_2026_v1.csv")
 
     def test_approval_root_defaults_to_allshared(self):
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -693,6 +771,64 @@ class DashboardViewTests(TestCase):
             parser_key="tvm",
             status=AssetStatus.PROCESSING,
             name="TVM MAY 2026.xlsx",
+            local_path=local_path,
+            file_size=workbook_path.stat().st_size,
+        )
+
+    def _write_octopus_parse_fixture(self, repo_root: Path) -> Asset:
+        project_root = Path(__file__).resolve().parents[3]
+        parser_root = repo_root / "parsers" / "Octopus"
+        parser_root.mkdir(parents=True)
+        shutil.copy2(project_root / "parsers" / "Octopus" / "input_schema.json", parser_root / "input_schema.json")
+        shutil.copy2(project_root / "parsers" / "Octopus" / "parser.py", parser_root / "parser.py")
+
+        approved_path = repo_root / "data" / "processed" / "Octopus" / "Octopus.csv"
+        approved_path.parent.mkdir(parents=True)
+        approved_path.write_text(
+            "\n".join(
+                [
+                    "Date,Vendor,Brand,Channel,Platform,Spend,Impressions,Data_Grain,Processed_At,Source_File",
+                    "2026-04-01,Octopus,BetOnline,Display,Octopus,10,100,daily,approved,baseline.csv",
+                    "",
+                ]
+            ),
+            encoding="utf-8",
+        )
+
+        local_path = "data/inbox/home/josh/T-MOBILE MAY 2026.xlsx"
+        workbook_path = repo_root / local_path
+        workbook_path.parent.mkdir(parents=True)
+        workbook = Workbook()
+        sheet = workbook.active
+        sheet.title = "Daily Spend"
+        sheet["A1"] = "DOOH"
+        sheet["B1"] = "Impressions"
+        sheet["C1"] = "Spend"
+        sheet["A2"] = "2026-05-01"
+        sheet["B2"] = 100
+        sheet["C2"] = 10
+        sheet["A3"] = "2026-05-02"
+        sheet["B3"] = 200
+        sheet["C3"] = 20
+        sheet["A34"] = "Rideshare"
+        sheet["B34"] = "Impressions"
+        sheet["C34"] = "Spend"
+        sheet["A35"] = "2026-05-01"
+        sheet["B35"] = 300
+        sheet["C35"] = 30
+        sheet["A36"] = "2026-05-02"
+        sheet["B36"] = 400
+        sheet["C36"] = 40
+        workbook.save(workbook_path)
+        workbook.close()
+
+        octopus, _ = Vendor.objects.get_or_create(name="Octopus", defaults={"parser_key": "octopus"})
+        return Asset.objects.create(
+            remote_item_id="fi-octopus-parse",
+            vendor=octopus,
+            parser_key="octopus",
+            status=AssetStatus.PROCESSING,
+            name="T-MOBILE MAY 2026.xlsx",
             local_path=local_path,
             file_size=workbook_path.stat().st_size,
         )

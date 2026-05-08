@@ -1,0 +1,69 @@
+{
+  "source_file": "data/inbox/home/josh/T-MOBILE_April 2026 FINAL REPORT.xlsx",
+  "target_file": "_old/final/Octopus.csv",
+  "sheet_name": "Daily Spend",
+  "file_type": "xlsx",
+  "header": {
+    "row": 1,
+    "columns": [
+      {
+        "letter": "A",
+        "name": "DOOH"
+      },
+      {
+        "letter": "B",
+        "name": "Impressions"
+      },
+      {
+        "letter": "C",
+        "name": "Spend"
+      }
+    ]
+  },
+  "tables": [
+    {
+      "name": "DOOH",
+      "header_row": 1,
+      "first_data_row": 2,
+      "columns": {
+        "date": "A",
+        "impressions": "B",
+        "spend": "C"
+      }
+    },
+    {
+      "name": "Rideshare",
+      "header_row": 34,
+      "first_data_row": 35,
+      "columns": {
+        "date": "A",
+        "impressions": "B",
+        "spend": "C"
+      }
+    }
+  ],
+  "selected_columns": {
+    "date": "Date",
+    "impressions": "Impressions",
+    "spend": "Spend"
+  },
+  "skip_rules": [
+    "Use the DOOH table and the Rideshare table on the Daily Spend sheet.",
+    "Aggregate both tables into one daily row because the approved Octopus history is one row per date.",
+    "Skip section header rows where column A is DOOH or Rideshare.",
+    "Skip subtotal rows and blank separator rows where Date is blank."
+  ],
+  "comparison_window": {
+    "start_date": "2026-04-01",
+    "end_date": "2026-04-30"
+  },
+  "output_defaults": {
+    "Vendor": "Octopus",
+    "Brand": "BetOnline",
+    "Channel": "Display",
+    "Platform": "Octopus",
+    "Data_Grain": "daily",
+    "Processed_At": "generated",
+    "Source_File": "T-MOBILE_April 2026 FINAL REPORT.xlsx"
+  }
+}

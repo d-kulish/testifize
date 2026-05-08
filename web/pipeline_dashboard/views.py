@@ -21,6 +21,9 @@ from .parser_workflow import (
     ParserWorkflowError,
     build_parse_preview,
     build_parse_result_preview,
+    final_period_label,
+    final_processed_output_path,
+    finalize_approved_output,
     stage_asset_parser,
     upload_approved_output,
 )
@@ -167,7 +170,7 @@ def process(request):
         "grouped_assets": grouped_assets,
         "vendors": active_vendors,
         "parsed_outputs": ParsedOutput.objects.select_related("asset", "vendor")
-        .exclude(comparison_status="cancelled")
+        .filter(comparison_status="sent_for_approval")
         .order_by("-created_at")[:50],
         "admin_urls": admin_urls_context(),
         "active_nav": "process",
@@ -468,6 +471,63 @@ def cancel_parsed_output(request, parsed_output_id: int):
     return redirect("pipeline_dashboard:process")
 
 
+@require_POST
+@transaction.atomic
+def approve_parsed_output(request, parsed_output_id: int):
+    parsed = get_object_or_404(
+        ParsedOutput.objects.select_for_update().select_related("asset", "vendor"),
+        pk=parsed_output_id,
+        comparison_status="sent_for_approval",
+    )
+    asset = Asset.objects.select_for_update().get(pk=parsed.asset_id)
+    previous_status = asset.status
+    if asset.status != AssetStatus.REVIEW:
+        return JsonResponse({"error": "Only files in Review can be marked approved."}, status=400)
+
+    try:
+        upload_item = finalize_approved_output(parsed)
+    except (ParserWorkflowError, ReviewPreviewError, ValueError) as exc:
+        transaction.set_rollback(True)
+        return JsonResponse({"error": str(exc)}, status=400)
+    except Exception as exc:
+        transaction.set_rollback(True)
+        return JsonResponse({"error": str(exc)}, status=400)
+
+    final_path = final_processed_output_path(parsed)
+    period_label = final_period_label(parsed)
+    parsed.comparison_status = "approved"
+    parsed.comparison_summary = {
+        **(parsed.comparison_summary or {}),
+        "final_sharefile_item_id": upload_item.id,
+        "final_sharefile_filename": upload_item.name,
+        "final_sharefile_path": f"Final/{period_label}/{upload_item.name}",
+        "final_local_path": _relative_path(final_path),
+        "approved_at": timezone.now().isoformat(),
+    }
+    parsed.save(update_fields=["comparison_status", "comparison_summary"])
+
+    asset.output_path = _relative_path(final_path)
+    asset.uploaded_item_id = upload_item.id
+    asset.status_reason = "Parsed CSV approved and stored in ShareFile Final."
+    asset.save(update_fields=["output_path", "uploaded_item_id", "status_reason", "updated_at"])
+    set_asset_status(asset, AssetStatus.PROCESSED, "Parsed CSV approved and stored in ShareFile Final.")
+    AssetEvent.objects.create(
+        asset=asset,
+        event_type="final_approved",
+        from_status=previous_status,
+        to_status=AssetStatus.PROCESSED,
+        message=f"Parsed CSV stored in ShareFile Final as {upload_item.name}.",
+        metadata={
+            "parsed_output_id": parsed.id,
+            "final_sharefile_item_id": upload_item.id,
+            "final_sharefile_filename": upload_item.name,
+            "final_local_path": _relative_path(final_path),
+        },
+    )
+    messages.success(request, f"{asset.name}: approved and stored in ShareFile Final.")
+    return redirect("pipeline_dashboard:process")
+
+
 def _remove_staged_output(parsed: ParsedOutput | None) -> None:
     if parsed and parsed.output_path:
         (settings.REPO_ROOT / parsed.output_path).unlink(missing_ok=True)
@@ -543,3 +603,10 @@ def _parse_dt(value: str | None):
     if not value:
         return None
     return parse_datetime(value)
+
+
+def _relative_path(path):
+    try:
+        return str(path.relative_to(settings.REPO_ROOT))
+    except ValueError:
+        return str(path)

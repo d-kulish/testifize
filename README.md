@@ -571,7 +571,7 @@ Approval-review parser outputs are versioned under:
 data/output/<Vendor>/<Vendor>_<Month>_<Year>_vN.csv
 ```
 
-The first migrated parsers are `Loop`, `TVM`, `TAIV`, and `PodcastOne`. TAIV combines the Prime and Retail tables on `Spend By Day` into one daily row per date, matching the approved TAIV history shape. PodcastOne combines the BASE daily sheet and WC daily sheet by `Day`. On `/process/`, `Parse` validates the input schema and shows overlapping period-day charts for the parsed candidate against the latest approved vendor history. It does not write the final CSV.
+The first migrated parsers are `Loop`, `TVM`, `TAIV`, `PodcastOne`, and `Octopus`. TAIV combines the Prime and Retail tables on `Spend By Day` into one daily row per date, matching the approved TAIV history shape. PodcastOne combines the BASE daily sheet and WC daily sheet by `Day`. Octopus combines the `DOOH` and `Rideshare` tables on `Daily Spend` into one daily row per date. On `/process/`, `Parse` validates the input schema and shows overlapping period-day charts for the parsed candidate against the latest approved vendor history. It does not write the final CSV.
 
 The approved-history importer canonicalizes `_old/final/Taiv.csv` into `data/processed/TAIV/TAIV.csv` so the parser workflow can find TAIV history by the app vendor name.
 
@@ -579,7 +579,7 @@ The modal `Approval` action writes the versioned parsed CSV under `data/output/<
 
 `data/processed/<Vendor>/` is reserved for files that have actually been approved. The ShareFile Approval upload is only an external review request, so it does not create or update `data/processed/<Vendor>/`.
 
-The Approval table tracks sent review files. `Cancel` cancels that parsed output and returns the source asset to Processing Files.
+The Approval table tracks sent review files. `Cancel` cancels that parsed output and returns the source asset to Processing Files. `Approved` copies the parsed CSV into `data/processed/<Vendor>/<Vendor>_<Reporting_Period>.csv`, uploads that final-named CSV to ShareFile `Final/<Reporting_Period>/`, stores the final ShareFile item ID, and moves the source asset from Review to Processed.
 
 ShareFile approval upload defaults to the ShareFile `allshared` root, so approved CSVs are uploaded under Shared Folders unless overridden. To use a different root folder, set:
 
@@ -587,19 +587,23 @@ ShareFile approval upload defaults to the ShareFile `allshared` root, so approve
 SHAREFILE_APPROVAL_ROOT_ID=<folder-id-or-alias>
 ```
 
-The app ensures this path under the selected root before upload:
+The app ensures this path under the selected root before approval upload:
 
 ```text
 Approval/<Current_Month>/<Vendor>/<Vendor>_<Current_Month>_<Current_Year>_vN.csv
 ```
 
+When a review file is approved, the app ensures this final path under the selected root:
+
+```text
+Final/<Reporting_Period>/<Vendor>_<Reporting_Period>.csv
+```
+
 ## Immediate Next Steps
 
-1. Add the post-ShareFile approval step that promotes an externally approved CSV from `data/output/<Vendor>/` into `data/processed/<Vendor>/`.
-2. Decide how external approval should be signaled back to the app: manual button, ShareFile folder scan, or metadata/status file.
-3. Migrate the next vendor parser after Loop, TVM, TAIV, and PodcastOne, starting with its `_old/final/<Vendor>.csv` benchmark and real inbox files.
-4. Define the shared target schema location and validation rules for final approved outputs.
-5. Add anomaly/comparison summaries beyond the current overlapping Spend, Impressions, and CPM charts.
+1. Define the shared target schema location and validation rules for final approved outputs.
+2. Add anomaly/comparison summaries beyond the current overlapping Spend, Impressions, and CPM charts.
+3. Decide whether finalized ShareFile uploads should fail on duplicate names, overwrite them, or create explicit new versions.
 
 ## Historical Material
 

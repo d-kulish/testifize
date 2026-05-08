@@ -190,9 +190,40 @@ def upload_approved_output(
     )
 
 
+def finalize_approved_output(parsed_output: ParsedOutput, client: ShareFileClient | None = None):
+    final_path = promote_final_output_file(parsed_output)
+    root_id = final_root_id()
+    period_label = final_period_label(parsed_output)
+    client = client or build_sharefile_client()
+    try:
+        folder = client.ensure_folder_path(root_id, ["Final", period_label])
+        return client.upload_bytes(
+            folder.id,
+            final_path.name,
+            final_path.read_bytes(),
+            content_type="text/csv",
+            notify=False,
+            overwrite=False,
+        )
+    except Exception:
+        final_path.unlink(missing_ok=True)
+        raise
+
+
 def approval_root_id() -> str:
     env = load_dotenv(settings.REPO_ROOT / ".env")
     root_id = env.get("SHAREFILE_APPROVAL_ROOT_ID") or env.get("SHAREFILE_APPROVAL_FOLDER_ID")
+    return root_id or "allshared"
+
+
+def final_root_id() -> str:
+    env = load_dotenv(settings.REPO_ROOT / ".env")
+    root_id = (
+        env.get("SHAREFILE_FINAL_ROOT_ID")
+        or env.get("SHAREFILE_FINAL_FOLDER_ID")
+        or env.get("SHAREFILE_APPROVAL_ROOT_ID")
+        or env.get("SHAREFILE_APPROVAL_FOLDER_ID")
+    )
     return root_id or "allshared"
 
 
@@ -345,6 +376,40 @@ def promote_parsed_output_file(parsed_output: ParsedOutput) -> Path:
     destination_path.parent.mkdir(parents=True, exist_ok=True)
     shutil.copy2(source_path, destination_path)
     return destination_path
+
+
+def promote_final_output_file(parsed_output: ParsedOutput) -> Path:
+    if not parsed_output.vendor:
+        raise ParserWorkflowError("Parsed output has no vendor.")
+    source_path = settings.REPO_ROOT / parsed_output.output_path
+    if not source_path.exists():
+        raise ParserWorkflowError(f"Parsed CSV was not found: {display_path(source_path)}")
+    destination_path = final_processed_output_path(parsed_output)
+    if destination_path.exists():
+        raise ParserWorkflowError(f"Final CSV already exists: {display_path(destination_path)}")
+    destination_path.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copy2(source_path, destination_path)
+    return destination_path
+
+
+def final_processed_output_path(parsed_output: ParsedOutput) -> Path:
+    if not parsed_output.vendor:
+        raise ParserWorkflowError("Parsed output has no vendor.")
+    period_label = final_period_label(parsed_output)
+    filename = f"{parsed_output.vendor.name}_{period_label}.csv"
+    return settings.REPO_ROOT / "data" / "processed" / parsed_output.vendor.name / filename
+
+
+def final_period_label(parsed_output: ParsedOutput) -> str:
+    if parsed_output.reporting_period:
+        return safe_period_label(parsed_output.reporting_period)
+    if parsed_output.period_start:
+        return parsed_output.period_start.strftime("%B_%Y")
+    return approval_period_label()
+
+
+def safe_period_label(value: str) -> str:
+    return re.sub(r"[^A-Za-z0-9]+", "_", value).strip("_") or "Unknown_Period"
 
 
 def load_output_columns(approved_path: Path | None, schema: dict[str, Any]) -> list[str]:
