@@ -1,0 +1,4 @@
+interface:
+  display_name: "Design"
+  short_description: "Testifize local UI design contract for the ShareFile vendor pipeline"
+  default_prompt: "Use $design to apply the selected Linear Ops Console visual direction to Testifize Django templates, tables, modals, navigation, charts, and workflow states."

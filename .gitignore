@@ -148,6 +148,7 @@ venv.bak/
 # Testifize local pipeline state and downloaded vendor assets
 data/
 config/sharefile_folders.json
+temp/
 
 # Spyder project settings
 .spyderproject
