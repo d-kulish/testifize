@@ -8,12 +8,12 @@
   <style>
     :root {
       color-scheme: light;
-      --bg: #f6f7f9;
+      --bg: #f7f8fb;
       --panel: #ffffff;
-      --panel-subtle: #f9fafb;
-      --border: #d9dee5;
-      --text: #18202a;
-      --muted: #647184;
+      --panel-subtle: #f8fafc;
+      --border: #e1e7ef;
+      --text: #101828;
+      --muted: #667085;
       --accent: #2563eb;
       --accent-strong: #1e40af;
       --danger: #b42318;
@@ -53,8 +53,9 @@
     }
 
     .sidebar {
-      background: #111827;
-      color: #e5e7eb;
+      background: #ffffff;
+      color: var(--text);
+      border-right: 1px solid var(--border);
       padding: 20px 16px;
     }
 
@@ -83,15 +84,16 @@
       display: block;
       padding: 9px 10px;
       border-radius: 6px;
-      color: #d1d5db;
+      color: #475467;
       text-decoration: none;
       font-size: 14px;
+      font-weight: 600;
     }
 
     .nav a:hover,
     .nav a.active {
-      background: #1f2937;
-      color: #ffffff;
+      background: #eff6ff;
+      color: var(--accent);
     }
 
     .content {
@@ -179,7 +181,7 @@
 
     .metrics {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+      grid-template-columns: repeat(8, minmax(0, 1fr));
       gap: 12px;
       margin-bottom: 20px;
     }
@@ -193,27 +195,135 @@
     }
 
     .metric {
-      padding: 14px;
-      min-height: 86px;
+      position: relative;
+      display: grid;
+      grid-template-columns: 36px minmax(0, 1fr);
+      column-gap: 10px;
+      row-gap: 4px;
+      align-items: center;
+      padding: 14px 16px;
+      min-height: 97px;
+      overflow: hidden;
+    }
+
+    .metric-icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      grid-column: 1;
+      grid-row: 2;
+      width: 34px;
+      height: 34px;
+      color: var(--accent);
+    }
+
+    .metric-icon svg {
+      width: 32px;
+      height: 32px;
+      stroke: currentColor;
+      stroke-width: 1.9;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      fill: none;
+    }
+
+    .metric.green .metric-icon {
+      color: #15803d;
+    }
+
+    .metric.amber .metric-icon {
+      color: #d97706;
+    }
+
+    .metric.purple .metric-icon {
+      color: #6d28d9;
+    }
+
+    .metric.red .metric-icon {
+      color: #dc2626;
+    }
+
+    .metric.slate .metric-icon {
+      color: #475467;
+    }
+
+    .metric-body {
+      display: contents;
     }
 
     .metric-label {
+      grid-column: 1 / -1;
+      grid-row: 1;
+      min-width: 0;
       color: var(--muted);
-      font-size: 12px;
-      text-transform: uppercase;
-      font-weight: 700;
+      font-size: 13px;
+      font-weight: 650;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
     .metric-value {
-      margin-top: 8px;
-      font-size: 26px;
-      font-weight: 780;
+      grid-column: 2;
+      grid-row: 2;
+      min-width: 0;
+      color: var(--text);
+      font-size: 32px;
+      line-height: 0.95;
+      font-weight: 650;
+      letter-spacing: 0;
     }
 
     .metric-value.compact {
       font-size: 14px;
       line-height: 1.35;
       overflow-wrap: anywhere;
+    }
+
+    .metric-note {
+      display: flex;
+      align-items: center;
+      grid-column: 1 / -1;
+      grid-row: 3;
+      gap: 8px;
+      min-width: 0;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 600;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .metric-arrow {
+      flex: 0 0 auto;
+      color: #98a2b3;
+      font-size: 16px;
+      line-height: 1;
+    }
+
+    .metric.green .metric-note {
+      color: #15803d;
+    }
+
+    .metric.amber .metric-note {
+      color: #d97706;
+    }
+
+    .metric.purple .metric-note {
+      color: #6d28d9;
+    }
+
+    .metric.red .metric-note {
+      color: #dc2626;
+    }
+
+    .metric.blue .metric-note {
+      color: #1d4ed8;
+    }
+
+    .metric.slate .metric-note {
+      color: #475467;
     }
 
     .grid {
@@ -695,6 +805,7 @@
       gap: 12px;
       padding: 11px 14px;
       background: var(--panel);
+      color: var(--text);
     }
 
     .empty {
@@ -763,7 +874,9 @@
       }
 
       .metrics {
-        grid-template-columns: repeat(3, minmax(0, 1fr));
+        grid-template-columns: repeat(8, minmax(160px, 1fr));
+        overflow-x: auto;
+        padding-bottom: 4px;
       }
 
       .grid {
@@ -782,10 +895,6 @@
 
       .actions {
         justify-content: start;
-      }
-
-      .metrics {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
       }
 
       .review-modal {
@@ -816,11 +925,8 @@
       </div>
       <nav class="nav" aria-label="Primary">
         <a class="{% if active_nav == 'dashboard' %}active{% endif %}" href="{% url 'pipeline_dashboard:dashboard' %}">Dashboard</a>
-        <a class="{% if active_nav == 'assets' %}active{% endif %}" href="{% url 'pipeline_dashboard:assets' %}">Assets</a>
-        <a class="{% if active_nav == 'process' %}active{% endif %}" href="{% url 'pipeline_dashboard:process' %}">Process</a>
         <a class="{% if active_nav == 'folders' %}active{% endif %}" href="{% url 'pipeline_dashboard:folders' %}">SF folders</a>
-        <a class="{% if active_nav == 'vendors' %}active{% endif %}" href="{% url 'pipeline_dashboard:vendors' %}">Vendors</a>
-        <a href="{% url 'admin:index' %}">Django admin</a>
+        <a class="{% if active_nav == 'process' %}active{% endif %}" href="{% url 'pipeline_dashboard:process' %}">Process</a>
       </nav>
     </aside>
 

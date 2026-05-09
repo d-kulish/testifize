@@ -13,46 +13,6 @@
         {% csrf_token %}
         <button class="button primary" type="submit">Update</button>
       </form>
-      <a class="button" href="{{ admin_urls.index }}">Admin</a>
-    </div>
-  </section>
-
-  <section class="metrics">
-    <div class="metric">
-      <div class="metric-label">Folders</div>
-      <div class="metric-value">{{ mirror_summary.folder_count }}</div>
-    </div>
-    <div class="metric">
-      <div class="metric-label">Files</div>
-      <div class="metric-value">{{ mirror_summary.file_count }}</div>
-    </div>
-    <div class="metric">
-      <div class="metric-label">New</div>
-      <div class="metric-value status-green">{{ mirror_summary.new_count }}</div>
-    </div>
-    <div class="metric">
-      <div class="metric-label">Active</div>
-      <div class="metric-value status-orange">{{ mirror_summary.active_count }}</div>
-    </div>
-    <div class="metric">
-      <div class="metric-label">Review</div>
-      <div class="metric-value status-purple">{{ mirror_summary.review_count }}</div>
-    </div>
-    <div class="metric">
-      <div class="metric-label">Processed</div>
-      <div class="metric-value status-blue">{{ mirror_summary.processed_count }}</div>
-    </div>
-    <div class="metric">
-      <div class="metric-label">Deleted in SF</div>
-      <div class="metric-value status-red">{{ mirror_summary.deleted_count }}</div>
-    </div>
-    <div class="metric">
-      <div class="metric-label">Duplicate Names</div>
-      <div class="metric-value">{{ mirror_summary.duplicate_name_count }}</div>
-    </div>
-    <div class="metric">
-      <div class="metric-label">Last Sync</div>
-      <div class="metric-value compact">{{ mirror_summary.last_sync_at|default:"-" }}</div>
     </div>
   </section>
 

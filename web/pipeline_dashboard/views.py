@@ -10,7 +10,6 @@ from django.db import transaction
 from django.db.models import Count
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
-from django.urls import reverse
 from django.utils import timezone
 from django.utils.dateparse import parse_datetime
 from django.views.decorators.http import require_GET, require_POST
@@ -46,36 +45,8 @@ FOLDER_VENDOR_RULES = {
 }
 
 
-def admin_urls_context() -> dict[str, str]:
-    return {
-        "index": reverse("admin:index"),
-        "vendors": reverse("admin:pipeline_dashboard_vendor_changelist"),
-        "vendor_add": reverse("admin:pipeline_dashboard_vendor_add"),
-        "folders": reverse("admin:pipeline_dashboard_sharefilefolder_changelist"),
-        "folder_add": reverse("admin:pipeline_dashboard_sharefilefolder_add"),
-        "assets": reverse("admin:pipeline_dashboard_asset_changelist"),
-    }
-
-
-def status_rows(active_status: str | None = None) -> list[dict[str, object]]:
-    status_counts = {
-        row["status"]: row["count"]
-        for row in Asset.objects.values("status").annotate(count=Count("remote_item_id"))
-    }
-    return [
-        {
-            "key": status,
-            "label": AssetStatus(status).label,
-            "count": status_counts.get(status, 0),
-            "url": f"{reverse('pipeline_dashboard:assets')}?status={status}",
-            "admin_url": f"{reverse('admin:pipeline_dashboard_asset_changelist')}?status__exact={status}",
-            "active": status == active_status,
-        }
-        for status in REVIEW_STATUSES
-    ]
-
-
 def dashboard(request):
+    mirror = load_sharefile_mirror()
     status_counts = {
         row["status"]: row["count"]
         for row in Asset.objects.values("status").annotate(count=Count("remote_item_id"))
@@ -111,42 +82,17 @@ def dashboard(request):
                 "key": status,
                 "label": AssetStatus(status).label,
                 "count": status_counts.get(status, 0),
-                "url": f"{reverse('pipeline_dashboard:assets')}?status={status}",
             }
             for status in REVIEW_STATUSES
         ],
+        "mirror_summary": mirror.summary,
         "vendor_counts": vendor_counts,
         "review_assets": review_assets,
         "recent_assets": recent_assets,
         "folders": folders,
-        "admin_urls": admin_urls_context(),
         "active_nav": "dashboard",
     }
     return render(request, "pipeline_dashboard/dashboard.html", context)
-
-
-def assets(request):
-    active_status = request.GET.get("status") or ""
-    valid_statuses = {choice.value for choice in AssetStatus}
-    asset_queryset = Asset.objects.select_related("vendor", "source_folder").order_by(
-        "-remote_modified_at",
-        "-last_seen_at",
-        "name",
-    )
-    if active_status in valid_statuses:
-        asset_queryset = asset_queryset.filter(status=active_status)
-    else:
-        active_status = ""
-
-    context = {
-        "title": "Assets",
-        "assets": asset_queryset[:200],
-        "status_rows": status_rows(active_status or None),
-        "active_status": active_status,
-        "admin_urls": admin_urls_context(),
-        "active_nav": "assets",
-    }
-    return render(request, "pipeline_dashboard/assets.html", context)
 
 
 def process(request):
@@ -172,7 +118,6 @@ def process(request):
         "parsed_outputs": ParsedOutput.objects.select_related("asset", "vendor")
         .filter(comparison_status="sent_for_approval")
         .order_by("-created_at")[:50],
-        "admin_urls": admin_urls_context(),
         "active_nav": "process",
     }
     return render(request, "pipeline_dashboard/process.html", context)
@@ -187,7 +132,6 @@ def folders(request):
         "folders": mirror.folders,
         "mirror_summary": mirror.summary,
         "vendors": vendors,
-        "admin_urls": admin_urls_context(),
         "active_nav": "folders",
     }
     return render(request, "pipeline_dashboard/folders.html", context)
@@ -531,20 +475,6 @@ def approve_parsed_output(request, parsed_output_id: int):
 def _remove_staged_output(parsed: ParsedOutput | None) -> None:
     if parsed and parsed.output_path:
         (settings.REPO_ROOT / parsed.output_path).unlink(missing_ok=True)
-
-
-def vendors(request):
-    vendor_queryset = Vendor.objects.annotate(
-        asset_count=Count("assets", distinct=True),
-        folder_count=Count("folders", distinct=True),
-    ).order_by("name")
-    context = {
-        "title": "Vendors",
-        "vendors": vendor_queryset,
-        "admin_urls": admin_urls_context(),
-        "active_nav": "vendors",
-    }
-    return render(request, "pipeline_dashboard/vendors.html", context)
 
 
 def _apply_folder_vendor_rules(folders: list[dict], vendors: list[Vendor]) -> None:

@@ -40,7 +40,7 @@ class DashboardViewTests(TestCase):
         response = self.client.get(reverse("pipeline_dashboard:dashboard"))
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "Pipeline Dashboard")
+        self.assertContains(response, "Dashboard")
         self.assertContains(response, "No assets need review yet")
 
     def test_dashboard_renders_catalogue_data(self):
@@ -65,46 +65,34 @@ class DashboardViewTests(TestCase):
         self.assertContains(response, "AdTaxi report.xlsx")
         self.assertContains(response, "AdTaxi")
 
-    def test_assets_page_renders_catalogue_data(self):
-        vendor = Vendor.objects.create(name="AdTaxi", parser_key="adtaxi")
-        folder = ShareFileFolder.objects.create(
-            vendor=vendor,
-            folder_id="fo-example",
-            label="Shared Folders/AdTaxi",
-        )
-        Asset.objects.create(
-            remote_item_id="fi-example",
-            vendor=vendor,
-            source_folder=folder,
-            status=AssetStatus.NEW,
-            name="AdTaxi report.xlsx",
-            created_by_name="Vendor User",
-        )
+    def test_dashboard_renders_sharefile_mirror_totals(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            repo_root = Path(tmpdir)
+            self._write_review_fixture(repo_root)
 
-        response = self.client.get(reverse("pipeline_dashboard:assets"))
+            with override_settings(REPO_ROOT=repo_root):
+                response = self.client.get(reverse("pipeline_dashboard:dashboard"))
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "Asset List")
-        self.assertContains(response, "AdTaxi report.xlsx")
-        self.assertContains(response, "Vendor User")
+        self.assertContains(response, "ShareFile mirror totals")
+        self.assertContains(response, "Folders")
+        self.assertContains(response, "Files")
+        self.assertContains(response, "New")
+        self.assertContains(response, "Duplicate Names")
+        content = response.content.decode()
+        self.assertIn('<div class="metric-label">Folders</div>', content)
+        self.assertIn('<div class="metric-label">Files</div>', content)
+        self.assertIn('<div class="metric-label">New</div>', content)
+        self.assertIn('<div class="metric-label">Duplicate Names</div>', content)
+        self.assertIn('<div class="metric-value">1</div>', content)
+        self.assertIn('<div class="metric-value">0</div>', content)
+        self.assertContains(response, "ShareFile sources")
+        self.assertContains(response, "Ready for review")
+        self.assertContains(response, "Name collisions")
 
-    def test_assets_page_filters_by_status(self):
-        Asset.objects.create(
-            remote_item_id="fi-new",
-            status=AssetStatus.NEW,
-            name="new.xlsx",
-        )
-        Asset.objects.create(
-            remote_item_id="fi-ignored",
-            status=AssetStatus.IGNORED,
-            name="ignored.xlsx",
-        )
-
-        response = self.client.get(reverse("pipeline_dashboard:assets"), {"status": AssetStatus.NEW})
-
-        self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "new.xlsx")
-        self.assertNotContains(response, "ignored.xlsx")
+    def test_removed_public_pages_return_not_found(self):
+        self.assertEqual(self.client.get("/assets/").status_code, 404)
+        self.assertEqual(self.client.get("/vendors/").status_code, 404)
 
     def test_folders_page_renders_sharefile_mirror(self):
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -270,7 +258,6 @@ class DashboardViewTests(TestCase):
         self.assertContains(response, "deleted.xlsx")
         self.assertContains(response, "Uploader")
         self.assertContains(response, "Mail")
-        self.assertContains(response, "Last Sync")
         self.assertContains(response, "Uploader One")
         self.assertContains(response, "Uploader Two")
         self.assertContains(response, "one@example.com")
@@ -688,16 +675,6 @@ class DashboardViewTests(TestCase):
 
         self.assertRedirects(response, reverse("pipeline_dashboard:folders"))
         run_mock.assert_called_once()
-
-    def test_vendors_page_renders_vendor_data(self):
-        Vendor.objects.create(name="AdTaxi", parser_key="adtaxi", notes="Daily media exports")
-
-        response = self.client.get(reverse("pipeline_dashboard:vendors"))
-
-        self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "Vendor List")
-        self.assertContains(response, "AdTaxi")
-        self.assertContains(response, "adtaxi")
 
     def _write_review_fixture(self, repo_root: Path) -> str:
         local_path = "data/inbox/home/josh/new-report.csv"
