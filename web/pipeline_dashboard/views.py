@@ -3,11 +3,15 @@ from __future__ import annotations
 import os
 import subprocess
 import sys
+from datetime import date, timedelta
+from decimal import Decimal
+from pathlib import Path
+from types import SimpleNamespace
 
 from django.conf import settings
 from django.contrib import messages
 from django.db import transaction
-from django.db.models import Count
+from django.db.models import Count, Q
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
@@ -44,6 +48,45 @@ FOLDER_VENDOR_RULES = {
     "josh": ("PodcastOne", "Octopus", "Loop", "TVM", "TAIV"),
 }
 
+DASHBOARD_FILE_EXTENSIONS = {".csv", ".xls", ".xlsx"}
+DASHBOARD_FINISHED_STATUSES = {
+    AssetStatus.PROCESSED,
+    AssetStatus.UPLOADED,
+    AssetStatus.SUPERSEDED,
+    AssetStatus.IGNORED,
+}
+DASHBOARD_SPENDING_VENDORS = ("Loop", "PodcastOne", "TVM", "TAIV")
+DASHBOARD_SPENDING_EXAMPLE_PLANS = {
+    "Loop": {
+        "paid_start": -38,
+        "paid_end": -9,
+        "reported_start": -37,
+        "reported_end": -10,
+        "budget_multiplier": Decimal("1.05"),
+    },
+    "PodcastOne": {
+        "paid_start": -30,
+        "paid_end": 5,
+        "reported_start": -28,
+        "reported_end": 5,
+        "budget_multiplier": Decimal("1.02"),
+    },
+    "TVM": {
+        "paid_start": -16,
+        "paid_end": 35,
+        "reported_start": -16,
+        "reported_end": -5,
+        "budget_multiplier": Decimal("1.35"),
+    },
+    "TAIV": {
+        "paid_start": -2,
+        "paid_end": 38,
+        "reported_start": -2,
+        "reported_end": 7,
+        "budget_multiplier": Decimal("1.28"),
+    },
+}
+
 
 def dashboard(request):
     mirror = load_sharefile_mirror()
@@ -51,48 +94,434 @@ def dashboard(request):
         row["status"]: row["count"]
         for row in Asset.objects.values("status").annotate(count=Count("remote_item_id"))
     }
-    vendor_counts = (
-        Asset.objects.values("vendor__name")
-        .annotate(count=Count("remote_item_id"))
-        .order_by("-count", "vendor__name")[:8]
-    )
-    review_assets = (
+    queue_assets = list(
         Asset.objects.select_related("vendor", "source_folder")
-        .filter(status__in=[AssetStatus.NEW, AssetStatus.FAILED, AssetStatus.QUEUED])
-        .order_by("-remote_modified_at", "-last_seen_at")[:12]
+        .order_by("-remote_modified_at", "-last_seen_at", "name")[:18]
     )
-    recent_assets = (
-        Asset.objects.select_related("vendor", "source_folder")
-        .order_by("-last_seen_at", "name")[:12]
-    )
-    folders = ShareFileFolder.objects.select_related("vendor").order_by("label")[:12]
+    for asset in queue_assets:
+        _decorate_dashboard_asset(asset)
+
+    attention_assets = _dashboard_attention_assets(mirror.folders)
+    spending = _dashboard_spending()
 
     context = {
         "title": "Testifize Pipeline",
-        "totals": {
-            "assets": Asset.objects.count(),
-            "vendors": Vendor.objects.count(),
-            "folders": ShareFileFolder.objects.count(),
-            "needs_review": Asset.objects.filter(status__in=[AssetStatus.NEW, AssetStatus.FAILED]).count(),
-            "downloaded": status_counts.get(AssetStatus.DOWNLOADED, 0),
-            "uploaded": status_counts.get(AssetStatus.UPLOADED, 0),
-        },
-        "status_rows": [
-            {
-                "key": status,
-                "label": AssetStatus(status).label,
-                "count": status_counts.get(status, 0),
-            }
-            for status in REVIEW_STATUSES
-        ],
+        "dashboard_tabs": _dashboard_tabs(status_counts, mirror.summary),
         "mirror_summary": mirror.summary,
-        "vendor_counts": vendor_counts,
-        "review_assets": review_assets,
-        "recent_assets": recent_assets,
-        "folders": folders,
+        "queue_assets": queue_assets,
+        "attention_assets": attention_assets,
+        "spending": spending,
         "active_nav": "dashboard",
     }
     return render(request, "pipeline_dashboard/dashboard.html", context)
+
+
+def _dashboard_spending() -> SimpleNamespace:
+    today = timezone.localdate()
+    window_start = today - timedelta(days=40)
+    window_end = today + timedelta(days=40)
+    rows = []
+    for vendor_name in DASHBOARD_SPENDING_VENDORS:
+        parsed = (
+            ParsedOutput.objects.select_related("asset", "vendor")
+            .filter(vendor__name=vendor_name, comparison_status="approved")
+            .order_by("-created_at", "-id")
+            .first()
+        )
+        if parsed:
+            rows.append(_spending_row(parsed, window_start, window_end))
+
+    return SimpleNamespace(
+        rows=rows,
+        month_segments=_spending_month_segments(window_start, window_end),
+        month_markers=_spending_month_markers(window_start, window_end),
+        weekend_segments=_spending_weekend_segments(window_start, window_end),
+        ticks=_spending_ticks(window_start, window_end),
+        today_position=_timeline_center(today, window_start, window_end),
+        window_start=window_start,
+        window_end=window_end,
+    )
+
+
+def _spending_row(parsed: ParsedOutput, window_start: date, window_end: date) -> SimpleNamespace:
+    today = timezone.localdate()
+    plan = _spending_plan_dates(parsed, today)
+    recorded_amount = Decimal(parsed.total_spend or 0)
+    paid_amount = (recorded_amount * plan["budget_multiplier"]).quantize(Decimal("0.01"))
+    paid_start = plan["paid_start"]
+    paid_end = plan["paid_end"]
+    reported_start = plan["reported_start"]
+    reported_end = plan["reported_end"]
+    amount_gap = paid_amount - recorded_amount
+    paid_days = _inclusive_days(paid_start, paid_end)
+    recorded_days = _inclusive_days(reported_start, reported_end)
+    date_gap_days = paid_days - recorded_days
+
+    return SimpleNamespace(
+        vendor=parsed.vendor.name if parsed.vendor else "Unassigned",
+        campaign=_spending_campaign_name(parsed),
+        paid_label=_money_label(paid_amount),
+        recorded_label=_money_label(recorded_amount),
+        money_gap_label=_money_gap_label(amount_gap),
+        money_gap_class=_gap_class(amount_gap),
+        paid_days=paid_days,
+        recorded_days=recorded_days,
+        date_gap_label=str(date_gap_days),
+        date_gap_class="ok" if date_gap_days == 0 else "warn",
+        planned_left=_timeline_left(paid_start, window_start, window_end),
+        planned_width=_timeline_width(paid_start, paid_end, window_start, window_end),
+        recorded_left=_timeline_left(reported_start, window_start, window_end),
+        recorded_width=_timeline_width(reported_start, reported_end, window_start, window_end),
+        recorded_bar_class="warn" if date_gap_days >= 7 and reported_end < today else "",
+    )
+
+
+def _spending_plan_dates(parsed: ParsedOutput, today: date) -> dict[str, object]:
+    vendor_name = parsed.vendor.name if parsed.vendor else ""
+    example = DASHBOARD_SPENDING_EXAMPLE_PLANS.get(vendor_name)
+    if example:
+        return {
+            "paid_start": today + timedelta(days=example["paid_start"]),
+            "paid_end": today + timedelta(days=example["paid_end"]),
+            "reported_start": today + timedelta(days=example["reported_start"]),
+            "reported_end": today + timedelta(days=example["reported_end"]),
+            "budget_multiplier": example["budget_multiplier"],
+        }
+
+    fallback_start = parsed.period_start or today
+    fallback_end = parsed.period_end or fallback_start
+    return {
+        "paid_start": fallback_start,
+        "paid_end": fallback_end,
+        "reported_start": fallback_start,
+        "reported_end": fallback_end,
+        "budget_multiplier": Decimal("1.00"),
+    }
+
+
+def _inclusive_days(start: date, end: date) -> int:
+    return max((end - start).days + 1, 0)
+
+
+def _spending_campaign_name(parsed: ParsedOutput) -> str:
+    name = Path(parsed.asset.name).stem if parsed.asset_id else parsed.reporting_period
+    fallback = (parsed.reporting_period or "Campaign").replace("_", " ")
+    for marker in ("_April", "_May", "_June", "_July", "_August", "_September", "_October", "_November", "_December"):
+        if marker in name:
+            name = name.split(marker, 1)[0]
+            break
+    vendor = parsed.vendor.name if parsed.vendor else ""
+    normalized_vendor = vendor.upper().replace(" ", "")
+    if normalized_vendor and name.upper().replace(" ", "").startswith(normalized_vendor):
+        name = name[len(vendor):].lstrip(" _-")
+    return name or fallback
+
+
+def _spending_month_segments(window_start: date, window_end: date) -> list[dict[str, object]]:
+    segments = []
+    current = window_start.replace(day=1)
+    total_days = _timeline_total_days(window_start, window_end)
+    index = 0
+    while current <= window_end:
+        next_month = (current.replace(day=28) + timedelta(days=4)).replace(day=1)
+        segment_start = max(current, window_start)
+        segment_end = min(next_month - timedelta(days=1), window_end)
+        if segment_start <= segment_end:
+            left = ((segment_start - window_start).days / total_days) * 100
+            width = (((segment_end - segment_start).days + 1) / total_days) * 100
+            segments.append({
+                "label": segment_start.strftime("%b"),
+                "left": left,
+                "width": width,
+                "tone": "alt" if index % 2 else "",
+            })
+            index += 1
+        current = next_month
+    return segments
+
+
+def _spending_month_markers(window_start: date, window_end: date) -> list[dict[str, float]]:
+    markers = []
+    total_days = _timeline_total_days(window_start, window_end)
+    current = (window_start.replace(day=28) + timedelta(days=4)).replace(day=1)
+    while current < window_end:
+        markers.append({"left": ((current - window_start).days / total_days) * 100})
+        current = (current.replace(day=28) + timedelta(days=4)).replace(day=1)
+    return markers
+
+
+def _spending_weekend_segments(window_start: date, window_end: date) -> list[dict[str, float]]:
+    segments = []
+    total_days = _timeline_total_days(window_start, window_end)
+    current = window_start
+    segment_start = None
+    while current <= window_end:
+        if current.weekday() >= 5 and segment_start is None:
+            segment_start = current
+        if segment_start and (current.weekday() < 5 or current == window_end):
+            segment_end = current if current.weekday() >= 5 else current - timedelta(days=1)
+            left = ((segment_start - window_start).days / total_days) * 100
+            width = (((segment_end - segment_start).days + 1) / total_days) * 100
+            segments.append({"left": left, "width": width})
+            segment_start = None
+        current += timedelta(days=1)
+    return segments
+
+
+def _spending_ticks(window_start: date, window_end: date) -> list[dict[str, object]]:
+    ticks = []
+    total_days = _timeline_total_days(window_start, window_end)
+    for offset in range(0, 81, 10):
+        tick_date = window_start + timedelta(days=offset)
+        ticks.append({"label": f"{tick_date:%b} {tick_date.day}", "left": ((offset + 0.5) / total_days) * 100})
+    return ticks
+
+
+def _timeline_total_days(window_start: date, window_end: date) -> int:
+    return max((window_end - window_start).days + 1, 1)
+
+
+def _timeline_center(item_date: date, window_start: date, window_end: date) -> float:
+    total_days = _timeline_total_days(window_start, window_end)
+    clamped_date = min(max(item_date, window_start), window_end)
+    return (((clamped_date - window_start).days + 0.5) / total_days) * 100
+
+
+def _timeline_left(item_start: date, window_start: date, window_end: date) -> float:
+    total_days = _timeline_total_days(window_start, window_end)
+    clamped_start = min(max(item_start, window_start), window_end)
+    return ((clamped_start - window_start).days / total_days) * 100
+
+
+def _timeline_width(item_start: date, item_end: date, window_start: date, window_end: date) -> float:
+    total_days = _timeline_total_days(window_start, window_end)
+    clamped_start = min(max(item_start, window_start), window_end)
+    clamped_end = min(max(item_end, window_start), window_end)
+    if clamped_end < clamped_start:
+        return 0
+    return max((((clamped_end - clamped_start).days + 1) / total_days) * 100, 1.5)
+
+
+def _money_label(amount: Decimal) -> str:
+    if abs(amount) >= Decimal("1000"):
+        return f"${amount / Decimal('1000'):,.1f}k"
+    return f"${amount:,.0f}"
+
+
+def _money_gap_label(amount: Decimal) -> str:
+    if amount == 0:
+        return "$0"
+    sign = "-" if amount < 0 else "+"
+    return f"{sign}{_money_label(abs(amount))}"
+
+
+def _gap_class(amount: Decimal) -> str:
+    return "ok" if amount == 0 else "warn"
+
+
+def _decorate_dashboard_asset(asset: Asset) -> None:
+    suffix = Path(asset.name).suffix.lower().lstrip(".")
+    asset.display_file_type = suffix.upper() if suffix else "-"
+    asset.display_parser = asset.parser_key or (asset.vendor.parser_key if asset.vendor else "")
+    asset.display_parser = asset.display_parser or "-"
+    if asset.status == AssetStatus.FAILED:
+        asset.validation_label = "Needs attention"
+        asset.validation_class = "failed"
+    elif asset.status == AssetStatus.REVIEW:
+        asset.validation_label = "Ready"
+        asset.validation_class = "review"
+    elif asset.status in {AssetStatus.PROCESSED, AssetStatus.UPLOADED}:
+        asset.validation_label = "Passed"
+        asset.validation_class = "passed"
+    else:
+        asset.validation_label = "-"
+        asset.validation_class = ""
+    asset.duplicate_label = "Check" if asset.duplicate_group else "-"
+
+
+def _dashboard_tabs(status_counts: dict[str, int], mirror_summary: dict[str, int]) -> list[dict[str, object]]:
+    all_count = sum(status_counts.values()) or mirror_summary.get("file_count", 0)
+    return [
+        {"label": "All", "count": all_count, "active": True},
+        {"label": "New", "count": status_counts.get(AssetStatus.NEW, mirror_summary.get("new_count", 0))},
+        {"label": "Processing", "count": status_counts.get(AssetStatus.PROCESSING, mirror_summary.get("active_count", 0))},
+        {"label": "Parsed", "count": status_counts.get(AssetStatus.PROCESSED, mirror_summary.get("processed_count", 0))},
+        {"label": "Warnings", "count": status_counts.get(AssetStatus.FAILED, 0)},
+        {"label": "Ready", "count": status_counts.get(AssetStatus.REVIEW, mirror_summary.get("review_count", 0))},
+        {"label": "Approved", "count": status_counts.get(AssetStatus.UPLOADED, 0)},
+        {"label": "Duplicates", "count": mirror_summary.get("duplicate_name_count", 0)},
+    ]
+
+
+def _dashboard_attention_assets(folders: list[dict]) -> list[object]:
+    extension_filter = Q(name__iendswith=".csv") | Q(name__iendswith=".xls") | Q(name__iendswith=".xlsx")
+    pending_approval_ids = set(
+        ParsedOutput.objects.filter(comparison_status="sent_for_approval").values_list("asset_id", flat=True)
+    )
+    attention_by_id = {}
+    assets = list(
+        Asset.objects.select_related("vendor", "source_folder")
+        .filter(extension_filter)
+        .exclude(status__in=DASHBOARD_FINISHED_STATUSES)
+        .order_by("remote_created_at", "remote_modified_at", "name")
+    )
+    for asset in assets:
+        _decorate_attention_asset(asset, pending_approval_ids)
+        attention_by_id[asset.remote_item_id] = asset
+
+    for folder in folders:
+        folder_label = _dashboard_folder_label(folder.get("path") or folder.get("display_name") or "")
+        for file_row in folder.get("files", []):
+            if not _mirror_file_needs_action(file_row):
+                continue
+            remote_item_id = file_row.get("remote_item_id") or file_row.get("local_path") or file_row["name"]
+            if remote_item_id in attention_by_id:
+                continue
+            attention_by_id[remote_item_id] = _mirror_attention_item(file_row, folder_label)
+
+    attention_items = list(attention_by_id.values())
+    attention_items.sort(key=_attention_sort_key)
+    return attention_items
+
+
+def _attention_sort_key(item: object) -> tuple[int, int, float, str]:
+    uploaded_sort = getattr(item, "card_uploaded_sort", 0) or 0
+    missing_uploaded_at = 1 if uploaded_sort <= 0 else 0
+    return (
+        missing_uploaded_at,
+        -getattr(item, "card_age_days", 0),
+        uploaded_sort,
+        getattr(item, "name", "").lower(),
+    )
+
+
+def _mirror_file_needs_action(file_row: dict) -> bool:
+    suffix = Path(file_row.get("name") or "").suffix.lower()
+    return suffix in DASHBOARD_FILE_EXTENSIONS and file_row.get("status") in {"new", "active", "review"}
+
+
+def _mirror_attention_item(file_row: dict, folder_label: str) -> SimpleNamespace:
+    uploaded_at = _parse_attention_dt(file_row.get("created_at") or file_row.get("modified_at"))
+    age_days = _asset_age_days(uploaded_at)
+    stage = _mirror_attention_stage(file_row.get("status") or "new")
+    return SimpleNamespace(
+        name=file_row.get("name") or Path(file_row.get("local_path") or "").name,
+        card_vendor="No Vendor",
+        card_vendor_missing=True,
+        card_uploaded_at=uploaded_at,
+        card_uploaded_sort=uploaded_at.timestamp() if uploaded_at else 0,
+        card_age_days=age_days,
+        card_age_label=_age_label(age_days),
+        card_age_class=_age_class(age_days),
+        card_stage=stage,
+        card_stage_label={"new": "New", "review": "Review", "approval": "Approval"}[stage],
+        card_stage_sort={"approval": 0, "review": 1, "new": 2}[stage],
+        card_uploader=file_row.get("uploaded_by") or file_row.get("uploader_email") or "Unknown uploader",
+        card_progress=_progress_segments(stage),
+    )
+
+
+def _dashboard_folder_label(folder_path: str) -> str:
+    label = (folder_path or "").strip("/")
+    for prefix in ("home/", "allshared/"):
+        if label.startswith(prefix):
+            label = label.removeprefix(prefix)
+            break
+    return label or "Unassigned"
+
+
+def _parse_attention_dt(value: str | None):
+    if not value:
+        return None
+    parsed = parse_datetime(value)
+    if parsed and timezone.is_naive(parsed):
+        parsed = timezone.make_aware(parsed, timezone.get_current_timezone())
+    return parsed
+
+
+def _decorate_attention_asset(asset: Asset, pending_approval_ids: set[str]) -> None:
+    uploaded_at = _asset_uploaded_at(asset)
+    age_days = _asset_age_days(uploaded_at)
+    stage = _attention_stage(asset, pending_approval_ids)
+
+    asset.card_uploaded_at = uploaded_at
+    asset.card_age_days = age_days
+    asset.card_age_label = _age_label(age_days)
+    asset.card_age_class = _age_class(age_days)
+    asset.card_stage = stage
+    asset.card_stage_label = {"new": "New", "review": "Review", "approval": "Approval"}[stage]
+    asset.card_stage_sort = {"approval": 0, "review": 1, "new": 2}[stage]
+    asset.card_uploader = asset.created_by_display or "Unknown uploader"
+    asset.card_vendor = asset.vendor.name if asset.vendor else "No Vendor"
+    asset.card_vendor_missing = asset.vendor_id is None
+    asset.card_progress = _progress_segments(stage)
+    asset.card_uploaded_sort = uploaded_at.timestamp() if uploaded_at else 0
+
+
+def _asset_uploaded_at(asset: Asset):
+    uploaded_at = asset.remote_created_at or asset.remote_modified_at or asset.first_seen_at or asset.last_seen_at
+    if uploaded_at and timezone.is_naive(uploaded_at):
+        uploaded_at = timezone.make_aware(uploaded_at, timezone.get_current_timezone())
+    return uploaded_at
+
+
+def _asset_age_days(uploaded_at) -> int:
+    if not uploaded_at:
+        return 0
+    if timezone.is_naive(uploaded_at):
+        uploaded_at = timezone.make_aware(uploaded_at, timezone.get_current_timezone())
+    uploaded_date = timezone.localtime(uploaded_at).date()
+    return max((timezone.localdate() - uploaded_date).days, 0)
+
+
+def _age_label(age_days: int) -> str:
+    if age_days <= 0:
+        return "Today"
+    if age_days == 1:
+        return "1 day old"
+    return f"{age_days} days old"
+
+
+def _age_class(age_days: int) -> str:
+    if age_days <= 1:
+        return "fresh"
+    if age_days <= 3:
+        return "watch"
+    if age_days <= 5:
+        return "late"
+    return "overdue"
+
+
+def _attention_stage(asset: Asset, pending_approval_ids: set[str]) -> str:
+    if asset.remote_item_id in pending_approval_ids or asset.status == AssetStatus.REVIEW:
+        return "approval"
+    if asset.status == AssetStatus.PROCESSING:
+        return "review"
+    return "new"
+
+
+def _mirror_attention_stage(status: str) -> str:
+    if status == "review":
+        return "approval"
+    if status == "active":
+        return "review"
+    return "new"
+
+
+def _progress_segments(stage: str) -> list[dict[str, str]]:
+    order = ["new", "review", "approval"]
+    labels = {"new": "New", "review": "Review", "approval": "Approval"}
+    active_index = order.index(stage)
+    segments = []
+    for index, key in enumerate(order):
+        if index < active_index:
+            state = "complete"
+        elif index == active_index:
+            state = "active"
+        else:
+            state = "pending"
+        segments.append({"label": labels[key], "state": state})
+    return segments
 
 
 def process(request):

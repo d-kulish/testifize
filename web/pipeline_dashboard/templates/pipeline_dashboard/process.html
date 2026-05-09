@@ -14,10 +14,36 @@
     </div>
   </section>
 
-  <section class="metrics">
-    <div class="metric">
-      <div class="metric-label">Processing</div>
-      <div class="metric-value status-orange">{{ assets|length }}</div>
+  <section class="metrics metrics-compact" aria-label="Processing totals">
+    <div class="metric amber">
+      <div class="metric-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24"><path d="M4 7h16"></path><path d="M4 12h10"></path><path d="M4 17h7"></path><path d="m16 16 2 2 4-5"></path></svg>
+      </div>
+      <div class="metric-body">
+        <div class="metric-label">Processing</div>
+        <div class="metric-value">{{ assets|length }}</div>
+        <div class="metric-note">Active file queue</div>
+      </div>
+    </div>
+    <div class="metric purple">
+      <div class="metric-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"></circle><path d="m8 12 3 3 5-6"></path></svg>
+      </div>
+      <div class="metric-body">
+        <div class="metric-label">Ready</div>
+        <div class="metric-value">{{ parsed_outputs|length }}</div>
+        <div class="metric-note">Awaiting approval</div>
+      </div>
+    </div>
+    <div class="metric blue">
+      <div class="metric-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M22 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+      </div>
+      <div class="metric-body">
+        <div class="metric-label">Vendors</div>
+        <div class="metric-value">{{ vendors|length }}</div>
+        <div class="metric-note">Active parsers</div>
+      </div>
     </div>
   </section>
 

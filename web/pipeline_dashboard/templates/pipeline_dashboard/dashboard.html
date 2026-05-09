@@ -5,8 +5,7 @@
 {% block content %}
   <section class="topbar">
     <div>
-      <h1>Dashboard</h1>
-      <p class="subtitle">Operational snapshot of loaded ShareFile folders and file processing state.</p>
+      <h1 class="dashboard-heading">Dashboard</h1>
     </div>
   </section>
 
@@ -43,10 +42,10 @@
     </div>
     <div class="metric amber">
       <div class="metric-icon" aria-hidden="true">
-        <svg viewBox="0 0 24 24"><path d="M12 2.5 22 20H2Z"></path><path d="M12 8v5"></path><path d="M12 17h.01"></path></svg>
+        <svg viewBox="0 0 24 24"><path d="M4 7h16"></path><path d="M4 12h10"></path><path d="M4 17h7"></path><path d="m16 16 2 2 4-5"></path></svg>
       </div>
       <div class="metric-body">
-        <div class="metric-label">Active</div>
+        <div class="metric-label">Processing</div>
         <div class="metric-value">{{ mirror_summary.active_count }}</div>
         <div class="metric-note">View queue <span class="metric-arrow" aria-hidden="true">→</span></div>
       </div>
@@ -93,35 +92,149 @@
     </div>
   </section>
 
-  <section class="grid">
-    <div class="stack">
-      <section class="panel">
+  <section class="dashboard-grid">
+    <div class="dashboard-main">
+      <section class="panel spending-panel">
         <div class="panel-header">
-          <h2 class="panel-title">Review Queue</h2>
-          <span class="muted">Latest files needing attention</span>
+          <h2 class="panel-title">Spending</h2>
+          <span class="muted">{{ spending.window_start|date:"M j" }} - {{ spending.window_end|date:"M j" }}</span>
+        </div>
+        {% if spending.rows %}
+          <div class="spending-head">
+            <div>Vendor / Campaign</div>
+            <div class="spending-calendar-head">
+              <div class="spending-month-bands" aria-hidden="true">
+                {% for segment in spending.month_segments %}
+                  <span class="spending-month-band {{ segment.tone }}" style="left: {{ segment.left }}%; width: {{ segment.width }}%;"></span>
+                {% endfor %}
+              </div>
+              <div class="spending-months">
+                {% for segment in spending.month_segments %}
+                  <span style="left: {{ segment.left }}%; width: {{ segment.width }}%;">{{ segment.label }}</span>
+                {% endfor %}
+              </div>
+              <div class="spending-ticks">
+                {% for tick in spending.ticks %}
+                  <span style="left: {{ tick.left }}%;">{{ tick.label }}</span>
+                {% endfor %}
+              </div>
+              <span class="spending-today-label" style="left: {{ spending.today_position }}%;">Today</span>
+            </div>
+            <div class="spending-stats-head">
+              <span>Paid</span>
+              <span>Recorded</span>
+              <span>Gap</span>
+            </div>
+          </div>
+          <div class="spending-body">
+            {% for row in spending.rows %}
+              <div class="spending-row">
+                <div class="spending-name">
+                  <strong>{{ row.vendor }}</strong>
+                  <span title="{{ row.campaign }}">{{ row.campaign }}</span>
+                </div>
+                <div class="spending-chart">
+                  <span class="spending-today-line" style="left: {{ spending.today_position }}%;"></span>
+                  <div class="spending-bar-row">
+                    <span class="spending-track-label">Booked</span>
+                    <div class="spending-track">
+                      {% for segment in spending.weekend_segments %}
+                        <span class="spending-weekend" style="left: {{ segment.left }}%; width: {{ segment.width }}%;"></span>
+                      {% endfor %}
+                      {% for marker in spending.month_markers %}
+                        <span class="spending-month-marker" style="left: {{ marker.left }}%;"></span>
+                      {% endfor %}
+                      <span class="spending-bar planned" style="left: {{ row.planned_left }}%; width: {{ row.planned_width }}%;"></span>
+                    </div>
+                  </div>
+                  <div class="spending-bar-row">
+                    <span class="spending-track-label">Reported</span>
+                    <div class="spending-track">
+                      {% for segment in spending.weekend_segments %}
+                        <span class="spending-weekend" style="left: {{ segment.left }}%; width: {{ segment.width }}%;"></span>
+                      {% endfor %}
+                      {% for marker in spending.month_markers %}
+                        <span class="spending-month-marker" style="left: {{ marker.left }}%;"></span>
+                      {% endfor %}
+                      <span class="spending-bar recorded {{ row.recorded_bar_class }}" style="left: {{ row.recorded_left }}%; width: {{ row.recorded_width }}%;"></span>
+                    </div>
+                  </div>
+                </div>
+                <div class="spending-stats">
+                  <div>
+                    <strong>{{ row.paid_label }}</strong>
+                    <small>{{ row.paid_days }}</small>
+                  </div>
+                  <div>
+                    <strong>{{ row.recorded_label }}</strong>
+                    <small>{{ row.recorded_days }}</small>
+                  </div>
+                  <div>
+                    <strong class="{{ row.money_gap_class }}">{{ row.money_gap_label }}</strong>
+                    <small class="{{ row.date_gap_class }}">{{ row.date_gap_label }}</small>
+                  </div>
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div class="empty empty-chapter"></div>
+        {% endif %}
+      </section>
+
+      <section class="panel queue-panel">
+        <div class="panel-header">
+          <h2 class="panel-title">File Queue</h2>
+          <span class="muted">Latest catalogued files</span>
+        </div>
+        <div class="queue-tabs" aria-label="File queue status filters">
+          {% for tab in dashboard_tabs %}
+            <span class="queue-tab {% if tab.active %}active{% endif %}">
+              {{ tab.label }}
+              <span class="queue-count">{{ tab.count }}</span>
+            </span>
+          {% endfor %}
+        </div>
+        <div class="queue-toolbar" aria-label="Queue filters">
+          <span class="toolbar-chip">All vendors</span>
+          <span class="toolbar-chip">All file types</span>
+          <span class="toolbar-chip">All statuses</span>
         </div>
         <div class="panel-body">
-          {% if review_assets %}
-            <table>
+          {% if queue_assets %}
+            <table class="queue-table">
               <thead>
                 <tr>
-                  <th>Status</th>
-                  <th>File</th>
+                  <th>File Name</th>
                   <th>Vendor</th>
-                  <th>Modified</th>
-                  <th>Folder</th>
+                  <th>File Type</th>
+                  <th>Uploaded</th>
+                  <th>Status</th>
+                  <th>Parser</th>
+                  <th>Validation</th>
+                  <th>Duplicate</th>
                 </tr>
               </thead>
               <tbody>
-                {% for asset in review_assets %}
+                {% for asset in queue_assets %}
                   <tr>
-                    <td><span class="badge {{ asset.status }}">{{ asset.get_status_display }}</span></td>
-                    <td class="file-name">
+                    <td class="file-name" title="{{ asset.name }}">
                       {{ asset.name }}
+                      <span class="queue-file-meta">{{ asset.source_folder|default:asset.source_folder_label|default:"-" }}</span>
                     </td>
                     <td>{{ asset.vendor|default:"Unassigned" }}</td>
-                    <td>{{ asset.remote_modified_at|date:"Y-m-d H:i"|default:"-" }}</td>
-                    <td>{{ asset.source_folder|default:asset.source_folder_label|default:"-" }}</td>
+                    <td>{{ asset.display_file_type }}</td>
+                    <td>{{ asset.remote_modified_at|date:"M j, Y H:i"|default:"-" }}</td>
+                    <td><span class="badge {{ asset.status }}">{{ asset.get_status_display }}</span></td>
+                    <td class="file-name" title="{{ asset.display_parser }}">{{ asset.display_parser }}</td>
+                    <td>
+                      {% if asset.validation_label == "-" %}
+                        <span class="muted">-</span>
+                      {% else %}
+                        <span class="badge {{ asset.validation_class }}">{{ asset.validation_label }}</span>
+                      {% endif %}
+                    </td>
+                    <td>{{ asset.duplicate_label }}</td>
                   </tr>
                 {% endfor %}
               </tbody>
@@ -131,118 +244,104 @@
           {% endif %}
         </div>
       </section>
-
-      <section class="panel">
-        <div class="panel-header">
-          <h2 class="panel-title">Recent Assets</h2>
-          <span class="muted">Latest catalogued files</span>
-        </div>
-        <div class="panel-body">
-          {% if recent_assets %}
-            <table>
-              <thead>
-                <tr>
-                  <th>Status</th>
-                  <th>File</th>
-                  <th>Vendor</th>
-                  <th>Seen</th>
-                </tr>
-              </thead>
-              <tbody>
-                {% for asset in recent_assets %}
-                  <tr>
-                    <td><span class="badge {{ asset.status }}">{{ asset.get_status_display }}</span></td>
-                    <td class="file-name">
-                      {{ asset.name }}
-                    </td>
-                    <td>{{ asset.vendor|default:"Unassigned" }}</td>
-                    <td>{{ asset.last_seen_at|date:"Y-m-d H:i" }}</td>
-                  </tr>
-                {% endfor %}
-              </tbody>
-            </table>
-          {% else %}
-            <div class="empty">No assets have been catalogued yet.</div>
-          {% endif %}
-        </div>
-      </section>
     </div>
 
-    <div class="stack">
-      <section class="panel">
+    <aside class="dashboard-rail">
+      <section class="panel file-tablets-panel">
         <div class="panel-header">
-          <h2 class="panel-title">Status</h2>
+          <h2 class="panel-title">Files Needing Action</h2>
+          <span class="muted">{{ attention_assets|length }} files</span>
         </div>
-        <div class="status-list">
-          {% for row in status_rows %}
-            <div class="status-row">
-              <span>{{ row.label }}</span>
-              <strong>{{ row.count }}</strong>
+        {% if attention_assets %}
+          <div class="file-tablet-list" data-tablet-list data-page-size="4">
+            {% for asset in attention_assets %}
+              <article class="file-tablet age-{{ asset.card_age_class }}{% if asset.card_vendor_missing %} vendor-missing{% endif %}" data-tablet-item {% if forloop.counter > 4 %}hidden{% endif %}>
+                <div class="file-tablet-top">
+                  <div class="file-tablet-title">
+                    <div class="file-tablet-vendor">{{ asset.card_vendor }}</div>
+                    <div class="file-tablet-name" title="{{ asset.name }}">{{ asset.name }}</div>
+                  </div>
+                  <div class="file-tablet-age" aria-label="{{ asset.card_age_label }}">
+                    {{ asset.card_age_days }}
+                  </div>
+                </div>
+                <dl class="file-tablet-meta">
+                  <div>
+                    <dt>Uploaded</dt>
+                    <dd>{{ asset.card_uploaded_at|date:"M j, Y H:i"|default:"-" }}</dd>
+                  </div>
+                  <div>
+                    <dt>Uploader</dt>
+                    <dd>{{ asset.card_uploader }}</dd>
+                  </div>
+                  <div>
+                    <dt>Age</dt>
+                    <dd>{{ asset.card_age_label }}</dd>
+                  </div>
+                </dl>
+                <div class="tablet-progress" aria-label="New to approval progress for {{ asset.name }}">
+                  <div class="tablet-progress-labels">
+                    {% for segment in asset.card_progress %}
+                      <span>{{ segment.label }}</span>
+                    {% endfor %}
+                  </div>
+                  <div class="tablet-progress-bars">
+                    {% for segment in asset.card_progress %}
+                      <span class="tablet-progress-segment {{ segment.state }}"></span>
+                    {% endfor %}
+                  </div>
+                </div>
+              </article>
+            {% endfor %}
+            <div class="file-tablet-pager" data-tablet-pager>
+              <button class="button small" type="button" data-tablet-prev>Prev</button>
+              <span class="file-tablet-page-status" data-tablet-status>1-4 of {{ attention_assets|length }}</span>
+              <button class="button small" type="button" data-tablet-next>Next</button>
             </div>
-          {% endfor %}
-        </div>
+          </div>
+        {% else %}
+          <div class="empty">No Excel or CSV files are waiting for action.</div>
+        {% endif %}
       </section>
-
-      <section class="panel">
-        <div class="panel-header">
-          <h2 class="panel-title">Folders</h2>
-          <span class="muted">{{ folders|length }} shown</span>
-        </div>
-        <div class="panel-body">
-          {% if folders %}
-            <table>
-              <thead>
-                <tr>
-                  <th>Folder</th>
-                  <th>Vendor</th>
-                  <th>Role</th>
-                </tr>
-              </thead>
-              <tbody>
-                {% for folder in folders %}
-                  <tr>
-                    <td class="file-name">
-                      {{ folder.label }}
-                    </td>
-                    <td>{{ folder.vendor|default:"-" }}</td>
-                    <td>{{ folder.get_role_display }}</td>
-                  </tr>
-                {% endfor %}
-              </tbody>
-            </table>
-          {% else %}
-            <div class="empty">No ShareFile folders configured yet.</div>
-          {% endif %}
-        </div>
-      </section>
-
-      <section class="panel">
-        <div class="panel-header">
-          <h2 class="panel-title">Assets By Vendor</h2>
-        </div>
-        <div class="panel-body">
-          {% if vendor_counts %}
-            <table>
-              <thead>
-                <tr>
-                  <th>Vendor</th>
-                  <th>Assets</th>
-                </tr>
-              </thead>
-              <tbody>
-                {% for row in vendor_counts %}
-                  <tr>
-                    <td>{{ row.vendor__name|default:"Unassigned" }}</td>
-                    <td>{{ row.count }}</td>
-                  </tr>
-                {% endfor %}
-              </tbody>
-            </table>
-          {% else %}
-            <div class="empty">Vendor counts will appear after scanning files.</div>
-          {% endif %}
-        </div>
-      </section>
-    </div>
+    </aside>
   </section>
+
+  <script>
+    document.querySelectorAll("[data-tablet-list]").forEach((list) => {
+      const items = Array.from(list.querySelectorAll("[data-tablet-item]"));
+      const pager = list.querySelector("[data-tablet-pager]");
+      const previous = list.querySelector("[data-tablet-prev]");
+      const next = list.querySelector("[data-tablet-next]");
+      const status = list.querySelector("[data-tablet-status]");
+      const pageSize = Number(list.dataset.pageSize || 4);
+      const totalPages = Math.max(1, Math.ceil(items.length / pageSize));
+      let page = 1;
+
+      function render() {
+        const start = (page - 1) * pageSize;
+        const end = start + pageSize;
+        items.forEach((item, index) => {
+          item.hidden = index < start || index >= end;
+        });
+        if (status) {
+          const first = items.length ? start + 1 : 0;
+          const last = Math.min(end, items.length);
+          status.textContent = `${first}-${last} of ${items.length}`;
+        }
+        if (previous) previous.disabled = page === 1;
+        if (next) next.disabled = page === totalPages;
+        if (pager) pager.hidden = totalPages <= 1;
+      }
+
+      previous?.addEventListener("click", () => {
+        page = Math.max(1, page - 1);
+        render();
+      });
+      next?.addEventListener("click", () => {
+        page = Math.min(totalPages, page + 1);
+        render();
+      });
+      render();
+    });
+  </script>
 {% endblock %}
