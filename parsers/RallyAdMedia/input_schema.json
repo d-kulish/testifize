@@ -1,0 +1,72 @@
+{
+  "source_file": "data/inbox/allshared/May_2026_Internal_folders/RallyAd_Mar26_BOL_SB_WC_SS_2026.xlsx",
+  "target_file": "_old/final/RallyAdMedia.csv",
+  "file_type": "xlsx",
+  "worksheets": [
+    {
+      "name": "BOL",
+      "header_row": 1,
+      "first_data_row": 2,
+      "columns": {
+        "date": "A",
+        "impressions": "B",
+        "spend": "I"
+      }
+    },
+    {
+      "name": "SB",
+      "header_row": 1,
+      "first_data_row": 2,
+      "columns": {
+        "date": "A",
+        "impressions": "B",
+        "spend": "I"
+      }
+    },
+    {
+      "name": "WC",
+      "header_row": 1,
+      "first_data_row": 2,
+      "columns": {
+        "date": "A",
+        "impressions": "B",
+        "spend": "I"
+      }
+    },
+    {
+      "name": "SS",
+      "header_row": 1,
+      "first_data_row": 2,
+      "columns": {
+        "date": "A",
+        "impressions": "B",
+        "spend": "I"
+      }
+    }
+  ],
+  "selected_columns": {
+    "date": "DATE_LABEL",
+    "impressions": "Imps.",
+    "spend": "Total Spend"
+  },
+  "skip_rules": [
+    "Use the BOL, SB, WC, and SS sheets.",
+    "Group rows by DATE_LABEL across all four sheets.",
+    "Sum Imps. into Impressions.",
+    "Sum Total Spend into Spend.",
+    "Skip trailing blank rows."
+  ],
+  "comparison_window": {
+    "start_date": "2026-03-01",
+    "end_date": "2026-03-31"
+  },
+  "output_defaults": {
+    "Vendor": "RallyAdMedia",
+    "Brand": "BetOnline",
+    "Channel": "Display",
+    "Platform": "RallyAd",
+    "Data_Grain": "daily",
+    "Processed_At": "generated",
+    "Source_File": "RallyAd_Mar26_BOL_SB_WC_SS_2026.xlsx"
+  }
+}

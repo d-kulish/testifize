@@ -3,7 +3,7 @@ from __future__ import annotations
 import os
 import subprocess
 import sys
-from datetime import date, timedelta
+from datetime import date, timedelta, timezone as dt_timezone
 from decimal import Decimal
 from pathlib import Path
 from types import SimpleNamespace
@@ -14,6 +14,7 @@ from django.db import transaction
 from django.db.models import Count, Q
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 from django.utils import timezone
 from django.utils.dateparse import parse_datetime
 from django.views.decorators.http import require_GET, require_POST
@@ -46,6 +47,7 @@ REVIEW_STATUSES = [
 
 FOLDER_VENDOR_RULES = {
     "josh": ("PodcastOne", "Octopus", "Loop", "TVM", "TAIV"),
+    "may_2026_internal_folders": ("RallyAdMedia", "AdTaxi"),
 }
 
 DASHBOARD_FILE_EXTENSIONS = {".csv", ".xls", ".xlsx"}
@@ -540,7 +542,7 @@ def process(request):
     if unassigned_assets:
         grouped_assets.append({"vendor": None, "assets": unassigned_assets})
     context = {
-        "title": "Process",
+        "title": "Parsing",
         "assets": processing_assets,
         "grouped_assets": grouped_assets,
         "vendors": active_vendors,
@@ -556,10 +558,14 @@ def folders(request):
     mirror = load_sharefile_mirror()
     vendors = list(Vendor.objects.filter(is_active=True).order_by("name"))
     _apply_folder_vendor_rules(mirror.folders, vendors)
+    mirror_summary = {
+        **mirror.summary,
+        "last_sync_display": _display_timestamp(mirror.summary.get("last_sync_at", "")),
+    }
     context = {
         "title": "SF folders",
         "folders": mirror.folders,
-        "mirror_summary": mirror.summary,
+        "mirror_summary": mirror_summary,
         "vendors": vendors,
         "active_nav": "folders",
     }
@@ -579,12 +585,29 @@ def update_folders(request):
         check=False,
         timeout=900,
     )
-    if result.returncode == 0:
-        messages.success(request, "SF folders updated.")
-    else:
+    if result.returncode != 0:
         detail = (result.stderr or result.stdout or "No output").strip().splitlines()[-1]
         messages.error(request, f"SF folders update failed: {detail}")
+    if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+        return JsonResponse(
+            {
+                "ok": result.returncode == 0,
+                "redirect_url": reverse("pipeline_dashboard:folders"),
+            },
+            status=200 if result.returncode == 0 else 400,
+        )
     return redirect("pipeline_dashboard:folders")
+
+
+def _display_timestamp(value: str) -> str:
+    if not value:
+        return ""
+    parsed = parse_datetime(value)
+    if not parsed:
+        return value
+    if timezone.is_naive(parsed):
+        parsed = parsed.replace(tzinfo=dt_timezone.utc)
+    return timezone.localtime(parsed).strftime("%b %d, %Y %H:%M")
 
 
 @require_GET
@@ -610,9 +633,9 @@ def process_review_file(request):
     if not file_row:
         return JsonResponse({"error": "File is not in the current SF mirror."}, status=404)
     if file_row["status"] != "new":
-        return JsonResponse({"error": "Only new files can be moved to Active."}, status=400)
+        return JsonResponse({"error": "Only new files can be moved to Parsing."}, status=400)
     if not file_row.get("remote_item_id"):
-        return JsonResponse({"error": "Only files still present in ShareFile can be processed."}, status=400)
+        return JsonResponse({"error": "Only files still present in ShareFile can be moved to Parsing."}, status=400)
     try:
         inbox_file_path(local_path)
     except ReviewPreviewError as exc:
@@ -620,7 +643,7 @@ def process_review_file(request):
     try:
         vendor = Vendor.objects.get(pk=vendor_id, is_active=True)
     except (Vendor.DoesNotExist, ValueError):
-        return JsonResponse({"error": "Choose an active vendor before processing."}, status=400)
+        return JsonResponse({"error": "Choose an active vendor before moving to Parsing."}, status=400)
     if not _vendor_allowed_for_file(vendor, file_row):
         return JsonResponse({"error": f"{vendor.name} is not available for this folder."}, status=400)
 
@@ -645,7 +668,7 @@ def process_review_file(request):
         "content_hash": file_row.get("sharefile_hash") or "",
         "duplicate_group": file_row["name"].lower(),
         "last_seen_at": timezone.now(),
-        "status_reason": "Moved to Active from SF folders review.",
+        "status_reason": "Moved to Parsing from SF folders review.",
         "raw_metadata": {
             "source": "sf_folders_review",
             "profile_kind": file_row.get("profile_kind") or "",
@@ -658,7 +681,7 @@ def process_review_file(request):
         event_type="review_started",
         from_status=previous_status,
         to_status=AssetStatus.PROCESSING,
-        message="Moved to Active from SF folders review.",
+        message="Moved to Parsing from SF folders review.",
         metadata={"local_path": local_path, "vendor_id": vendor.id},
     )
     return JsonResponse({"status": "active", "label": "A", "asset_id": asset.remote_item_id})
@@ -706,15 +729,15 @@ def cancel_process_file(request, remote_item_id: str):
     previous_vendor = asset.vendor.name if asset.vendor else ""
     asset.vendor = None
     asset.parser_key = ""
-    asset.status_reason = "Processing was cancelled; file returned to New."
+    asset.status_reason = "Parsing was cancelled; file returned to New."
     asset.save(update_fields=["vendor", "parser_key", "status_reason", "updated_at"])
-    set_asset_status(asset, AssetStatus.NEW, "Processing cancelled from Process page.")
+    set_asset_status(asset, AssetStatus.NEW, "Parsing cancelled from Parsing page.")
     AssetEvent.objects.create(
         asset=asset,
         event_type="processing_cancelled",
         from_status=AssetStatus.PROCESSING,
         to_status=AssetStatus.NEW,
-        message="Processing cancelled from Process page.",
+        message="Parsing cancelled from Parsing page.",
         metadata={"previous_vendor": previous_vendor},
     )
     messages.success(request, f"{asset.name}: returned to New.")
@@ -829,7 +852,7 @@ def cancel_parsed_output(request, parsed_output_id: int):
 
     asset.output_path = ""
     asset.uploaded_item_id = ""
-    asset.status_reason = "Parsed CSV approval was cancelled; file returned to Processing."
+    asset.status_reason = "Parsed CSV approval was cancelled; file returned to Parsing."
     asset.save(update_fields=["output_path", "uploaded_item_id", "status_reason", "updated_at"])
     set_asset_status(asset, AssetStatus.PROCESSING, "Parsed CSV approval cancelled from Approval area.")
     AssetEvent.objects.create(
@@ -840,7 +863,7 @@ def cancel_parsed_output(request, parsed_output_id: int):
         message="Parsed CSV approval cancelled from Approval area.",
         metadata={"parsed_output_id": parsed.id, "output_path": parsed.output_path},
     )
-    messages.success(request, f"{asset.name}: returned to Processing Files.")
+    messages.success(request, f"{asset.name}: returned to Parsing Files.")
     return redirect("pipeline_dashboard:process")
 
 

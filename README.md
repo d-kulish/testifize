@@ -321,10 +321,10 @@ Historical plain-Python catalogue work. Keep it as source material for CLI compa
 
 ## Current Pipeline Flow
 
-The current Django workflow is centered on a local ShareFile mirror, a processing queue, parser preview, and a ShareFile Approval handoff:
+The current Django workflow is centered on a local ShareFile mirror, a parsing queue, parser preview, generated CSV review, and a ShareFile Approval handoff:
 
 ```text
-SF folders -> Review -> Processing Files -> Parse -> Approval upload -> external review
+SF folders -> Review -> Parsing Files -> Parse -> chart/CSV review -> Approval upload -> external review
 ```
 
 The older CLI command surface remains useful for low-level checks and future automation:
@@ -478,27 +478,33 @@ App pages:
 
 ```text
 /          dashboard
-/assets/   asset catalogue
-/process/  active parser queue and parsed-output comparisons
-/folders/  ShareFile folder catalogue
-/vendors/  vendor catalogue
+/folders/  ShareFile folder catalogue and review entrypoint
+/process/  Parsing page, parser preview, generated CSV review, approval queue
 /admin/    Django Admin back office
 ```
 
-The app pages are read-focused operational views. Admin remains the place for edits and synchronous actions such as scanning folders and downloading selected files.
+The app pages are operational views for the normal workflow. Admin remains available for back-office catalogue edits and exceptional recovery actions.
 
 First v1 workflow:
 
 1. Create `Vendor` rows for each vendor.
 2. Create `ShareFileFolder` rows with the ShareFile folder ID, role, file patterns, and optional vendor.
-3. Use the `Scan selected folders` admin action on `ShareFileFolder`.
-4. Review `Asset` rows and assign vendor/status/parser fields.
-5. Use `Asset` admin actions to mark files queued, ignored, superseded, or download selected files.
+3. Open `SF folders` and click `Update` to refresh the local ShareFile mirror.
+4. Review mirrored folders sorted by new-file count and use duplicate badges to identify repeated file names across folders.
+5. Open a file row, assign an allowed vendor, and move it to `Parsing`.
+6. On `Parsing`, open the file row, inspect raw workbook sheets, click `Parse`, and review the parsed charts plus final CSV preview.
+7. Click `Approval` only after the generated CSV preview and KPI charts look correct.
 
 The SF folders review modal can restrict the vendor dropdown by source folder. The current rule for `home/josh` allows only:
 
 ```text
 PodcastOne, Octopus, Loop, TVM, TAIV
+```
+
+The current rule for `allshared/May_2026_Internal_folders` allows only:
+
+```text
+RallyAdMedia, AdTaxi
 ```
 
 The same rule is enforced server-side when moving a file from SF folders into Processing, so bypassing the UI cannot assign a disallowed vendor.
@@ -571,7 +577,9 @@ Approval-review parser outputs are versioned under:
 data/output/<Vendor>/<Vendor>_<Month>_<Year>_vN.csv
 ```
 
-The first migrated parsers are `Loop`, `TVM`, `TAIV`, `PodcastOne`, and `Octopus`. TAIV combines the Prime and Retail tables on `Spend By Day` into one daily row per date, matching the approved TAIV history shape. PodcastOne combines the BASE daily sheet and WC daily sheet by `Day`. Octopus combines the `DOOH` and `Rideshare` tables on `Daily Spend` into one daily row per date. On `/process/`, `Parse` validates the input schema and shows overlapping period-day charts for the parsed candidate against the latest approved vendor history. It does not write the final CSV.
+The first migrated parsers are `Loop`, `TVM`, `TAIV`, `PodcastOne`, `Octopus`, and `RallyAdMedia`. TAIV combines the Prime and Retail tables on `Spend By Day` into one daily row per date, matching the approved TAIV history shape. PodcastOne combines the BASE daily sheet and WC daily sheet by `Day`. Octopus combines the `DOOH` and `Rideshare` tables on `Daily Spend` into one daily row per date. RallyAdMedia combines the `BOL`, `SB`, `WC`, and `SS` sheets by `DATE_LABEL`, summing `Imps.` into `Impressions` and `Total Spend` into `Spend`.
+
+On the `/process/` Parsing page, opening a file first shows raw workbook sheets. Clicking `Parse` switches into a parsed-review state with four tabs: `Spend`, `Impressions`, `Cost / impression`, and `Final CSV`. The chart tabs compare the generated candidate against up to two latest approved vendor periods, grouping spend and impressions by date. The `Final CSV` tab shows the generated normalized rows for visual inspection before the user sends anything for ShareFile approval. This parse preview does not write the output CSV.
 
 The approved-history importer canonicalizes `_old/final/Taiv.csv` into `data/processed/TAIV/TAIV.csv` so the parser workflow can find TAIV history by the app vendor name.
 
@@ -602,7 +610,7 @@ Final/<Reporting_Period>/<Vendor>_<Reporting_Period>.csv
 ## Immediate Next Steps
 
 1. Define the shared target schema location and validation rules for final approved outputs.
-2. Add anomaly/comparison summaries beyond the current overlapping Spend, Impressions, and CPM charts.
+2. Add anomaly/comparison summaries beyond the current overlapping Spend, Impressions, and cost-per-impression charts.
 3. Decide whether finalized ShareFile uploads should fail on duplicate names, overwrite them, or create explicit new versions.
 
 ## Historical Material

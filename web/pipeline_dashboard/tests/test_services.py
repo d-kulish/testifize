@@ -43,7 +43,7 @@ def sharefile_item(item_id="fi-example", name="report.xlsx", modified_at="2026-0
 
 class ServiceTests(TestCase):
     def setUp(self):
-        self.vendor = Vendor.objects.create(name="AdTaxi", parser_key="adtaxi")
+        self.vendor, _ = Vendor.objects.get_or_create(name="AdTaxi", defaults={"parser_key": "adtaxi"})
         self.folder = ShareFileFolder.objects.create(
             vendor=self.vendor,
             folder_id="fo-example",

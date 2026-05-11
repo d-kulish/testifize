@@ -148,6 +148,32 @@ daily aggregates or more detailed rows.
 - both tables are grouped by date into one daily row
 - `Impressions` and `Spend` are summed across both tables
 
+`RallyAdMedia` adds fixed multi-sheet aggregation:
+
+- sheets `BOL`, `SB`, `WC`, and `SS`
+- each sheet contributes rows keyed by `DATE_LABEL`
+- `Imps.` becomes `Impressions`
+- `Total Spend` becomes `Spend`
+- all four sheets are grouped by date into one daily row
+- the app vendor is `RallyAdMedia`; legacy or mistaken `ReallyAdMedia` rows should be renamed
+
+## App Review Flow
+
+The Parsing page has two explicit review phases:
+
+1. Opening a file row shows raw workbook or CSV contents so the user can verify the source layout before parsing.
+2. Clicking `Parse` validates the parser and switches to a generated-output review with four tabs: `Spend`, `Impressions`, `Cost / impression`, and `Final CSV`.
+
+The chart tabs compare the candidate output with up to two previous approved
+vendor periods from `data/processed/<Vendor>/`. Chart points are grouped by
+date, so parsers that emit multiple rows for the same date still show daily
+spend, daily impressions, and daily spend divided by daily impressions.
+
+The `Final CSV` tab is the table the user should visually inspect before
+clicking `Approval`. The preview route does not write `data/output/`; the
+Approval action reparses, writes the versioned CSV, uploads it to ShareFile
+Approval, and records the `ParsedOutput`.
+
 ## Validation Commands
 
 Use these after adding or changing a parser:

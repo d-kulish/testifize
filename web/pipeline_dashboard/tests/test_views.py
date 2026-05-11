@@ -12,7 +12,7 @@ from django.urls import reverse
 from openpyxl import Workbook
 
 from pipeline_dashboard.models import Asset, AssetStatus, ParsedOutput, ShareFileFolder, Vendor
-from pipeline_dashboard.parser_workflow import approval_root_id
+from pipeline_dashboard.parser_workflow import approval_root_id, period_series_from_rows
 
 
 class FakeApprovalClient:
@@ -44,7 +44,7 @@ class DashboardViewTests(TestCase):
         self.assertContains(response, "No assets need review yet")
 
     def test_dashboard_renders_catalogue_data(self):
-        vendor = Vendor.objects.create(name="AdTaxi", parser_key="adtaxi")
+        vendor, _ = Vendor.objects.get_or_create(name="AdTaxi", defaults={"parser_key": "adtaxi"})
         folder = ShareFileFolder.objects.create(
             vendor=vendor,
             folder_id="fo-example",
@@ -244,7 +244,7 @@ class DashboardViewTests(TestCase):
                 name="m-active.csv",
                 local_path="data/inbox/home/josh/m-active.csv",
             )
-            adtaxi = Vendor.objects.create(name="AdTaxi", parser_key="adtaxi")
+            adtaxi, _ = Vendor.objects.get_or_create(name="AdTaxi", defaults={"parser_key": "adtaxi"})
 
             with override_settings(REPO_ROOT=repo_root):
                 response = self.client.get(reverse("pipeline_dashboard:folders"))
@@ -274,12 +274,104 @@ class DashboardViewTests(TestCase):
         self.assertContains(response, "Review")
         self.assertContains(response, "Deleted in SF")
         self.assertContains(response, "PodcastOne, Octopus, Loop, TVM, TAIV")
+        self.assertContains(response, 'class="metrics metrics-compact folders-metrics"', html=False)
+        self.assertContains(response, 'class="metric blue update-metric"', html=False)
+        self.assertContains(response, "Last: May 07, 2026 12:00")
+        self.assertContains(response, "Updating SF folders")
         self.assertNotContains(response, f'data-allowed-vendors="{adtaxi.id}"')
         self.assertNotContains(response, "Approval/May_2026/Loop")
         self.assertNotContains(response, "Final/April_2026")
         self.assertNotContains(response, "Loop_May_2026_v1.csv")
         self.assertNotContains(response, "Loop_April_2026.csv")
         self.assertNotContains(response, "profile-only.csv")
+
+    def test_folders_page_sorts_by_new_count_and_marks_cross_folder_duplicates(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            repo_root = Path(tmpdir)
+            state_root = repo_root / "data" / "state"
+            state_root.mkdir(parents=True)
+            duplicate_name = "T-MOBILE March 2026 EOM Report.xlsx"
+            processed_duplicate_path = f"data/inbox/home/josh/{duplicate_name}"
+            internal_duplicate_path = f"data/inbox/allshared/May_2026_Internal_folders/{duplicate_name}"
+            snapshot_files = [
+                {
+                    "remote_item_id": "fi-many-1",
+                    "name": "new-a.csv",
+                    "local_path": "data/inbox/home/many_new/new-a.csv",
+                    "source_folder_path": "home/many_new",
+                    "extension": ".csv",
+                    "size": 10,
+                    "modified_at": "2026-05-09T12:00:00Z",
+                },
+                {
+                    "remote_item_id": "fi-many-2",
+                    "name": "new-b.csv",
+                    "local_path": "data/inbox/home/many_new/new-b.csv",
+                    "source_folder_path": "home/many_new",
+                    "extension": ".csv",
+                    "size": 10,
+                    "modified_at": "2026-05-09T11:00:00Z",
+                },
+                {
+                    "remote_item_id": "fi-internal-duplicate",
+                    "name": duplicate_name,
+                    "local_path": internal_duplicate_path,
+                    "source_folder_path": "allshared/May_2026_Internal_folders",
+                    "extension": ".xlsx",
+                    "size": 20,
+                    "modified_at": "2026-05-08T12:00:00Z",
+                },
+                {
+                    "remote_item_id": "fi-josh-duplicate",
+                    "name": duplicate_name,
+                    "local_path": processed_duplicate_path,
+                    "source_folder_path": "home/josh",
+                    "extension": ".xlsx",
+                    "size": 20,
+                    "modified_at": "2026-05-07T12:00:00Z",
+                },
+            ]
+            (state_root / "sharefile_snapshot_latest.json").write_text(
+                json.dumps({"run_id": "snapshot-duplicates", "files": snapshot_files})
+            )
+            (state_root / "inbox_profile_latest.json").write_text(
+                json.dumps(
+                    {
+                        "files": [
+                            {"local_path": row["local_path"], "name": row["name"], "kind": "csv"}
+                            for row in snapshot_files
+                        ]
+                    }
+                )
+            )
+            (state_root / "file_processing_state.json").write_text(
+                json.dumps({"processed_local_paths": [processed_duplicate_path]})
+            )
+
+            with override_settings(REPO_ROOT=repo_root):
+                response = self.client.get(reverse("pipeline_dashboard:folders"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            [folder["display_name"] for folder in response.context["folders"]],
+            ["many_new", "May_2026_Internal_folders", "josh"],
+        )
+        self.assertEqual(response.context["mirror_summary"]["duplicate_name_count"], 2)
+        self.assertEqual(response.context["folders"][1]["counts"]["duplicate_names"], 1)
+        self.assertEqual(response.context["folders"][2]["counts"]["duplicate_names"], 1)
+        self.assertEqual(response.context["folders"][1]["allowed_vendor_names"], "RallyAdMedia, AdTaxi")
+        duplicate_rows = [
+            file
+            for folder in response.context["folders"]
+            for file in folder["files"]
+            if file["duplicate_name"]
+        ]
+        self.assertEqual({row["local_path"] for row in duplicate_rows}, {internal_duplicate_path, processed_duplicate_path})
+        content = response.content.decode()
+        self.assertEqual(content.count('class="duplicate-badge"'), 2)
+        self.assertIn("Also in: josh", content)
+        self.assertIn("Also in: May_2026_Internal_folders", content)
+        self.assertIn('data-allowed-vendor-names="RallyAdMedia, AdTaxi"', content)
 
     def test_review_file_preview_returns_csv_rows(self):
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -320,7 +412,7 @@ class DashboardViewTests(TestCase):
         self.assertTrue(asset.events.filter(event_type="review_started").exists())
 
     def test_process_review_file_rejects_vendor_not_allowed_for_folder(self):
-        vendor = Vendor.objects.create(name="AdTaxi", parser_key="adtaxi")
+        vendor, _ = Vendor.objects.get_or_create(name="AdTaxi", defaults={"parser_key": "adtaxi"})
         with tempfile.TemporaryDirectory() as tmpdir:
             repo_root = Path(tmpdir)
             local_path = self._write_review_fixture(repo_root)
@@ -356,11 +448,14 @@ class DashboardViewTests(TestCase):
         response = self.client.get(reverse("pipeline_dashboard:process"))
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "Processing Files")
+        self.assertContains(response, "Parsing")
+        self.assertContains(response, "Parsing Files")
         self.assertContains(response, "Loop report.csv")
         self.assertContains(response, "Loop")
         self.assertContains(response, "PodcastOne")
         self.assertContains(response, "Cancel")
+        self.assertContains(response, "parse-result-tabs")
+        self.assertContains(response, "Final CSV")
         self.assertContains(response, "Approval")
         self.assertNotContains(response, "PodcastOne new.csv")
 
@@ -513,6 +608,22 @@ class DashboardViewTests(TestCase):
         self.assertEqual(payload["candidate"]["summary"]["total_impressions"], "1000")
         self.assertEqual(payload["charts"]["series"][0]["label"], "Parsed May_2026")
 
+    def test_parse_process_file_combines_rallyadmedia_brand_sheets(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            repo_root = Path(tmpdir)
+            asset = self._write_rallyadmedia_parse_fixture(repo_root)
+
+            with override_settings(REPO_ROOT=repo_root):
+                response = self.client.post(reverse("pipeline_dashboard:parse_process_file", args=[asset.remote_item_id]))
+
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertEqual(payload["candidate"]["summary"]["period_label"], "May_2026")
+        self.assertEqual(payload["candidate"]["summary"]["row_count"], 2)
+        self.assertEqual(payload["candidate"]["summary"]["total_spend"], "280")
+        self.assertEqual(payload["candidate"]["summary"]["total_impressions"], "2800")
+        self.assertEqual(payload["charts"]["series"][0]["label"], "Parsed May_2026")
+
     def test_parse_process_file_returns_chart_preview_without_writing_output(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             repo_root = Path(tmpdir)
@@ -531,7 +642,28 @@ class DashboardViewTests(TestCase):
         self.assertEqual(payload["candidate"]["summary"]["row_count"], 2)
         self.assertEqual(payload["charts"]["series"][0]["label"], "Parsed May_2026")
         self.assertEqual(payload["charts"]["series"][0]["points"][0]["day"], 1)
+        self.assertEqual(payload["charts"]["series"][0]["points"][0]["cpm"], 0.1)
+        self.assertEqual(payload["parsed_table"]["columns"][0], "Date")
+        self.assertEqual(payload["parsed_table"]["row_count"], 2)
+        self.assertFalse(payload["parsed_table"]["truncated"])
+        self.assertEqual(payload["parsed_table"]["rows"][0][0], "2026-05-01")
         self.assertEqual(ParsedOutput.objects.filter(asset=asset).count(), 0)
+
+    def test_chart_preview_groups_metrics_by_date(self):
+        series = period_series_from_rows(
+            [
+                {"Date": "2026-05-01", "Spend": "10", "Impressions": "100"},
+                {"Date": "2026-05-01", "Spend": "15", "Impressions": "400"},
+                {"Date": "2026-05-02", "Spend": "5", "Impressions": "50"},
+            ],
+            "Parsed May_2026",
+        )
+
+        self.assertEqual(len(series["points"]), 2)
+        self.assertEqual(series["points"][0]["date"], "2026-05-01")
+        self.assertEqual(series["points"][0]["spend"], 25.0)
+        self.assertEqual(series["points"][0]["impressions"], 500.0)
+        self.assertEqual(series["points"][0]["cpm"], 0.05)
 
     def test_approve_process_file_sends_versioned_output_for_external_approval(self):
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -671,9 +803,28 @@ class DashboardViewTests(TestCase):
         run_mock.return_value.stdout = "ok"
         run_mock.return_value.stderr = ""
 
-        response = self.client.post(reverse("pipeline_dashboard:update_folders"))
+        response = self.client.post(reverse("pipeline_dashboard:update_folders"), follow=True)
 
         self.assertRedirects(response, reverse("pipeline_dashboard:folders"))
+        self.assertNotContains(response, "SF folders updated.")
+        run_mock.assert_called_once()
+
+    @patch("pipeline_dashboard.views.subprocess.run")
+    def test_update_folders_ajax_returns_redirect_payload(self, run_mock):
+        run_mock.return_value.returncode = 0
+        run_mock.return_value.stdout = "ok"
+        run_mock.return_value.stderr = ""
+
+        response = self.client.post(
+            reverse("pipeline_dashboard:update_folders"),
+            HTTP_X_REQUESTED_WITH="XMLHttpRequest",
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            response.json(),
+            {"ok": True, "redirect_url": reverse("pipeline_dashboard:folders")},
+        )
         run_mock.assert_called_once()
 
     def _write_review_fixture(self, repo_root: Path) -> str:
@@ -1020,6 +1171,63 @@ class DashboardViewTests(TestCase):
             parser_key="podcastone",
             status=AssetStatus.PROCESSING,
             name="PODCASTONE MAY 2026.xlsx",
+            local_path=local_path,
+            file_size=workbook_path.stat().st_size,
+        )
+
+    def _write_rallyadmedia_parse_fixture(self, repo_root: Path) -> Asset:
+        project_root = Path(__file__).resolve().parents[3]
+        parser_root = repo_root / "parsers" / "RallyAdMedia"
+        parser_root.mkdir(parents=True)
+        shutil.copy2(
+            project_root / "parsers" / "RallyAdMedia" / "input_schema.json",
+            parser_root / "input_schema.json",
+        )
+        shutil.copy2(project_root / "parsers" / "RallyAdMedia" / "parser.py", parser_root / "parser.py")
+
+        approved_path = repo_root / "data" / "processed" / "RallyAdMedia" / "RallyAdMedia.csv"
+        approved_path.parent.mkdir(parents=True)
+        approved_path.write_text(
+            "\n".join(
+                [
+                    "Date,Vendor,Brand,Channel,Platform,Spend,Impressions,Data_Grain,Processed_At,Source_File",
+                    "2026-04-01,RallyAdMedia,BetOnline,Display,RallyAd,10,100,daily,approved,baseline.csv",
+                    "",
+                ]
+            ),
+            encoding="utf-8",
+        )
+
+        local_path = "data/inbox/allshared/May_2026_Internal_folders/RallyAd MAY 2026.xlsx"
+        workbook_path = repo_root / local_path
+        workbook_path.parent.mkdir(parents=True)
+        workbook = Workbook()
+        workbook.remove(workbook.active)
+        sheet_values = {
+            "BOL": [("01-May-2026", 100, 10), ("02-May-2026", 500, 50)],
+            "SB": [("01-May-2026", 200, 20), (None, None, None)],
+            "WC": [("01-May-2026", 300, 30), ("02-May-2026", 600, 60)],
+            "SS": [("01-May-2026", 400, 40), ("02-May-2026", 700, 70)],
+        }
+        for sheet_name, rows in sheet_values.items():
+            sheet = workbook.create_sheet(sheet_name)
+            sheet["A1"] = "DATE_LABEL"
+            sheet["B1"] = "Imps."
+            sheet["I1"] = "Total Spend"
+            for index, (row_date, impressions, spend) in enumerate(rows, 2):
+                sheet.cell(index, 1).value = row_date
+                sheet.cell(index, 2).value = impressions
+                sheet.cell(index, 9).value = spend
+        workbook.save(workbook_path)
+        workbook.close()
+
+        rallyad, _ = Vendor.objects.get_or_create(name="RallyAdMedia", defaults={"parser_key": "rallyadmedia"})
+        return Asset.objects.create(
+            remote_item_id="fi-rallyadmedia-parse",
+            vendor=rallyad,
+            parser_key="rallyadmedia",
+            status=AssetStatus.PROCESSING,
+            name="RallyAd MAY 2026.xlsx",
             local_path=local_path,
             file_size=workbook_path.stat().st_size,
         )

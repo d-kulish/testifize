@@ -67,7 +67,12 @@ def load_sharefile_mirror() -> MirrorData:
             assets_by_local_path,
             assets_by_remote_item_id,
         )
-        grouped[folder_path].append(_file_row(local_path, remote, profile_row, status, user_cache))
+        file_row = _file_row(local_path, remote, profile_row, status, user_cache)
+        file_row["folder_path"] = folder_path
+        file_row["folder_display_name"] = _display_folder_name(folder_path)
+        grouped[folder_path].append(file_row)
+
+    annotate_duplicate_names(grouped)
 
     folders = []
     for folder_path, files in grouped.items():
@@ -89,7 +94,7 @@ def load_sharefile_mirror() -> MirrorData:
             }
         )
 
-    folders.sort(key=lambda row: (-row["counts"]["total"], row["display_name"].lower()))
+    folders.sort(key=lambda row: (-row["counts"]["new"], row["display_name"].lower()))
     summary = {
         "run_id": snapshot.get("run_id", ""),
         "snapshot_created_at": snapshot.get("created_at", ""),
@@ -207,10 +212,34 @@ def _status_label(status: str) -> str:
 
 
 def duplicate_name_count(files: list[dict[str, Any]]) -> int:
-    counts: defaultdict[str, int] = defaultdict(int)
-    for row in files:
-        counts[row["name"].lower()] += 1
-    return sum(count for count in counts.values() if count > 1)
+    return sum(1 for row in files if row.get("duplicate_name"))
+
+
+def annotate_duplicate_names(grouped: dict[str, list[dict[str, Any]]]) -> None:
+    rows_by_name: defaultdict[str, list[dict[str, Any]]] = defaultdict(list)
+    for files in grouped.values():
+        for row in files:
+            row["duplicate_name"] = False
+            row["duplicate_hint"] = ""
+            key = duplicate_name_key(row["name"])
+            if key:
+                rows_by_name[key].append(row)
+
+    for rows in rows_by_name.values():
+        if len(rows) < 2:
+            continue
+        locations = sorted({row["folder_display_name"] for row in rows})
+        for row in rows:
+            other_locations = [location for location in locations if location != row["folder_display_name"]]
+            row["duplicate_name"] = True
+            if other_locations:
+                row["duplicate_hint"] = f"Also in: {', '.join(other_locations)}"
+            else:
+                row["duplicate_hint"] = f"{len(rows)} files with this name in {row['folder_display_name']}"
+
+
+def duplicate_name_key(name: str) -> str:
+    return " ".join(name.casefold().strip().split())
 
 
 def newest_first(files: list[dict[str, Any]]) -> list[dict[str, Any]]:

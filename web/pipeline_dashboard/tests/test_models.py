@@ -7,7 +7,7 @@ from pipeline_dashboard.models import Asset, AssetStatus, ShareFileFolder, Vendo
 
 class ModelTests(TestCase):
     def test_vendor_folder_and_asset_creation(self):
-        vendor = Vendor.objects.create(name="AdTaxi", parser_key="adtaxi")
+        vendor, _ = Vendor.objects.get_or_create(name="AdTaxi", defaults={"parser_key": "adtaxi"})
         folder = ShareFileFolder.objects.create(
             vendor=vendor,
             folder_id="fo-example",

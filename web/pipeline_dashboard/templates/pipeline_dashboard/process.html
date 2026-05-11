@@ -1,28 +1,28 @@
 {% extends "pipeline_dashboard/base.html" %}
 {% load pipeline_numbers %}
 
-{% block title %}Process{% endblock %}
+{% block title %}Parsing{% endblock %}
 
 {% block content %}
   <section class="topbar">
     <div>
-      <h1>Process</h1>
-      <p class="subtitle">Files currently marked Active and ready for processing work.</p>
+      <h1>Parsing</h1>
+      <p class="subtitle">Files assigned to a vendor and ready for parser review.</p>
     </div>
     <div class="actions">
       <a class="button" href="{% url 'pipeline_dashboard:folders' %}">SF folders</a>
     </div>
   </section>
 
-  <section class="metrics metrics-compact" aria-label="Processing totals">
+  <section class="metrics metrics-compact" aria-label="Parsing totals">
     <div class="metric amber">
       <div class="metric-icon" aria-hidden="true">
         <svg viewBox="0 0 24 24"><path d="M4 7h16"></path><path d="M4 12h10"></path><path d="M4 17h7"></path><path d="m16 16 2 2 4-5"></path></svg>
       </div>
       <div class="metric-body">
-        <div class="metric-label">Processing</div>
+        <div class="metric-label">Parsing</div>
         <div class="metric-value">{{ assets|length }}</div>
-        <div class="metric-note">Active file queue</div>
+        <div class="metric-note">Active parser queue</div>
       </div>
     </div>
     <div class="metric purple">
@@ -49,12 +49,12 @@
 
   <section class="panel">
     <div class="panel-header">
-      <h2 class="panel-title">Processing Files</h2>
-      <span class="muted">Only files with Processing status</span>
+      <h2 class="panel-title">Parsing Files</h2>
+      <span class="muted">Only files assigned for parser review</span>
     </div>
     <div class="panel-body">
       {% if grouped_assets %}
-        <div class="mirror-table" role="table" aria-label="Processing files grouped by vendor">
+        <div class="mirror-table" role="table" aria-label="Parsing files grouped by vendor">
           <div class="mirror-head" role="row">
             <div role="columnheader">Vendor</div>
             <div role="columnheader">Files</div>
@@ -70,7 +70,7 @@
                 <span class="mirror-folder-name" role="cell">{{ group.vendor.name|default:"Unassigned" }}</span>
                 <span role="cell">{{ group.assets|length }}</span>
                 <span class="status-orange" role="cell">{{ group.assets|length }}</span>
-                <span role="cell">Processing</span>
+                <span role="cell">Parsing</span>
                 <span role="cell">Click file</span>
                 <span role="cell">Per row</span>
                 <span role="cell"></span>
@@ -135,7 +135,7 @@
             {% endfor %}
         </div>
       {% else %}
-        <div class="empty">No files are currently in processing.</div>
+        <div class="empty">No files are currently queued for parsing.</div>
       {% endif %}
     </div>
   </section>
@@ -218,17 +218,9 @@
       <div class="review-body">
         <div class="review-sheet-tabs" data-parse-tabs></div>
         <div class="review-preview" data-parse-preview>
-          <div class="review-message">Choose a processing file to preview.</div>
+          <div class="review-message">Choose a parsing file to preview.</div>
         </div>
-        <div class="review-preview" data-chart-preview hidden>
-          <div class="review-sheet-tabs">
-            <button class="active" type="button" data-chart-mode="spend">Spend</button>
-            <button type="button" data-chart-mode="impressions">Impressions</button>
-            <button type="button" data-chart-mode="cpm">Spend/Impressions</button>
-          </div>
-          <div data-chart-summary class="review-message"></div>
-          <svg data-approval-chart viewBox="0 0 920 360" role="img" aria-label="Approval comparison chart"></svg>
-        </div>
+        <div class="parse-result" data-chart-preview hidden></div>
       </div>
       <footer class="review-footer">
         <span class="muted" data-parse-footer>Parser validation runs before CSV creation.</span>
@@ -268,7 +260,7 @@
       form.addEventListener("submit", (event) => {
         const row = form.closest("tr");
         const fileName = row?.querySelectorAll(".file-name")?.[1]?.textContent?.trim() || "this parsed file";
-        const confirmed = window.confirm(`Cancel approval for ${fileName} and return it to Processing Files?`);
+        const confirmed = window.confirm(`Cancel approval for ${fileName} and return it to Parsing Files?`);
         if (!confirmed) {
           event.preventDefault();
         }
@@ -282,8 +274,6 @@
     const parseTabs = document.querySelector("[data-parse-tabs]");
     const parsePreview = document.querySelector("[data-parse-preview]");
     const chartPreview = document.querySelector("[data-chart-preview]");
-    const chartSvg = document.querySelector("[data-approval-chart]");
-    const chartSummary = document.querySelector("[data-chart-summary]");
     const parseSubmit = document.querySelector("[data-parse-submit]");
     const approvalSubmit = document.querySelector("[data-approval-submit]");
     const parseFooter = document.querySelector("[data-parse-footer]");
@@ -294,6 +284,8 @@
       parseModal.hidden = true;
       activeParse = null;
       chartPreview.hidden = true;
+      chartPreview.replaceChildren();
+      parseTabs.hidden = false;
       parsePreview.hidden = false;
       approvalSubmit.hidden = true;
       parseSubmit.hidden = false;
@@ -315,14 +307,14 @@
     }
 
     function resetParseModal() {
+      parseTabs.hidden = false;
       chartPreview.hidden = true;
+      chartPreview.replaceChildren();
       parsePreview.hidden = false;
       approvalSubmit.hidden = true;
       approvalSubmit.disabled = true;
       parseSubmit.hidden = false;
       parseSubmit.disabled = true;
-      chartSvg.replaceChildren();
-      chartSummary.textContent = "";
     }
 
     function formatBytes(value) {
@@ -472,55 +464,148 @@
         });
         const payload = await response.json();
         if (!response.ok) throw new Error(payload.error || "Parse failed.");
-        activeParse.chartPayload = payload;
+        activeParse.resultPayload = payload;
+        parseTabs.hidden = true;
         parsePreview.hidden = true;
         chartPreview.hidden = false;
         parseSubmit.hidden = true;
         approvalSubmit.hidden = false;
         approvalSubmit.disabled = false;
-        renderChart("spend");
-        parseFooter.textContent = "Review the comparison, then approve or cancel.";
+        renderParsedResult(payload);
+        parseFooter.textContent = "Review the charts and final CSV preview, then approve or cancel.";
       } catch (error) {
+        parseTabs.hidden = false;
+        parsePreview.hidden = false;
+        chartPreview.hidden = true;
         showParseMessage(error.message, true);
         parseFooter.textContent = "Parse failed.";
         parseSubmit.disabled = false;
       }
     });
 
-    document.querySelectorAll("[data-chart-mode]").forEach((button) => {
-      button.addEventListener("click", () => {
-        document.querySelectorAll("[data-chart-mode]").forEach((item) => item.classList.remove("active"));
-        button.classList.add("active");
-        renderChart(button.dataset.chartMode);
-      });
-    });
+    function renderParsedResult(payload) {
+      chartPreview.replaceChildren();
+      const tabs = document.createElement("div");
+      tabs.className = "parse-result-tabs";
+      tabs.setAttribute("role", "tablist");
+      const summary = renderResultSummary(payload);
+      const view = document.createElement("div");
+      view.className = "parse-result-view";
+      const configs = [
+        {mode: "spend", label: "Spend", title: "Spend", note: "Daily spend against approved history", type: "chart"},
+        {mode: "impressions", label: "Impressions", title: "Impressions", note: "Daily impressions against approved history", type: "chart"},
+        {mode: "cpm", label: "Cost / impression", title: "Cost / impression", note: "Daily spend divided by daily impressions", type: "chart"},
+        {mode: "csv", label: "Final CSV", title: "Final CSV", type: "table"},
+      ];
+      const buttons = new Map();
 
-    function renderChart(mode) {
-      if (!activeParse?.chartPayload?.charts) return;
-      const payload = activeParse.chartPayload;
-      const series = payload.charts.series || [];
-      const values = series.flatMap((item) => item.points.map((point) => Number(point[mode] || 0)));
+      function activate(config) {
+        buttons.forEach((button, key) => {
+          const selected = key === config.mode;
+          button.classList.toggle("active", selected);
+          button.setAttribute("aria-selected", selected ? "true" : "false");
+        });
+        view.replaceChildren();
+        if (config.type === "table") {
+          view.appendChild(renderParsedTable(payload.parsed_table || {}));
+        } else {
+          view.appendChild(renderSingleChart(payload, config));
+        }
+        view.scrollTop = 0;
+      }
+
+      configs.forEach((config) => {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.textContent = config.label;
+        button.setAttribute("role", "tab");
+        button.setAttribute("aria-selected", "false");
+        button.addEventListener("click", () => activate(config));
+        buttons.set(config.mode, button);
+        tabs.appendChild(button);
+      });
+
+      chartPreview.append(tabs, summary, view);
+      activate(configs[0]);
+    }
+
+    function renderResultSummary(payload) {
+      const summary = payload.candidate?.summary || {};
+      const series = payload.charts?.series || [];
+      const baselineCount = Math.max(series.length - 1, 0);
+      const header = document.createElement("div");
+      header.className = "parse-result-summary";
+      const title = document.createElement("div");
+      title.className = "parse-result-title";
+      const heading = document.createElement("h3");
+      heading.textContent = "Parsed CSV review";
+      const meta = document.createElement("span");
+      meta.textContent = `${summary.period_start || "-"} to ${summary.period_end || "-"} · ${payload.candidate?.output_filename || "CSV output"}`;
+      title.append(heading, meta);
+      const pills = document.createElement("div");
+      pills.className = "parse-result-pills";
+      [
+        ["Rows", summary.row_count || 0],
+        ["Spend", formatMetric(summary.total_spend, "spend")],
+        ["Impressions", formatMetric(summary.total_impressions, "impressions")],
+        ["Compared", `${baselineCount} previous month${baselineCount === 1 ? "" : "s"}`],
+      ].forEach(([label, value]) => {
+        const pill = document.createElement("div");
+        pill.className = "parse-result-pill";
+        const strong = document.createElement("strong");
+        strong.textContent = value;
+        const span = document.createElement("span");
+        span.textContent = label;
+        pill.append(strong, span);
+        pills.appendChild(pill);
+      });
+      header.append(title, pills);
+      return header;
+    }
+
+    function renderSingleChart(payload, config) {
+      const card = document.createElement("section");
+      card.className = "parse-chart-card";
+      const cardHeader = document.createElement("div");
+      cardHeader.className = "parse-chart-head";
+      const h4 = document.createElement("h4");
+      h4.textContent = config.title;
+      const small = document.createElement("span");
+      small.textContent = config.note;
+      cardHeader.append(h4, small);
+      const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+      svg.setAttribute("viewBox", "0 0 920 320");
+      svg.setAttribute("role", "img");
+      svg.setAttribute("aria-label", `${config.title} comparison chart`);
+      card.append(cardHeader, svg);
+      renderMetricChart(svg, payload.charts || {}, config.mode);
+      return card;
+    }
+
+    function renderMetricChart(svg, chartPayload, mode) {
+      const series = chartPayload.series || [];
+      const values = series.flatMap((item) => (item.points || []).map((point) => Number(point[mode] || 0)));
       const maxValue = Math.max(...values, 1);
-      const maxDay = Math.max(payload.charts.max_day || 0, 1);
+      const maxDay = Math.max(chartPayload.max_day || 0, ...series.map((item) => (item.points || []).length), 1);
       const width = 920;
-      const height = 360;
+      const height = 320;
       const left = 52;
       const right = 24;
-      const top = 24;
+      const top = 30;
       const bottom = 44;
       const plotWidth = width - left - right;
       const plotHeight = height - top - bottom;
       const colors = ["#2563eb", "#b54708", "#13795b"];
-      chartSvg.replaceChildren();
+      svg.replaceChildren();
 
       const axis = document.createElementNS("http://www.w3.org/2000/svg", "path");
       axis.setAttribute("d", `M${left},${top} V${top + plotHeight} H${left + plotWidth}`);
       axis.setAttribute("fill", "none");
       axis.setAttribute("stroke", "#98a2b3");
-      chartSvg.appendChild(axis);
+      svg.appendChild(axis);
 
       series.forEach((item, index) => {
-        const points = item.points.map((point) => {
+        const points = (item.points || []).map((point) => {
           const x = left + ((Number(point.day) - 1) / Math.max(maxDay - 1, 1)) * plotWidth;
           const y = top + plotHeight - (Number(point[mode] || 0) / maxValue) * plotHeight;
           return `${x.toFixed(2)},${y.toFixed(2)}`;
@@ -531,7 +616,7 @@
         line.setAttribute("fill", "none");
         line.setAttribute("stroke", colors[index % colors.length]);
         line.setAttribute("stroke-width", index === 0 ? "3" : "2");
-        chartSvg.appendChild(line);
+        svg.appendChild(line);
 
         const label = document.createElementNS("http://www.w3.org/2000/svg", "text");
         label.setAttribute("x", String(left + 12));
@@ -539,7 +624,7 @@
         label.setAttribute("fill", colors[index % colors.length]);
         label.setAttribute("font-size", "13");
         label.textContent = item.label;
-        chartSvg.appendChild(label);
+        svg.appendChild(label);
       });
 
       const xLabel = document.createElementNS("http://www.w3.org/2000/svg", "text");
@@ -549,11 +634,82 @@
       xLabel.setAttribute("fill", "#647184");
       xLabel.setAttribute("font-size", "12");
       xLabel.textContent = "Overlapping period day";
-      chartSvg.appendChild(xLabel);
+      svg.appendChild(xLabel);
 
-      const metricLabel = mode === "cpm" ? "CPM" : mode[0].toUpperCase() + mode.slice(1);
-      const candidate = payload.candidate?.summary || {};
-      chartSummary.textContent = `${metricLabel}. Parsed rows: ${candidate.row_count || 0}; period: ${candidate.period_start || "-"} to ${candidate.period_end || "-"}; output: ${payload.candidate?.output_filename || "-"}.`;
+      const maxLabel = document.createElementNS("http://www.w3.org/2000/svg", "text");
+      maxLabel.setAttribute("x", String(left));
+      maxLabel.setAttribute("y", String(top - 10));
+      maxLabel.setAttribute("fill", "#647184");
+      maxLabel.setAttribute("font-size", "12");
+      maxLabel.textContent = formatMetric(maxValue, mode);
+      svg.appendChild(maxLabel);
+    }
+
+    function renderParsedTable(tablePayload) {
+      const columns = tablePayload.columns || [];
+      const rows = tablePayload.rows || [];
+      const panel = document.createElement("section");
+      panel.className = "parse-csv-panel";
+      const header = document.createElement("div");
+      header.className = "parse-csv-head";
+      const h3 = document.createElement("h3");
+      h3.textContent = "Final CSV preview";
+      const meta = document.createElement("span");
+      meta.textContent = `${tablePayload.preview_count || rows.length} of ${tablePayload.row_count || rows.length} rows`;
+      header.append(h3, meta);
+      panel.appendChild(header);
+
+      if (!columns.length) {
+        const empty = document.createElement("div");
+        empty.className = "review-message";
+        empty.textContent = "No parsed CSV rows were returned.";
+        panel.appendChild(empty);
+        return panel;
+      }
+
+      const wrapper = document.createElement("div");
+      wrapper.className = "parse-csv-table-wrap";
+      const table = document.createElement("table");
+      const thead = document.createElement("thead");
+      const tbody = document.createElement("tbody");
+      const headerRow = document.createElement("tr");
+      columns.forEach((column) => {
+        const th = document.createElement("th");
+        th.textContent = column;
+        headerRow.appendChild(th);
+      });
+      thead.appendChild(headerRow);
+      rows.forEach((row) => {
+        const tr = document.createElement("tr");
+        columns.forEach((column, index) => {
+          const td = document.createElement("td");
+          td.textContent = Array.isArray(row) ? row[index] || "" : row[column] || "";
+          tr.appendChild(td);
+        });
+        tbody.appendChild(tr);
+      });
+      table.append(thead, tbody);
+      wrapper.appendChild(table);
+      panel.appendChild(wrapper);
+      if (tablePayload.truncated) {
+        const note = document.createElement("div");
+        note.className = "parse-csv-note";
+        note.textContent = "Preview is truncated. The full CSV will be generated during Approval.";
+        panel.appendChild(note);
+      }
+      return panel;
+    }
+
+    function formatMetric(value, mode) {
+      const number = Number(value || 0);
+      if (!Number.isFinite(number)) return "-";
+      if (mode === "spend") {
+        return new Intl.NumberFormat(undefined, {style: "currency", currency: "USD", maximumFractionDigits: 2}).format(number);
+      }
+      if (mode === "impressions") {
+        return new Intl.NumberFormat(undefined, {maximumFractionDigits: 0}).format(number);
+      }
+      return new Intl.NumberFormat(undefined, {minimumFractionDigits: 4, maximumFractionDigits: 6}).format(number);
     }
 
     approvalSubmit.addEventListener("click", async () => {

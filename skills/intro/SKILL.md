@@ -58,10 +58,9 @@ Local app pages:
 
 ```text
 /          dashboard
-/assets/   asset catalogue
-/folders/  ShareFile folder catalogue
-/vendors/  vendor catalogue
-/admin/    Django Admin back office for edits and actions
+/folders/  ShareFile folder catalogue, update, review, vendor assignment
+/process/  Parsing page for raw preview, parser output review, approval queue
+/admin/    Django Admin back office for catalogue edits and recovery actions
 ```
 
 Start locally:
@@ -160,7 +159,8 @@ Delete/Admin are not required unless the pipeline is later asked to clean up rem
 - Catalogue every matching remote file first, then decide status.
 - Use `superseded` for older overlapping files instead of hiding or deleting them.
 - Use `ignored` for files that should never be processed.
-- Keep upload actions out of the app UI until parser-result and validation-review models are designed.
+- Keep parser preview side-effect free: `Parse` may validate and display charts/CSV rows, but `Approval` owns writing the versioned CSV and uploading to ShareFile.
+- Keep vendor assignment restrictions in the server workflow as well as the UI.
 
 ## Key Files
 

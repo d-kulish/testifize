@@ -59,7 +59,32 @@ def build_parse_result_preview(asset: Asset) -> dict[str, Any]:
         },
         "comparison": comparison,
         "charts": build_chart_payload(parsed.rows, asset.vendor, parsed.summary),
+        "parsed_table": parsed_table_payload(parsed),
     }
+
+
+def parsed_table_payload(parsed: ParsedRows, limit: int = 200) -> dict[str, Any]:
+    preview_rows = parsed.rows[:limit]
+    return {
+        "columns": parsed.columns,
+        "rows": [
+            [csv_preview_value(row.get(column, "")) for column in parsed.columns]
+            for row in preview_rows
+        ],
+        "row_count": len(parsed.rows),
+        "preview_count": len(preview_rows),
+        "truncated": len(parsed.rows) > limit,
+    }
+
+
+def csv_preview_value(value: Any) -> str:
+    if value is None:
+        return ""
+    if isinstance(value, Decimal):
+        return str(value)
+    if isinstance(value, (date, datetime)):
+        return value.isoformat()
+    return str(value)
 
 
 def validate_asset_parser(asset: Asset) -> dict[str, Any]:
@@ -536,24 +561,27 @@ def latest_approved_period_series(vendor: Vendor | None, before_date: date | Non
 
 
 def period_series_from_rows(rows: list[dict[str, Any]], label: str) -> dict[str, Any]:
-    dated_rows = []
+    grouped: dict[date, dict[str, Decimal]] = {}
     for row in rows:
         row_date = parse_iso_date(row.get("Date"))
-        if row_date:
-            dated_rows.append((row_date, row))
-    dated_rows.sort(key=lambda item: item[0])
+        if not row_date:
+            continue
+        totals = grouped.setdefault(row_date, {"spend": Decimal("0"), "impressions": Decimal("0")})
+        totals["spend"] += decimal_value(row.get(spend_column(row), 0))
+        totals["impressions"] += decimal_value(row.get(impression_column(row), 0))
+
     points = []
-    for index, (row_date, row) in enumerate(dated_rows, 1):
-        spend = decimal_value(row.get(spend_column(row), 0))
-        impressions = decimal_value(row.get(impression_column(row), 0))
-        cpm = (spend / impressions * Decimal("1000")) if impressions else Decimal("0")
+    for index, row_date in enumerate(sorted(grouped), 1):
+        spend = grouped[row_date]["spend"]
+        impressions = grouped[row_date]["impressions"]
+        cost_per_impression = (spend / impressions) if impressions else Decimal("0")
         points.append(
             {
                 "day": index,
                 "date": row_date.isoformat(),
                 "spend": float(spend),
                 "impressions": float(impressions),
-                "cpm": float(cpm),
+                "cpm": float(cost_per_impression),
             }
         )
     return {"label": label, "points": points}
