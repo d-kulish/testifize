@@ -51,11 +51,11 @@ def build_parse_preview(asset: Asset) -> dict[str, Any]:
 def build_parse_result_preview(asset: Asset) -> dict[str, Any]:
     parsed = parse_asset_rows(asset)
     comparison = compare_to_approved(parsed.rows, parsed.approved_path)
-    approval_label = approval_period_label()
+    output_label = approval_filename_label(parsed.summary)
     return {
         "candidate": {
             "summary": serializable_summary(parsed.summary),
-            "output_filename": next_output_path(asset.vendor, approval_label)[0].name if asset.vendor else "",
+            "output_filename": next_output_path(asset.vendor, output_label)[0].name if asset.vendor else "",
         },
         "comparison": comparison,
         "charts": build_chart_payload(parsed.rows, asset.vendor, parsed.summary),
@@ -172,11 +172,15 @@ def stage_asset_parser(asset: Asset) -> ParsedOutput:
     if not asset.vendor:
         raise ParserWorkflowError("No vendor is assigned.")
     summary = parsed_rows.summary
-    output_path, version = next_output_path(asset.vendor, approval_period_label())
+    output_path, version = next_output_path(asset.vendor, approval_filename_label(summary))
     output_path.parent.mkdir(parents=True, exist_ok=True)
     write_rows(output_path, parsed_rows.columns, parsed_rows.rows)
 
-    comparison = compare_to_approved(parsed_rows.rows, parsed_rows.approved_path)
+    comparison = {
+        **compare_to_approved(parsed_rows.rows, parsed_rows.approved_path),
+        "approval_folder_label": approval_folder_label(summary),
+        "approval_filename_label": approval_filename_label(summary),
+    }
     parsed = ParsedOutput.objects.create(
         asset=asset,
         vendor=asset.vendor,
@@ -202,9 +206,9 @@ def upload_approved_output(
     client: ShareFileClient | None = None,
 ):
     root_id = approval_root_id()
-    current_month = datetime.now().strftime("%B_%Y")
+    approval_month = approval_folder_label(summary)
     client = client or build_sharefile_client()
-    folder = client.ensure_folder_path(root_id, ["Approval", current_month, vendor.name])
+    folder = client.ensure_folder_path(root_id, ["Approval", approval_month, vendor.name])
     return client.upload_bytes(
         folder.id,
         output_path.name,
@@ -433,6 +437,53 @@ def final_period_label(parsed_output: ParsedOutput) -> str:
     return approval_period_label()
 
 
+def approval_folder_label(summary: dict[str, Any] | None = None, at: datetime | None = None) -> str:
+    if summary and summary.get("approval_folder_label"):
+        return str(summary["approval_folder_label"])
+    return approval_period_date(summary, at).strftime("%B_%Y")
+
+
+def approval_filename_label(summary: dict[str, Any] | None = None, at: datetime | None = None) -> str:
+    if summary and summary.get("approval_filename_label"):
+        return str(summary["approval_filename_label"])
+    return approval_period_date(summary, at).strftime("%b_%Y")
+
+
+def approval_period_date(summary: dict[str, Any] | None = None, at: datetime | None = None) -> date:
+    period_end = summary_period_date(summary, "period_end")
+    period_start = summary_period_date(summary, "period_start")
+    anchor = period_end or period_start
+    if anchor:
+        return next_month_start(anchor)
+    fallback = at or datetime.now()
+    return date(fallback.year, fallback.month, 1)
+
+
+def summary_period_date(summary: dict[str, Any] | None, key: str) -> date | None:
+    if not summary:
+        return None
+    value = summary.get(key)
+    if not value and isinstance(summary.get("generated"), dict):
+        value = summary["generated"].get(key)
+    return coerce_date(value)
+
+
+def coerce_date(value: Any) -> date | None:
+    if isinstance(value, datetime):
+        return value.date()
+    if isinstance(value, date):
+        return value
+    if isinstance(value, str):
+        return parse_iso_date(value)
+    return None
+
+
+def next_month_start(value: date) -> date:
+    if value.month == 12:
+        return date(value.year + 1, 1, 1)
+    return date(value.year, value.month + 1, 1)
+
+
 def safe_period_label(value: str) -> str:
     return re.sub(r"[^A-Za-z0-9]+", "_", value).strip("_") or "Unknown_Period"
 
@@ -472,7 +523,7 @@ def next_output_path(vendor: Vendor, period_label: str) -> tuple[Path, int]:
 
 
 def approval_period_label(at: datetime | None = None) -> str:
-    return (at or datetime.now()).strftime("%B_%Y")
+    return approval_folder_label(at=at)
 
 
 def write_rows(path: Path, columns: list[str], rows: list[dict[str, Any]]) -> None:

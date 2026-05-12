@@ -157,6 +157,15 @@ daily aggregates or more detailed rows.
 - all four sheets are grouped by date into one daily row
 - the app vendor is `RallyAdMedia`; legacy or mistaken `ReallyAdMedia` rows should be renamed
 
+`AdTaxi` adds top-level summary distribution:
+
+- sheet `Totals By State`
+- the reporting date range comes from the `Dates` row
+- the three top-level `Advertiser Cost` values are summed into total `Spend`
+- the three top-level `Impressions` values are summed into total `Impressions`
+- both totals are distributed across every date in the reporting range
+- March 2026 source rows are submitted for April 2026 approval review
+
 ## App Review Flow
 
 The Parsing page has two explicit review phases:

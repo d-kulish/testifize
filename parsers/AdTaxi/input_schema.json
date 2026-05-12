@@ -1,0 +1,53 @@
+{
+  "source_file": "data/inbox/allshared/May_2026_Internal_folders/AdTaxi_Media Spend & Conversion by State (March 2026).xlsx",
+  "target_file": "_old/final/AdTaxi.csv",
+  "sheet_name": "Totals By State",
+  "file_type": "xlsx",
+  "metadata": {
+    "date_label_cell": "A2",
+    "date_range_cell": "B2"
+  },
+  "header": {
+    "row": 1,
+    "columns": [
+      {
+        "letter": "G",
+        "name": "Advertiser Cost "
+      },
+      {
+        "letter": "H",
+        "name": "Impressions"
+      }
+    ]
+  },
+  "summary_rows": {
+    "first_row": 3,
+    "last_row": 5,
+    "spend_column": "G",
+    "impressions_column": "H"
+  },
+  "selected_columns": {
+    "date": "Dates",
+    "spend": "Advertiser Cost ",
+    "impressions": "Impressions"
+  },
+  "skip_rules": [
+    "Use the date range from the Dates row on the Totals By State sheet.",
+    "Sum the three top-level Advertiser Cost values from rows 3 through 5.",
+    "Sum the three top-level Impressions values from rows 3 through 5.",
+    "Distribute the aggregate spend and impressions across every date in the date range."
+  ],
+  "comparison_window": {
+    "start_date": "2026-03-01",
+    "end_date": "2026-03-31"
+  },
+  "output_defaults": {
+    "Vendor": "AdTaxi",
+    "Brand": "BetOnline",
+    "Channel": "Display, CTV",
+    "Platform": "AdTaxi",
+    "Data_Grain": "daily",
+    "Processed_At": "generated",
+    "Source_File": "AdTaxi_Media Spend & Conversion by State (March 2026).xlsx"
+  }
+}

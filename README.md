@@ -571,19 +571,20 @@ The app uses approved files as comparison baselines directly under each vendor f
 data/processed/<Vendor>/
 ```
 
-Approval-review parser outputs are versioned under:
+Approval-review parser outputs are versioned under the approval period, defined
+as the month after the parsed reporting period:
 
 ```text
-data/output/<Vendor>/<Vendor>_<Month>_<Year>_vN.csv
+data/output/<Vendor>/<Vendor>_<Mon>_<Year>_vN.csv
 ```
 
-The first migrated parsers are `Loop`, `TVM`, `TAIV`, `PodcastOne`, `Octopus`, and `RallyAdMedia`. TAIV combines the Prime and Retail tables on `Spend By Day` into one daily row per date, matching the approved TAIV history shape. PodcastOne combines the BASE daily sheet and WC daily sheet by `Day`. Octopus combines the `DOOH` and `Rideshare` tables on `Daily Spend` into one daily row per date. RallyAdMedia combines the `BOL`, `SB`, `WC`, and `SS` sheets by `DATE_LABEL`, summing `Imps.` into `Impressions` and `Total Spend` into `Spend`.
+The first migrated parsers are `Loop`, `TVM`, `TAIV`, `PodcastOne`, `Octopus`, `RallyAdMedia`, and `AdTaxi`. TAIV combines the Prime and Retail tables on `Spend By Day` into one daily row per date, matching the approved TAIV history shape. PodcastOne combines the BASE daily sheet and WC daily sheet by `Day`. Octopus combines the `DOOH` and `Rideshare` tables on `Daily Spend` into one daily row per date. RallyAdMedia combines the `BOL`, `SB`, `WC`, and `SS` sheets by `DATE_LABEL`, summing `Imps.` into `Impressions` and `Total Spend` into `Spend`. AdTaxi reads the March 2026 date range from the `Dates` row, sums the three top-level `Advertiser Cost` and `Impressions` cells, and distributes each total across every date in that range.
 
 On the `/process/` Parsing page, opening a file first shows raw workbook sheets. Clicking `Parse` switches into a parsed-review state with four tabs: `Spend`, `Impressions`, `Cost / impression`, and `Final CSV`. The chart tabs compare the generated candidate against up to two latest approved vendor periods, grouping spend and impressions by date. The `Final CSV` tab shows the generated normalized rows for visual inspection before the user sends anything for ShareFile approval. This parse preview does not write the output CSV.
 
 The approved-history importer canonicalizes `_old/final/Taiv.csv` into `data/processed/TAIV/TAIV.csv` so the parser workflow can find TAIV history by the app vendor name.
 
-The modal `Approval` action writes the versioned parsed CSV under `data/output/<Vendor>/`, uploads that same versioned CSV to ShareFile `Approval/<Current_Month>/<Vendor>/`, stores the ShareFile item ID, creates a `ParsedOutput` record, and moves the source `Asset` into Review.
+The modal `Approval` action writes the versioned parsed CSV under `data/output/<Vendor>/`, uploads that same versioned CSV to ShareFile `Approval/<Approval_Period>/<Vendor>/`, stores the ShareFile item ID, creates a `ParsedOutput` record, and moves the source `Asset` into Review.
 
 `data/processed/<Vendor>/` is reserved for files that have actually been approved. The ShareFile Approval upload is only an external review request, so it does not create or update `data/processed/<Vendor>/`.
 
@@ -598,8 +599,12 @@ SHAREFILE_APPROVAL_ROOT_ID=<folder-id-or-alias>
 The app ensures this path under the selected root before approval upload:
 
 ```text
-Approval/<Current_Month>/<Vendor>/<Vendor>_<Current_Month>_<Current_Year>_vN.csv
+Approval/<Approval_Period>/<Vendor>/<Vendor>_<Mon>_<Year>_vN.csv
 ```
+
+For example, rows dated in March 2026 are submitted for review under
+`Approval/April_2026/<Vendor>/` with a filename like
+`<Vendor>_Apr_2026_v1.csv`.
 
 When a review file is approved, the app ensures this final path under the selected root:
 

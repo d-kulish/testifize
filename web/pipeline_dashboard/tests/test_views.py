@@ -618,11 +618,88 @@ class DashboardViewTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         payload = response.json()
-        self.assertEqual(payload["candidate"]["summary"]["period_label"], "May_2026")
+        self.assertEqual(payload["candidate"]["summary"]["period_label"], "March_2026")
+        self.assertEqual(payload["candidate"]["output_filename"], "RallyAdMedia_Apr_2026_v1.csv")
         self.assertEqual(payload["candidate"]["summary"]["row_count"], 2)
         self.assertEqual(payload["candidate"]["summary"]["total_spend"], "280")
         self.assertEqual(payload["candidate"]["summary"]["total_impressions"], "2800")
-        self.assertEqual(payload["charts"]["series"][0]["label"], "Parsed May_2026")
+        self.assertEqual(payload["charts"]["series"][0]["label"], "Parsed March_2026")
+
+    def test_parse_process_file_distributes_adtaxi_totals_across_report_dates(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            repo_root = Path(tmpdir)
+            asset = self._write_adtaxi_parse_fixture(repo_root)
+
+            with override_settings(REPO_ROOT=repo_root):
+                response = self.client.post(reverse("pipeline_dashboard:parse_process_file", args=[asset.remote_item_id]))
+
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertEqual(payload["candidate"]["summary"]["period_label"], "March_2026")
+        self.assertEqual(payload["candidate"]["output_filename"], "AdTaxi_Apr_2026_v1.csv")
+        self.assertEqual(payload["candidate"]["summary"]["row_count"], 31)
+        self.assertEqual(payload["candidate"]["summary"]["total_spend"], "93")
+        self.assertEqual(payload["candidate"]["summary"]["total_impressions"], "930")
+        self.assertEqual(payload["charts"]["series"][0]["label"], "Parsed March_2026")
+        self.assertEqual(payload["parsed_table"]["rows"][0][0], "2026-03-01")
+        self.assertEqual(payload["parsed_table"]["rows"][0][5], "3")
+        self.assertEqual(payload["parsed_table"]["rows"][0][6], "30")
+        self.assertEqual(payload["parsed_table"]["rows"][-1][0], "2026-03-31")
+
+    def test_approve_rallyadmedia_march_output_uses_april_approval_period(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            repo_root = Path(tmpdir)
+            asset = self._write_rallyadmedia_parse_fixture(repo_root)
+            fake_client = FakeApprovalClient()
+
+            with (
+                override_settings(REPO_ROOT=repo_root),
+                patch("pipeline_dashboard.parser_workflow.approval_root_id", return_value="fo-root"),
+                patch("pipeline_dashboard.parser_workflow.build_sharefile_client", return_value=fake_client),
+            ):
+                response = self.client.post(reverse("pipeline_dashboard:approve_process_file", args=[asset.remote_item_id]))
+                output_exists = (
+                    repo_root / "data" / "output" / "RallyAdMedia" / "RallyAdMedia_Apr_2026_v1.csv"
+                ).exists()
+
+        self.assertEqual(response.status_code, 200)
+        asset.refresh_from_db()
+        parsed = ParsedOutput.objects.get(asset=asset)
+        self.assertEqual(asset.status, AssetStatus.REVIEW)
+        self.assertEqual(asset.output_path, "data/output/RallyAdMedia/RallyAdMedia_Apr_2026_v1.csv")
+        self.assertEqual(parsed.output_path, "data/output/RallyAdMedia/RallyAdMedia_Apr_2026_v1.csv")
+        self.assertEqual(parsed.reporting_period, "March_2026")
+        self.assertEqual(parsed.comparison_summary["approval_folder_label"], "April_2026")
+        self.assertEqual(parsed.comparison_summary["approval_filename_label"], "Apr_2026")
+        self.assertEqual(fake_client.folder_parts, ["Approval", "April_2026", "RallyAdMedia"])
+        self.assertEqual(fake_client.uploaded_name, "RallyAdMedia_Apr_2026_v1.csv")
+        self.assertTrue(output_exists)
+
+    def test_approve_adtaxi_march_output_uses_april_approval_period(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            repo_root = Path(tmpdir)
+            asset = self._write_adtaxi_parse_fixture(repo_root)
+            fake_client = FakeApprovalClient()
+
+            with (
+                override_settings(REPO_ROOT=repo_root),
+                patch("pipeline_dashboard.parser_workflow.approval_root_id", return_value="fo-root"),
+                patch("pipeline_dashboard.parser_workflow.build_sharefile_client", return_value=fake_client),
+            ):
+                response = self.client.post(reverse("pipeline_dashboard:approve_process_file", args=[asset.remote_item_id]))
+                output_exists = (repo_root / "data" / "output" / "AdTaxi" / "AdTaxi_Apr_2026_v1.csv").exists()
+
+        self.assertEqual(response.status_code, 200)
+        asset.refresh_from_db()
+        parsed = ParsedOutput.objects.get(asset=asset)
+        self.assertEqual(asset.status, AssetStatus.REVIEW)
+        self.assertEqual(asset.output_path, "data/output/AdTaxi/AdTaxi_Apr_2026_v1.csv")
+        self.assertEqual(parsed.reporting_period, "March_2026")
+        self.assertEqual(parsed.comparison_summary["approval_folder_label"], "April_2026")
+        self.assertEqual(parsed.comparison_summary["approval_filename_label"], "Apr_2026")
+        self.assertEqual(fake_client.folder_parts, ["Approval", "April_2026", "AdTaxi"])
+        self.assertEqual(fake_client.uploaded_name, "AdTaxi_Apr_2026_v1.csv")
+        self.assertTrue(output_exists)
 
     def test_parse_process_file_returns_chart_preview_without_writing_output(self):
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -677,7 +754,7 @@ class DashboardViewTests(TestCase):
                 patch("pipeline_dashboard.parser_workflow.build_sharefile_client", return_value=fake_client),
             ):
                 response = self.client.post(reverse("pipeline_dashboard:approve_process_file", args=[asset.remote_item_id]))
-                output_exists = (repo_root / "data" / "output" / "Loop" / "Loop_May_2026_v1.csv").exists()
+                output_exists = (repo_root / "data" / "output" / "Loop" / "Loop_Jun_2026_v1.csv").exists()
                 processed_exists = (repo_root / "data" / "processed" / "Loop" / "Loop_May_2026.csv").exists()
 
         self.assertEqual(response.status_code, 200)
@@ -685,15 +762,15 @@ class DashboardViewTests(TestCase):
         parsed = ParsedOutput.objects.get(asset=asset)
         self.assertEqual(asset.status, AssetStatus.REVIEW)
         self.assertEqual(asset.uploaded_item_id, "fi-uploaded")
-        self.assertEqual(asset.output_path, "data/output/Loop/Loop_May_2026_v1.csv")
+        self.assertEqual(asset.output_path, "data/output/Loop/Loop_Jun_2026_v1.csv")
         self.assertEqual(parsed.reporting_period, "May_2026")
         self.assertEqual(parsed.row_count, 2)
         self.assertEqual(parsed.comparison_status, "sent_for_approval")
         self.assertEqual(parsed.comparison_summary["sharefile_item_id"], "fi-uploaded")
         self.assertTrue(output_exists)
         self.assertFalse(processed_exists)
-        self.assertEqual(fake_client.folder_parts, ["Approval", fake_client.current_month, "Loop"])
-        self.assertEqual(fake_client.uploaded_name, "Loop_May_2026_v1.csv")
+        self.assertEqual(fake_client.folder_parts, ["Approval", "June_2026", "Loop"])
+        self.assertEqual(fake_client.uploaded_name, "Loop_Jun_2026_v1.csv")
         self.assertTrue(asset.events.filter(event_type="approval_sent").exists())
 
     def test_cancel_parsed_output_returns_asset_to_processing(self):
@@ -1198,16 +1275,16 @@ class DashboardViewTests(TestCase):
             encoding="utf-8",
         )
 
-        local_path = "data/inbox/allshared/May_2026_Internal_folders/RallyAd MAY 2026.xlsx"
+        local_path = "data/inbox/allshared/May_2026_Internal_folders/RallyAd_Mar26_BOL_SB_WC_SS_2026.xlsx"
         workbook_path = repo_root / local_path
         workbook_path.parent.mkdir(parents=True)
         workbook = Workbook()
         workbook.remove(workbook.active)
         sheet_values = {
-            "BOL": [("01-May-2026", 100, 10), ("02-May-2026", 500, 50)],
-            "SB": [("01-May-2026", 200, 20), (None, None, None)],
-            "WC": [("01-May-2026", 300, 30), ("02-May-2026", 600, 60)],
-            "SS": [("01-May-2026", 400, 40), ("02-May-2026", 700, 70)],
+            "BOL": [("01-Mar-2026", 100, 10), ("02-Mar-2026", 500, 50)],
+            "SB": [("01-Mar-2026", 200, 20), (None, None, None)],
+            "WC": [("01-Mar-2026", 300, 30), ("02-Mar-2026", 600, 60)],
+            "SS": [("01-Mar-2026", 400, 40), ("02-Mar-2026", 700, 70)],
         }
         for sheet_name, rows in sheet_values.items():
             sheet = workbook.create_sheet(sheet_name)
@@ -1227,7 +1304,58 @@ class DashboardViewTests(TestCase):
             vendor=rallyad,
             parser_key="rallyadmedia",
             status=AssetStatus.PROCESSING,
-            name="RallyAd MAY 2026.xlsx",
+            name="RallyAd_Mar26_BOL_SB_WC_SS_2026.xlsx",
+            local_path=local_path,
+            file_size=workbook_path.stat().st_size,
+        )
+
+    def _write_adtaxi_parse_fixture(self, repo_root: Path) -> Asset:
+        project_root = Path(__file__).resolve().parents[3]
+        parser_root = repo_root / "parsers" / "AdTaxi"
+        parser_root.mkdir(parents=True)
+        shutil.copy2(project_root / "parsers" / "AdTaxi" / "input_schema.json", parser_root / "input_schema.json")
+        shutil.copy2(project_root / "parsers" / "AdTaxi" / "parser.py", parser_root / "parser.py")
+
+        approved_path = repo_root / "data" / "processed" / "AdTaxi" / "AdTaxi.csv"
+        approved_path.parent.mkdir(parents=True)
+        approved_path.write_text(
+            "\n".join(
+                [
+                    "Date,Vendor,Brand,Channel,Platform,Spend,Impressions,Data_Grain,Processed_At,Source_File",
+                    "2026-02-01,AdTaxi,BetOnline,Display,AdTaxi,10,100,daily,approved,baseline.csv",
+                    "",
+                ]
+            ),
+            encoding="utf-8",
+        )
+
+        local_path = "data/inbox/allshared/May_2026_Internal_folders/AdTaxi_Media Spend & Conversion by State (March 2026).xlsx"
+        workbook_path = repo_root / local_path
+        workbook_path.parent.mkdir(parents=True)
+        workbook = Workbook()
+        sheet = workbook.active
+        sheet.title = "Totals By State"
+        sheet["A1"] = "Timeframe"
+        sheet["G1"] = "Advertiser Cost "
+        sheet["H1"] = "Impressions"
+        sheet["A2"] = "Dates"
+        sheet["B2"] = "3/1/2026/26 - 3/31-26"
+        sheet["G3"] = 31
+        sheet["H3"] = 310
+        sheet["G4"] = 62
+        sheet["H4"] = 620
+        sheet["G5"] = 0
+        sheet["H5"] = 0
+        workbook.save(workbook_path)
+        workbook.close()
+
+        adtaxi, _ = Vendor.objects.get_or_create(name="AdTaxi", defaults={"parser_key": "adtaxi"})
+        return Asset.objects.create(
+            remote_item_id="fi-adtaxi-parse",
+            vendor=adtaxi,
+            parser_key="adtaxi",
+            status=AssetStatus.PROCESSING,
+            name="AdTaxi_Media Spend & Conversion by State (March 2026).xlsx",
             local_path=local_path,
             file_size=workbook_path.stat().st_size,
         )

@@ -68,7 +68,7 @@ failed
 
 `ignored` should be used for files that match folder access but should never be processed, such as notes, templates, bad test uploads, or historical duplicates.
 
-`review` means a parsed CSV has been uploaded to ShareFile `Approval/<Current_Month>/<Vendor>/` and is waiting for external approval. The `/process/` Approval table shows only parsed outputs with `comparison_status="sent_for_approval"`.
+`review` means a parsed CSV has been uploaded to ShareFile `Approval/<Approval_Period>/<Vendor>/` and is waiting for external approval. The approval period is the month after the parsed reporting period, so March 2026 rows are submitted under `Approval/April_2026/<Vendor>/`. The `/process/` Approval table shows only parsed outputs with `comparison_status="sent_for_approval"`.
 
 When an Approval row is green-lighted, the `Approved` action uploads the final CSV to ShareFile:
 
