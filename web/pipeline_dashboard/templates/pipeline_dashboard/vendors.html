@@ -1,0 +1,545 @@
+{% extends "pipeline_dashboard/base.html" %}
+
+{% block title %}Vendors{% endblock %}
+
+{% block content %}
+  <style>
+    .vendors-metrics {
+      grid-template-columns: repeat(5, minmax(150px, 1fr));
+    }
+
+    .vendor-create-grid,
+    .vendor-edit-grid {
+      display: grid;
+      grid-template-columns: minmax(180px, 1fr) minmax(140px, 0.7fr) minmax(220px, 1.5fr) auto;
+      gap: 10px;
+      align-items: end;
+    }
+
+    .vendor-edit-grid {
+      grid-template-columns: minmax(170px, 1fr) minmax(130px, 0.7fr) minmax(220px, 1.4fr) auto auto;
+      align-items: center;
+    }
+
+    .vendor-field {
+      display: grid;
+      gap: 6px;
+      min-width: 0;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 720;
+    }
+
+    .vendor-field input,
+    .vendor-field textarea,
+    .vendor-field select {
+      width: 100%;
+      min-height: 34px;
+      padding: 8px 10px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--panel);
+      color: var(--text);
+      font: inherit;
+    }
+
+    .vendor-field textarea {
+      min-height: 34px;
+      resize: vertical;
+    }
+
+    .vendor-list {
+      display: grid;
+      gap: 12px;
+    }
+
+    .vendor-card {
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.78);
+      overflow: hidden;
+    }
+
+    .vendor-summary {
+      display: grid;
+      grid-template-columns: minmax(180px, 1.2fr) repeat(5, minmax(90px, 0.45fr)) minmax(220px, 1fr);
+      gap: 12px;
+      align-items: center;
+      padding: 12px 14px;
+      cursor: pointer;
+    }
+
+    .vendor-name {
+      font-weight: 760;
+    }
+
+    .vendor-kpi {
+      display: grid;
+      gap: 2px;
+    }
+
+    .vendor-kpi span:first-child {
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 720;
+      text-transform: uppercase;
+    }
+
+    .vendor-kpi span:last-child {
+      font-weight: 760;
+    }
+
+    .vendor-badges {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      justify-content: flex-end;
+    }
+
+    .vendor-detail {
+      display: grid;
+      gap: 14px;
+      padding: 14px;
+      border-top: 1px solid var(--border);
+      background: rgba(248, 250, 252, 0.72);
+    }
+
+    .vendor-detail-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .vendor-subpanel {
+      min-width: 0;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--panel);
+      overflow: hidden;
+    }
+
+    .vendor-subpanel h3 {
+      margin: 0;
+      padding: 11px 12px;
+      border-bottom: 1px solid var(--border);
+      font-size: 13px;
+      font-weight: 760;
+    }
+
+    .vendor-subpanel-body {
+      padding: 12px;
+    }
+
+    .vendor-path {
+      color: var(--muted);
+      font-size: 12px;
+      word-break: break-word;
+    }
+
+    .vendor-empty {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .folder-assignment-row {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    @media (max-width: 1180px) {
+      .vendors-metrics,
+      .vendor-detail-grid,
+      .vendor-create-grid,
+      .vendor-edit-grid,
+      .vendor-summary {
+        grid-template-columns: 1fr;
+      }
+
+      .vendor-badges {
+        justify-content: flex-start;
+      }
+    }
+  </style>
+
+  <section class="topbar">
+    <div>
+      <h1>Vendors</h1>
+      <p class="subtitle">Vendor operations, parser readiness, folder ownership, and observed ShareFile activity.</p>
+    </div>
+  </section>
+
+  <section class="metrics metrics-compact vendors-metrics" aria-label="Vendor totals">
+    <div class="metric blue">
+      <div class="metric-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M22 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+      </div>
+      <div class="metric-body">
+        <div class="metric-label">Vendors</div>
+        <div class="metric-value">{{ metrics.vendors }}</div>
+        <div class="metric-note">Configured locally</div>
+      </div>
+    </div>
+    <div class="metric green">
+      <div class="metric-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24"><path d="m8 12 3 3 5-6"></path><circle cx="12" cy="12" r="9"></circle></svg>
+      </div>
+      <div class="metric-body">
+        <div class="metric-label">Active</div>
+        <div class="metric-value">{{ metrics.active }}</div>
+        <div class="metric-note">Available in queues</div>
+      </div>
+    </div>
+    <div class="metric blue">
+      <div class="metric-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24"><path d="M4 7h16"></path><path d="M4 12h10"></path><path d="M4 17h7"></path><path d="m16 16 2 2 4-5"></path></svg>
+      </div>
+      <div class="metric-body">
+        <div class="metric-label">Parsers</div>
+        <div class="metric-value">{{ metrics.parser_ready }}</div>
+        <div class="metric-note">Ready folders</div>
+      </div>
+    </div>
+    <div class="metric slate">
+      <div class="metric-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24"><path d="M3 7.5V18a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-7l-2-2H5a2 2 0 0 0-2 2.5Z"></path></svg>
+      </div>
+      <div class="metric-body">
+        <div class="metric-label">Folders</div>
+        <div class="metric-value">{{ metrics.folders }}</div>
+        <div class="metric-note">Registered sources</div>
+      </div>
+    </div>
+    <div class="metric amber">
+      <div class="metric-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24"><path d="M16 11c1.66 0 3-1.57 3-3.5S17.66 4 16 4s-3 1.57-3 3.5S14.34 11 16 11Z"></path><path d="M8 11c1.66 0 3-1.57 3-3.5S9.66 4 8 4 5 5.57 5 7.5 6.34 11 8 11Z"></path><path d="M2 20c.5-3 2.5-5 6-5s5.5 2 6 5"></path><path d="M10 20c.42-2.4 2-4 4.8-4 2.75 0 4.43 1.6 5.2 4"></path></svg>
+      </div>
+      <div class="metric-body">
+        <div class="metric-label">People</div>
+        <div class="metric-value">{{ metrics.observed_people }}</div>
+        <div class="metric-note">Observed uploaders</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="panel-header">
+      <h2 class="panel-title">Create Vendor</h2>
+    </div>
+    <div class="panel-body">
+      <form method="post" action="{% url 'pipeline_dashboard:create_vendor' %}" class="vendor-create-grid">
+        {% csrf_token %}
+        <label class="vendor-field">
+          Name
+          <input name="name" type="text" autocomplete="off" required>
+        </label>
+        <label class="vendor-field">
+          Parser key
+          <input name="parser_key" type="text" autocomplete="off" placeholder="auto">
+        </label>
+        <label class="vendor-field">
+          Notes
+          <input name="notes" type="text" autocomplete="off">
+        </label>
+        <button class="button primary" type="submit">Create</button>
+      </form>
+    </div>
+  </section>
+
+  <section class="panel" style="margin-top: 16px;">
+    <div class="panel-header">
+      <h2 class="panel-title">Vendor Directory</h2>
+      <span class="muted">{{ vendor_rows|length }} vendors</span>
+    </div>
+    <div class="panel-body">
+      {% if vendor_rows %}
+        <div class="vendor-list">
+          {% for row in vendor_rows %}
+            <details class="vendor-card" {% if forloop.first %}open{% endif %}>
+              <summary class="vendor-summary">
+                <div>
+                  <div class="vendor-name">{{ row.vendor.name }}</div>
+                  <div class="vendor-path">{{ row.vendor.parser_key|default:"-" }}</div>
+                </div>
+                <div class="vendor-kpi"><span>Files</span><span>{{ row.asset_count }}</span></div>
+                <div class="vendor-kpi"><span>Parsing</span><span>{{ row.processing_count }}</span></div>
+                <div class="vendor-kpi"><span>Review</span><span>{{ row.review_count|add:row.approval_count }}</span></div>
+                <div class="vendor-kpi"><span>Processed</span><span>{{ row.processed_count }}</span></div>
+                <div class="vendor-kpi"><span>Folders</span><span>{{ row.folder_count }}</span></div>
+                <div class="vendor-badges">
+                  <span class="badge {{ row.parser.badge_class }}">{{ row.parser.label }}</span>
+                  {% for badge in row.health_badges %}
+                    <span class="badge {{ badge.class }}">{{ badge.label }}</span>
+                  {% endfor %}
+                </div>
+              </summary>
+
+              <div class="vendor-detail">
+                <form method="post" action="{% url 'pipeline_dashboard:update_vendor' row.vendor.id %}" class="vendor-edit-grid">
+                  {% csrf_token %}
+                  <label class="vendor-field">
+                    Name
+                    <input name="name" type="text" value="{{ row.vendor.name }}" required>
+                  </label>
+                  <label class="vendor-field">
+                    Parser key
+                    <input name="parser_key" type="text" value="{{ row.vendor.parser_key }}">
+                  </label>
+                  <label class="vendor-field">
+                    Notes
+                    <input name="notes" type="text" value="{{ row.vendor.notes }}">
+                  </label>
+                  <label class="inline-form">
+                    <input name="is_active" type="checkbox" {% if row.vendor.is_active %}checked{% endif %}>
+                    Active
+                  </label>
+                  <div class="actions">
+                    <button class="button small primary" type="submit">Save</button>
+                  </div>
+                </form>
+
+                <div class="vendor-detail-grid">
+                  <section class="vendor-subpanel">
+                    <h3>Folders</h3>
+                    <div class="vendor-subpanel-body">
+                      {% if row.folders %}
+                        <table>
+                          <thead>
+                            <tr>
+                              <th>Label</th>
+                              <th>Role</th>
+                              <th>Active</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {% for folder in row.folders %}
+                              <tr>
+                                <td class="file-name" title="{{ folder.folder_id }}">{{ folder.label }}</td>
+                                <td>{{ folder.role }}</td>
+                                <td>{% if folder.is_active %}Yes{% else %}No{% endif %}</td>
+                              </tr>
+                            {% endfor %}
+                          </tbody>
+                        </table>
+                      {% else %}
+                        <div class="vendor-empty">No registered folders.</div>
+                      {% endif %}
+                    </div>
+                  </section>
+
+                  <section class="vendor-subpanel">
+                    <h3>Parser</h3>
+                    <div class="vendor-subpanel-body">
+                      <table>
+                        <tbody>
+                          <tr>
+                            <th>Schema</th>
+                            <td>
+                              <span class="badge {% if row.parser.has_schema %}passed{% else %}failed{% endif %}">
+                                {% if row.parser.has_schema %}Found{% else %}Missing{% endif %}
+                              </span>
+                              <div class="vendor-path">{{ row.parser.schema_path }}</div>
+                            </td>
+                          </tr>
+                          <tr>
+                            <th>Parser</th>
+                            <td>
+                              <span class="badge {% if row.parser.has_parser %}passed{% else %}failed{% endif %}">
+                                {% if row.parser.has_parser %}Found{% else %}Missing{% endif %}
+                              </span>
+                              <div class="vendor-path">{{ row.parser.parser_path }}</div>
+                            </td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </section>
+
+                  <section class="vendor-subpanel">
+                    <h3>People</h3>
+                    <div class="vendor-subpanel-body">
+                      {% if row.people %}
+                        <table>
+                          <thead>
+                            <tr>
+                              <th>Name</th>
+                              <th>Email</th>
+                              <th>Uploads</th>
+                              <th>Last</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {% for person in row.people %}
+                              <tr>
+                                <td>{{ person.name }}</td>
+                                <td>{{ person.email|default:"-" }}</td>
+                                <td>{{ person.upload_count }}</td>
+                                <td>{{ person.last_upload|date:"Y-m-d H:i"|default:"-" }}</td>
+                              </tr>
+                            {% endfor %}
+                          </tbody>
+                        </table>
+                      {% else %}
+                        <div class="vendor-empty">No observed uploaders.</div>
+                      {% endif %}
+                    </div>
+                  </section>
+
+                  <section class="vendor-subpanel">
+                    <h3>Recent Files</h3>
+                    <div class="vendor-subpanel-body">
+                      {% if row.recent_assets %}
+                        <table>
+                          <thead>
+                            <tr>
+                              <th>File</th>
+                              <th>Status</th>
+                              <th>Modified</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {% for asset in row.recent_assets %}
+                              <tr>
+                                <td class="file-name" title="{{ asset.name }}">{{ asset.name }}</td>
+                                <td><span class="badge {{ asset.status }}">{{ asset.status }}</span></td>
+                                <td>{{ asset.remote_modified_at|date:"Y-m-d H:i"|default:"-" }}</td>
+                              </tr>
+                            {% endfor %}
+                          </tbody>
+                        </table>
+                      {% else %}
+                        <div class="vendor-empty">No files yet.</div>
+                      {% endif %}
+                    </div>
+                  </section>
+
+                  <section class="vendor-subpanel">
+                    <h3>Activity</h3>
+                    <div class="vendor-subpanel-body">
+                      {% if row.recent_events %}
+                        <table>
+                          <thead>
+                            <tr>
+                              <th>When</th>
+                              <th>Event</th>
+                              <th>File</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {% for event in row.recent_events %}
+                              <tr>
+                                <td>{{ event.created_at|date:"Y-m-d H:i" }}</td>
+                                <td>{{ event.event_type }}</td>
+                                <td class="file-name" title="{{ event.asset.name }}">{{ event.asset.name }}</td>
+                              </tr>
+                            {% endfor %}
+                          </tbody>
+                        </table>
+                      {% else %}
+                        <div class="vendor-empty">No local events yet.</div>
+                      {% endif %}
+                    </div>
+                  </section>
+
+                  <section class="vendor-subpanel">
+                    <h3>Lifecycle</h3>
+                    <div class="vendor-subpanel-body">
+                      <table>
+                        <tbody>
+                          <tr>
+                            <th>Created</th>
+                            <td>{{ row.vendor.created_at|date:"Y-m-d H:i" }}</td>
+                          </tr>
+                          <tr>
+                            <th>Updated</th>
+                            <td>{{ row.vendor.updated_at|date:"Y-m-d H:i" }}</td>
+                          </tr>
+                          <tr>
+                            <th>Latest activity</th>
+                            <td>{{ row.latest_activity_at|date:"Y-m-d H:i"|default:"-" }}</td>
+                          </tr>
+                          <tr>
+                            <th>Action</th>
+                            <td>
+                              <form method="post" action="{% url 'pipeline_dashboard:delete_vendor' row.vendor.id %}" data-vendor-delete-form>
+                                {% csrf_token %}
+                                <button class="button small" type="submit">
+                                  {% if row.can_delete %}Delete{% else %}Deactivate{% endif %}
+                                </button>
+                              </form>
+                            </td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </section>
+                </div>
+              </div>
+            </details>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="empty">No vendors are configured yet.</div>
+      {% endif %}
+    </div>
+  </section>
+
+  <section class="panel" style="margin-top: 16px;">
+    <div class="panel-header">
+      <h2 class="panel-title">Folder Ownership</h2>
+      <span class="muted">{{ folders|length }} registered folders</span>
+    </div>
+    <div class="panel-body">
+      {% if folders %}
+        <table>
+          <thead>
+            <tr>
+              <th>Folder</th>
+              <th>Role</th>
+              <th>Current Vendor</th>
+              <th>Assign</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for folder in folders %}
+              <tr>
+                <td class="file-name" title="{{ folder.folder_id }}">{{ folder.label }}</td>
+                <td>{{ folder.role }}</td>
+                <td>{{ folder.vendor.name|default:"Unassigned" }}</td>
+                <td>
+                  <form method="post" action="{% url 'pipeline_dashboard:assign_vendor_folder' folder.id %}" class="folder-assignment-row">
+                    {% csrf_token %}
+                    <select class="table-select" name="vendor_id" aria-label="Vendor for {{ folder.label }}">
+                      <option value="">Unassigned</option>
+                      {% for vendor in all_vendors %}
+                        {% if vendor.is_active %}
+                          <option value="{{ vendor.id }}" {% if folder.vendor_id == vendor.id %}selected{% endif %}>{{ vendor.name }}</option>
+                        {% endif %}
+                      {% endfor %}
+                    </select>
+                    <button class="button small" type="submit">Save</button>
+                  </form>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      {% else %}
+        <div class="empty">No ShareFile folders are registered yet.</div>
+      {% endif %}
+    </div>
+  </section>
+
+  <script>
+    document.querySelectorAll("[data-vendor-delete-form]").forEach((form) => {
+      form.addEventListener("submit", (event) => {
+        const card = form.closest(".vendor-card");
+        const name = card?.querySelector(".vendor-name")?.textContent?.trim() || "this vendor";
+        const confirmed = window.confirm(`Apply lifecycle action for ${name}?`);
+        if (!confirmed) {
+          event.preventDefault();
+        }
+      });
+    });
+  </script>
+{% endblock %}

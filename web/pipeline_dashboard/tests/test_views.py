@@ -11,7 +11,7 @@ from django.test import TestCase, override_settings
 from django.urls import reverse
 from openpyxl import Workbook
 
-from pipeline_dashboard.models import Asset, AssetStatus, ParsedOutput, ShareFileFolder, Vendor
+from pipeline_dashboard.models import Asset, AssetEvent, AssetStatus, ParsedOutput, ShareFileFolder, Vendor
 from pipeline_dashboard.parser_workflow import approval_root_id, period_series_from_rows
 
 
@@ -92,7 +92,114 @@ class DashboardViewTests(TestCase):
 
     def test_removed_public_pages_return_not_found(self):
         self.assertEqual(self.client.get("/assets/").status_code, 404)
-        self.assertEqual(self.client.get("/vendors/").status_code, 404)
+
+    def test_vendors_page_renders_vendor_activity(self):
+        vendor, _ = Vendor.objects.get_or_create(name="Loop", defaults={"parser_key": "loop"})
+        folder = ShareFileFolder.objects.create(
+            vendor=vendor,
+            folder_id="fo-loop",
+            label="Shared Folders/Loop",
+            file_patterns=["*.xlsx"],
+        )
+        asset = Asset.objects.create(
+            remote_item_id="fi-loop-vendor-page",
+            vendor=vendor,
+            source_folder=folder,
+            status=AssetStatus.REVIEW,
+            name="Loop report.xlsx",
+            created_by_name="Uploader One",
+            created_by_email="uploader@example.com",
+        )
+        ParsedOutput.objects.create(
+            asset=asset,
+            vendor=vendor,
+            output_path="data/output/Loop/Loop_Apr_2026_v1.csv",
+            reporting_period="March_2026",
+            comparison_status="sent_for_approval",
+        )
+        AssetEvent.objects.create(asset=asset, event_type="approval_sent", to_status=AssetStatus.REVIEW)
+
+        response = self.client.get(reverse("pipeline_dashboard:vendors"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Vendors")
+        self.assertContains(response, "Create Vendor")
+        self.assertContains(response, "Loop")
+        self.assertContains(response, "Shared Folders/Loop")
+        self.assertContains(response, "Uploader One")
+        self.assertContains(response, "approval_sent")
+
+    def test_create_vendor_adds_local_vendor(self):
+        response = self.client.post(
+            reverse("pipeline_dashboard:create_vendor"),
+            {"name": "New Vendor", "parser_key": "", "notes": "Pilot source"},
+        )
+
+        self.assertRedirects(response, reverse("pipeline_dashboard:vendors"))
+        vendor = Vendor.objects.get(name="New Vendor")
+        self.assertEqual(vendor.parser_key, "new_vendor")
+        self.assertEqual(vendor.notes, "Pilot source")
+        self.assertTrue(vendor.is_active)
+
+    def test_create_vendor_rejects_duplicate_name(self):
+        Vendor.objects.create(name="Case Vendor", parser_key="case_vendor")
+
+        response = self.client.post(reverse("pipeline_dashboard:create_vendor"), {"name": "case vendor"})
+
+        self.assertRedirects(response, reverse("pipeline_dashboard:vendors"))
+        self.assertEqual(Vendor.objects.filter(name__iexact="case vendor").count(), 1)
+
+    def test_update_vendor_changes_local_metadata(self):
+        vendor = Vendor.objects.create(name="Mutable Vendor", parser_key="mutable")
+
+        response = self.client.post(
+            reverse("pipeline_dashboard:update_vendor", args=[vendor.id]),
+            {"name": "Renamed Vendor", "parser_key": "renamed", "notes": "Updated"},
+        )
+
+        self.assertRedirects(response, reverse("pipeline_dashboard:vendors"))
+        vendor.refresh_from_db()
+        self.assertEqual(vendor.name, "Renamed Vendor")
+        self.assertEqual(vendor.parser_key, "renamed")
+        self.assertEqual(vendor.notes, "Updated")
+        self.assertFalse(vendor.is_active)
+
+    def test_delete_vendor_removes_unused_vendor(self):
+        vendor = Vendor.objects.create(name="Unused Vendor", parser_key="unused")
+
+        response = self.client.post(reverse("pipeline_dashboard:delete_vendor", args=[vendor.id]))
+
+        self.assertRedirects(response, reverse("pipeline_dashboard:vendors"))
+        self.assertFalse(Vendor.objects.filter(pk=vendor.pk).exists())
+
+    def test_delete_vendor_deactivates_linked_vendor(self):
+        vendor = Vendor.objects.create(name="Linked Vendor", parser_key="linked")
+        Asset.objects.create(remote_item_id="fi-linked-vendor", vendor=vendor, status=AssetStatus.NEW, name="linked.xlsx")
+
+        response = self.client.post(reverse("pipeline_dashboard:delete_vendor", args=[vendor.id]))
+
+        self.assertRedirects(response, reverse("pipeline_dashboard:vendors"))
+        vendor.refresh_from_db()
+        self.assertFalse(vendor.is_active)
+
+    def test_assign_vendor_folder_updates_local_binding(self):
+        vendor = Vendor.objects.create(name="Folder Vendor", parser_key="folder_vendor")
+        folder = ShareFileFolder.objects.create(folder_id="fo-unassigned", label="Shared Folders/Unassigned")
+
+        response = self.client.post(
+            reverse("pipeline_dashboard:assign_vendor_folder", args=[folder.id]),
+            {"vendor_id": vendor.id},
+        )
+
+        self.assertRedirects(response, reverse("pipeline_dashboard:vendors"))
+        folder.refresh_from_db()
+        self.assertEqual(folder.vendor, vendor)
+
+        response = self.client.post(reverse("pipeline_dashboard:assign_vendor_folder", args=[folder.id]), {"vendor_id": ""})
+
+        self.assertRedirects(response, reverse("pipeline_dashboard:vendors"))
+        folder.refresh_from_db()
+        self.assertIsNone(folder.vendor)
 
     def test_folders_page_renders_sharefile_mirror(self):
         with tempfile.TemporaryDirectory() as tmpdir:

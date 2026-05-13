@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import re
 import subprocess
 import sys
 from datetime import date, timedelta, timezone as dt_timezone
@@ -10,7 +11,7 @@ from types import SimpleNamespace
 
 from django.conf import settings
 from django.contrib import messages
-from django.db import transaction
+from django.db import IntegrityError, transaction
 from django.db.models import Count, Q
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
@@ -33,6 +34,7 @@ from .parser_workflow import (
 )
 from .sharefile_mirror import load_sharefile_mirror
 from .services import set_asset_status
+from .vendor_dashboard import build_vendor_page_context, can_delete_vendor
 
 
 REVIEW_STATUSES = [
@@ -570,6 +572,106 @@ def folders(request):
         "active_nav": "folders",
     }
     return render(request, "pipeline_dashboard/folders.html", context)
+
+
+def vendors(request):
+    return render(request, "pipeline_dashboard/vendors.html", build_vendor_page_context())
+
+
+@require_POST
+@transaction.atomic
+def create_vendor(request):
+    name = clean_vendor_name(request.POST.get("name", ""))
+    parser_key = clean_parser_key(request.POST.get("parser_key", "") or name)
+    notes = request.POST.get("notes", "").strip()
+    if not name:
+        messages.error(request, "Vendor name is required.")
+        return redirect("pipeline_dashboard:vendors")
+    if Vendor.objects.filter(name__iexact=name).exists():
+        messages.error(request, f"{name} already exists.")
+        return redirect("pipeline_dashboard:vendors")
+
+    try:
+        Vendor.objects.create(name=name, parser_key=parser_key, notes=notes, is_active=True)
+    except IntegrityError:
+        messages.error(request, f"{name} already exists.")
+    else:
+        messages.success(request, f"{name}: vendor created.")
+    return redirect("pipeline_dashboard:vendors")
+
+
+@require_POST
+@transaction.atomic
+def update_vendor(request, vendor_id: int):
+    vendor = get_object_or_404(Vendor.objects.select_for_update(), pk=vendor_id)
+    name = clean_vendor_name(request.POST.get("name", ""))
+    parser_key = clean_parser_key(request.POST.get("parser_key", "") or name)
+    notes = request.POST.get("notes", "").strip()
+    is_active = request.POST.get("is_active") == "on"
+    if not name:
+        messages.error(request, "Vendor name is required.")
+        return redirect("pipeline_dashboard:vendors")
+    if Vendor.objects.exclude(pk=vendor.pk).filter(name__iexact=name).exists():
+        messages.error(request, f"{name} already exists.")
+        return redirect("pipeline_dashboard:vendors")
+
+    vendor.name = name
+    vendor.parser_key = parser_key
+    vendor.notes = notes
+    vendor.is_active = is_active
+    try:
+        vendor.save(update_fields=["name", "parser_key", "notes", "is_active", "updated_at"])
+    except IntegrityError:
+        messages.error(request, f"{name} already exists.")
+    else:
+        messages.success(request, f"{vendor.name}: vendor updated.")
+    return redirect("pipeline_dashboard:vendors")
+
+
+@require_POST
+@transaction.atomic
+def delete_vendor(request, vendor_id: int):
+    vendor = get_object_or_404(Vendor.objects.select_for_update(), pk=vendor_id)
+    name = vendor.name
+    if can_delete_vendor(vendor):
+        vendor.delete()
+        messages.success(request, f"{name}: vendor deleted.")
+    else:
+        vendor.is_active = False
+        vendor.save(update_fields=["is_active", "updated_at"])
+        messages.success(request, f"{name}: vendor deactivated because it has linked folders or activity.")
+    return redirect("pipeline_dashboard:vendors")
+
+
+@require_POST
+@transaction.atomic
+def assign_vendor_folder(request, folder_id: int):
+    folder = get_object_or_404(ShareFileFolder.objects.select_for_update(), pk=folder_id)
+    vendor_id = request.POST.get("vendor_id", "")
+    if vendor_id:
+        try:
+            vendor = Vendor.objects.get(pk=vendor_id, is_active=True)
+        except (Vendor.DoesNotExist, ValueError):
+            messages.error(request, "Choose an active vendor.")
+            return redirect("pipeline_dashboard:vendors")
+    else:
+        vendor = None
+
+    previous = folder.vendor.name if folder.vendor else "Unassigned"
+    folder.vendor = vendor
+    folder.save(update_fields=["vendor", "updated_at"])
+    current = folder.vendor.name if folder.vendor else "Unassigned"
+    messages.success(request, f"{folder.label}: folder owner changed from {previous} to {current}.")
+    return redirect("pipeline_dashboard:vendors")
+
+
+def clean_vendor_name(value: str) -> str:
+    return " ".join(value.strip().split())
+
+
+def clean_parser_key(value: str) -> str:
+    cleaned = re.sub(r"[^a-z0-9]+", "_", value.lower()).strip("_")
+    return cleaned or "vendor"
 
 
 @require_POST
