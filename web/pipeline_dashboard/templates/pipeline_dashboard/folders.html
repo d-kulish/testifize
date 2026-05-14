@@ -4,6 +4,15 @@
 
 {% block content %}
 <style>
+    .folders-metrics {
+      grid-template-columns: repeat(7, minmax(0, 1fr)) !important;
+    }
+
+    .folders-metrics .metric,
+    .folders-metrics .update-metric {
+      min-width: 0;
+    }
+
     .folders-metrics .metric,
     .folders-metrics .update-metric {
       background: #ffffff;
