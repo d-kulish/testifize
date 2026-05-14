@@ -47,6 +47,28 @@
       transform: translateY(-1px);
       transition: box-shadow 160ms ease, transform 160ms ease;
     }
+    .folders-metrics .filter-tab {
+      cursor: pointer;
+      user-select: none;
+      transition: border-color 160ms ease, box-shadow 160ms ease;
+    }
+
+    .folders-metrics .filter-tab.active {
+      background: #eff6ff;
+      border-color: #1f6feb;
+      color: #1f6feb;
+    }
+
+    .folders-metrics .filter-tab.active .metric-icon {
+      color: #1f6feb;
+    }
+
+    .folders-metrics .filter-tab.active .metric-label,
+    .folders-metrics .filter-tab.active .metric-value,
+    .folders-metrics .filter-tab.active .metric-note {
+      color: #1f6feb;
+    }
+
     .folders-mirror .mirror-head,
     .folders-mirror .mirror-summary {
       grid-template-columns: 16px minmax(200px, 1fr) 120px 120px 120px 120px 120px 140px;
@@ -163,14 +185,24 @@
   </section>
 
   <section class="metrics metrics-compact folders-metrics" aria-label="ShareFile folder totals">
-    <div class="metric blue">
+    <div class="metric blue filter-tab" data-filter="with-files" role="button" tabindex="0">
       <div class="metric-icon" aria-hidden="true">
         <svg viewBox="0 0 24 24"><path d="M3 7.5V18a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-7l-2-2H5a2 2 0 0 0-2 2.5Z"></path></svg>
       </div>
       <div class="metric-body">
-        <div class="metric-label">Folders</div>
-        <div class="metric-value">{{ mirror_summary.folder_count }}</div>
-        <div class="metric-note">Loaded sources</div>
+        <div class="metric-label">Folders with files</div>
+        <div class="metric-value">{{ mirror_summary.folders_with_files_count }}</div>
+        <div class="metric-note">Only folders containing files</div>
+      </div>
+    </div>
+    <div class="metric blue filter-tab active" data-filter="all" role="button" tabindex="0">
+      <div class="metric-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24"><path d="M3 7.5V18a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-7l-2-2H5a2 2 0 0 0-2 2.5Z"></path></svg>
+      </div>
+      <div class="metric-body">
+        <div class="metric-label">All Folders</div>
+        <div class="metric-value">{{ mirror_summary.all_folder_count }}</div>
+        <div class="metric-note">All SF folders including empty</div>
       </div>
     </div>
     <div class="metric blue">
@@ -756,6 +788,43 @@
       });
 
       applyInitialSort();
+    })();
+
+    // Folder filter tabs
+    (function () {
+      const tabs = document.querySelectorAll("[data-filter]");
+      const table = document.querySelector(".folders-mirror");
+      if (!table || tabs.length === 0) return;
+
+      function setFilter(mode) {
+        const rows = Array.from(table.querySelectorAll(".mirror-folder"));
+        rows.forEach((row) => {
+          const hasFiles = row.querySelectorAll(".folders-count-cell").length > 0;
+          if (!hasFiles) return;
+          const total = parseInt(
+            row.querySelectorAll(".folders-count-cell")[0]?.textContent.replace(/\D/g, "") || "0", 10);
+          if (mode === "with-files") {
+            row.hidden = total === 0;
+          } else {
+            row.hidden = false;
+          }
+        });
+      }
+
+      tabs.forEach((tab) => {
+        tab.addEventListener("click", () => {
+          const mode = tab.dataset.filter;
+          tabs.forEach((t) => t.classList.toggle("active", t === tab));
+          setFilter(mode);
+        });
+      });
+
+      // Default to "all" filter
+      const allTab = document.querySelector('[data-filter="all"]');
+      if (allTab) {
+        tabs.forEach((t) => t.classList.toggle("active", t === allTab));
+        setFilter("all");
+      }
     })();
   </script>
 </section>

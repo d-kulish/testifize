@@ -560,13 +560,18 @@ def folders(request):
     mirror = load_sharefile_mirror()
     vendors = list(Vendor.objects.filter(is_active=True).order_by("name"))
     _apply_folder_vendor_rules(mirror.folders, vendors)
+    all_folders = mirror.folders
+    folders_with_files = [row for row in all_folders if row["counts"]["total"] > 0]
     mirror_summary = {
         **mirror.summary,
+        "all_folder_count": len(all_folders),
+        "folders_with_files_count": len(folders_with_files),
         "last_sync_display": _display_timestamp(mirror.summary.get("last_sync_at", "")),
     }
     context = {
         "title": "SF folders",
-        "folders": mirror.folders,
+        "folders": all_folders,
+        "folders_with_files": folders_with_files,
         "mirror_summary": mirror_summary,
         "vendors": vendors,
         "active_nav": "folders",
