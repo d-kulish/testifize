@@ -99,6 +99,7 @@ class Asset(models.Model):
         db_index=True,
     )
     status_reason = models.TextField(blank=True)
+    is_active = models.BooleanField(default=True, db_index=True)
     first_seen_at = models.DateTimeField(default=timezone.now, editable=False)
     last_seen_at = models.DateTimeField(default=timezone.now)
     updated_at = models.DateTimeField(auto_now=True)

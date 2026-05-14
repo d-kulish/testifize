@@ -206,10 +206,108 @@
       background: #ffffff;
     }
 
-    .duplicate-badge.original {
-      background: #ecfdf3;
+    .status-text {
+      font-size: 14px;
+      font-weight: 400;
+      color: #111827;
+    }
+
+    .duplicate-text {
+      font-size: 12px;
+      font-weight: 760;
+    }
+
+    .duplicate-text.original {
       color: #087443;
-      border-color: #abefc6;
+    }
+
+    .duplicate-text.duplicate {
+      color: #b42318;
+    }
+
+    .toggle-switch {
+      position: relative;
+      display: inline-block;
+      width: 36px;
+      height: 20px;
+      cursor: pointer;
+    }
+
+    .toggle-switch input {
+      position: absolute;
+      top: 0;
+      left: 0;
+      opacity: 0;
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      cursor: pointer;
+      z-index: 2;
+    }
+
+    .toggle-slider {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: #9ca3af;
+      border-radius: 999px;
+      transition: background 200ms ease;
+    }
+
+    .toggle-slider::before {
+      content: "";
+      position: absolute;
+      height: 16px;
+      width: 16px;
+      left: 2px;
+      bottom: 2px;
+      background: #ffffff;
+      border-radius: 50%;
+      transition: transform 200ms ease;
+    }
+
+    .toggle-switch input:checked + .toggle-slider {
+      background: #93c5fd;
+    }
+
+    .toggle-switch input:checked + .toggle-slider::before {
+      transform: translateX(16px);
+    }
+
+    .toggle-switch input:focus-visible + .toggle-slider {
+      outline: 2px solid #1f6feb;
+      outline-offset: 2px;
+    }
+
+    .toggle-switch input:disabled + .toggle-slider {
+      background: #d1d5db;
+      cursor: not-allowed;
+    }
+
+    .mirror-file-row.inactive {
+      background: #f9fafb;
+    }
+
+    .mirror-file-row.inactive .file-name {
+      color: #9ca3af;
+    }
+
+    .mirror-file-row.inactive td {
+      opacity: 0.7;
+    }
+
+    .mirror-file-row.inactive .status-text {
+      color: #9ca3af;
+    }
+
+    .mirror-file-row.inactive .duplicate-text.original {
+      color: #87bfa2;
+    }
+
+    .mirror-file-row.inactive .duplicate-text.duplicate {
+      color: #d19a9a;
     }
   </style>
 
@@ -333,6 +431,8 @@
                     <tr>
                       <th>Status</th>
                       <th>File</th>
+                      <th>Duplicate</th>
+                      <th>Active</th>
                       <th>Type</th>
                       <th>Sheets</th>
                       <th>Modified</th>
@@ -344,15 +444,29 @@
                   </thead>
                   <tbody>
                     {% for file in folder.files %}
-                      <tr class="mirror-file-row {{ file.status }}{% if file.duplicate_role == 'duplicate' %} duplicate-name{% endif %}" data-file-row>
-                        <td><span class="mirror-status {{ file.status }}">{{ file.status_label }}</span></td>
+                      <tr class="mirror-file-row {{ file.status }}{% if not file.is_active %} inactive{% endif %}{% if file.duplicate_role == 'duplicate' %} duplicate-name{% endif %}" data-file-row data-remote-item-id="{{ file.remote_item_id }}" data-name="{{ file.name }}" data-is-active="{{ file.is_active|yesno:'true,false' }}" data-toggle-url="{% url 'pipeline_dashboard:toggle_is_active' %}">
+                        <td class="status-text {{ file.status }}">{{ file.status_label }}</td>
                         <td class="file-name" title="{% if file.duplicate_hint %}{{ file.duplicate_hint }}{% else %}{{ file.name }}{% endif %}">
                           {{ file.name }}
+                        </td>
+                        <td class="duplicate-text {{ file.duplicate_role }}">
                           {% if file.duplicate_role == 'original' %}
-                            <span class="duplicate-badge original" title="{{ file.duplicate_hint }}">Original</span>
+                            Original
                           {% elif file.duplicate_role == 'duplicate' %}
-                            <span class="duplicate-badge" title="{{ file.duplicate_hint }}">Duplicate</span>
+                            Dup
+                          {% else %}
+                            <span class="muted">-</span>
                           {% endif %}
+                        </td>
+                        <td>
+                          <label class="toggle-switch">
+                            <input
+                              type="checkbox"
+                              data-toggle-is-active
+                              {% if file.is_active %}checked{% endif %}
+                            />
+                            <span class="toggle-slider"></span>
+                          </label>
                         </td>
                         <td>{{ file.extension|type_label }}</td>
                         <td>{{ file.sheet_count|default:"-" }}</td>
@@ -874,6 +988,51 @@
         }
       });
     })();
+
+    // Toggle is_active handler
+    document.querySelectorAll("[data-toggle-is-active]").forEach((input) => {
+      input.addEventListener("change", async () => {
+        const row = input.closest("[data-file-row]");
+        const remoteItemId = row?.dataset.remoteItemId;
+        const url = row?.dataset.toggleUrl;
+        if (!url) return;
+
+        const localPath = row?.querySelector("[data-review-button]")?.dataset.localPath || "";
+
+        const body = new URLSearchParams();
+        if (remoteItemId) {
+          body.append("remote_item_id", remoteItemId);
+        }
+        body.append("name", row?.dataset.name || "");
+        body.append("local_path", localPath);
+
+        try {
+          const response = await fetch(url, {
+            method: "POST",
+            headers: {
+              "X-CSRFToken": csrfToken,
+              "Content-Type": "application/x-www-form-urlencoded",
+            },
+            body,
+          });
+          if (!response.ok) {
+            const text = await response.text();
+            throw new Error(`Toggle failed (${response.status}): ${text}`);
+          }
+
+          const nextActive = input.checked;
+          row.classList.toggle("inactive", !nextActive);
+          const reviewButton = row.querySelector("[data-review-button]");
+          if (reviewButton) {
+            reviewButton.disabled = !nextActive;
+          }
+          row.dataset.isActive = String(nextActive);
+        } catch (error) {
+          input.checked = !input.checked;
+          console.error(error);
+        }
+      });
+    });
   </script>
 </section>
 {% endblock %}

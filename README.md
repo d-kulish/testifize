@@ -408,6 +408,7 @@ parser_version
 content_hash
 duplicate_group
 duplicate_role
+is_active
 status_reason
 first_seen_at
 last_seen_at
@@ -418,11 +419,13 @@ raw_metadata_json
 Initial statuses:
 
 ```text
+discovered
 new
 queued
 downloading
 downloaded
 processing
+review
 processed
 uploading
 uploaded
@@ -432,6 +435,19 @@ failed
 ```
 
 `superseded` is important for overlapping files. It lets the pipeline say: "we saw this file, but a newer or more authoritative file replaced it." That is much better than making the file disappear from the workflow.
+
+### Duplicate Detection
+
+Files with the same normalized name are tagged as **Original** (the earliest ShareFile `created_at` in that group) or **Dup** (all uploaded copies). This applies to both the live JSON mirror and synced `Asset` records; the `duplicate_role` field is stored in the Django database and backfilled by the `reconcile_duplicates` management command.
+
+### Active Flag
+
+Every file in the catalogue has an `is_active` boolean, defaulting to **Active**. In the SF folders UI, each file row has an Active toggle:
+
+- **Active** (default): file behaves normally, Review button is available
+- **Inactive**: file row background turns grey and faded, Review button is disabled
+
+The `is_active` field is a database-level toggle, so setting a file to Inactive excludes it from processing and persists across mirror refreshes. The toggle saves to the Django database via an async POST, automatically creating an Asset record for files that only exist in the mirror and don't have one yet.
 
 See [docs/asset_catalog.md](docs/asset_catalog.md) for the catalogue design.
 

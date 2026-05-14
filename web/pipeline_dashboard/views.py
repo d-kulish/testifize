@@ -1094,6 +1094,39 @@ def _parse_dt(value: str | None):
     return parse_datetime(value)
 
 
+@require_POST
+@transaction.atomic
+def toggle_is_active(request):
+    remote_item_id = request.POST.get("remote_item_id", "")
+    name = request.POST.get("name", "")
+    local_path = request.POST.get("local_path", "")
+
+    if remote_item_id:
+        asset, created = Asset.objects.select_for_update().get_or_create(
+            remote_item_id=remote_item_id,
+            defaults={"name": name or remote_item_id, "local_path": local_path or "", "is_active": True},
+        )
+    elif local_path:
+        asset, created = Asset.objects.select_for_update().get_or_create(
+            local_path=local_path,
+            defaults={"name": name or local_path, "remote_item_id": local_path, "is_active": True},
+        )
+    elif name:
+        asset, created = Asset.objects.select_for_update().get_or_create(
+            name=name,
+            defaults={"remote_item_id": name, "local_path": "", "is_active": True},
+        )
+    else:
+        return JsonResponse({"error": "Missing identifier."}, status=400)
+
+    asset.is_active = not asset.is_active
+    asset.save(update_fields=["is_active", "updated_at"])
+    return JsonResponse({
+        "remote_item_id": asset.remote_item_id,
+        "is_active": asset.is_active,
+    })
+
+
 def _relative_path(path):
     try:
         return str(path.relative_to(settings.REPO_ROOT))

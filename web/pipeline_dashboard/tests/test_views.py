@@ -374,10 +374,10 @@ class DashboardViewTests(TestCase):
         self.assertContains(response, "Prev")
         self.assertContains(response, "Next")
         self.assertLess(response.content.decode().index("z-new.xlsx"), response.content.decode().index("a-processed.csv"))
-        self.assertContains(response, ">N<", html=False)
-        self.assertContains(response, ">A<", html=False)
-        self.assertContains(response, ">P<", html=False)
-        self.assertContains(response, ">D<", html=False)
+        self.assertContains(response, ">New<", html=False)
+        self.assertContains(response, ">Active<", html=False)
+        self.assertContains(response, ">Processed<", html=False)
+        self.assertContains(response, ">Deleted<", html=False)
         self.assertContains(response, "Active")
         self.assertContains(response, "Review")
         self.assertContains(response, "Deleted in SF")
@@ -495,8 +495,8 @@ class DashboardViewTests(TestCase):
         self.assertEqual({row["local_path"] for row in duplicate_rows}, {internal_duplicate_path, processed_duplicate_path})
         content = response.content.decode()
         # One original badge, one duplicate badge
-        self.assertIn(">Original</span>", content)
-        self.assertIn(">Duplicate</span>", content)
+        self.assertIn("\n                            Original\n                          ", content)
+        self.assertIn("\n                            Dup\n                          ", content)
         self.assertIn('data-allowed-vendor-names="RallyAdMedia, AdTaxi"', content)
 
     def test_review_file_preview_returns_csv_rows(self):

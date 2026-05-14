@@ -77,6 +77,7 @@ def load_sharefile_mirror() -> MirrorData:
             user_cache,
             duplicate_role=getattr(asset, "duplicate_role", "") or "",
             duplicate_group=getattr(asset, "duplicate_group", "") or "",
+            is_active=getattr(asset, "is_active", True),
         )
         file_row["folder_path"] = folder_path
         file_row["folder_display_name"] = _display_folder_name(folder_path)
@@ -140,13 +141,14 @@ def _file_row(
     user_cache: dict[str, Any],
     duplicate_role: str = "",
     duplicate_group: str = "",
+    is_active: bool = True,
 ) -> dict[str, Any]:
     uploader = _uploader_for(remote, user_cache)
     return {
         "status": status,
         "status_label": _status_label(status),
         "status_sort": {"new": 0, "active": 1, "review": 2, "processed": 3, "deleted_remote": 4}.get(status, 9),
-        "review_enabled": status == "new",
+        "review_enabled": status == "new" and is_active,
         "name": remote.get("name") or profile.get("name") or Path(local_path).name,
         "extension": remote.get("extension") or profile.get("extension") or Path(local_path).suffix.lower(),
         "size": remote.get("size") or profile.get("size") or 0,
@@ -166,6 +168,7 @@ def _file_row(
         "sharefile_hash": remote.get("sharefile_hash") or "",
         "duplicate_role": duplicate_role,
         "duplicate_group": duplicate_group,
+        "is_active": is_active,
     }
 
 
@@ -225,12 +228,12 @@ def _is_internal_workflow_folder(folder_path: str) -> bool:
 
 def _status_label(status: str) -> str:
     return {
-        "new": "N",
-        "active": "A",
-        "review": "R",
-        "processed": "P",
-        "deleted_remote": "D",
-    }.get(status, status[:1].upper())
+        "new": "New",
+        "active": "Active",
+        "review": "Review",
+        "processed": "Processed",
+        "deleted_remote": "Deleted",
+    }.get(status, status.replace("_", " ").capitalize())
 
 
 def duplicate_name_count(files: list[dict[str, Any]]) -> int:
