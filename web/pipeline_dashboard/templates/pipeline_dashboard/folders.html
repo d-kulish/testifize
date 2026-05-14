@@ -3,6 +3,159 @@
 {% block title %}SF folders{% endblock %}
 
 {% block content %}
+<style>
+    .folders-metrics .metric,
+    .folders-metrics .update-metric {
+      background: #ffffff;
+      border: 1px solid #111827;
+      box-shadow: 0 1px 2px rgba(60, 64, 67, 0.08), 0 2px 6px rgba(60, 64, 67, 0.10), 0 4px 12px rgba(60, 64, 67, 0.12);
+    }
+
+    .folders-page .panel {
+      background: #ffffff;
+      border: 1px solid #111827;
+      box-shadow: 0 1px 2px rgba(60, 64, 67, 0.08), 0 2px 6px rgba(60, 64, 67, 0.10), 0 4px 12px rgba(60, 64, 67, 0.12);
+    }
+
+    .folders-metrics .update-metric {
+      background: #16a34a;
+      border-color: #111827;
+      color: #ffffff;
+    }
+
+    .folders-metrics .update-metric .metric-icon {
+      color: #ffffff;
+    }
+
+    .folders-metrics .update-metric .metric-label,
+    .folders-metrics .update-metric .metric-value,
+    .folders-metrics .update-metric .metric-note {
+      color: #ffffff;
+    }
+
+    .folders-metrics .update-metric:hover {
+      background: #15803d;
+      border-color: #15803d !important;
+      color: #ffffff;
+      box-shadow: 0 2px 4px rgba(22, 163, 74, 0.10), 0 4px 10px rgba(22, 163, 74, 0.14), 0 8px 20px rgba(22, 163, 74, 0.16);
+    }
+
+    .folders-metrics .metric:hover,
+    .folders-metrics .update-metric:hover {
+      border-color: #111827;
+      box-shadow: 0 2px 4px rgba(60, 64, 67, 0.10), 0 4px 10px rgba(60, 64, 67, 0.14), 0 8px 20px rgba(60, 64, 67, 0.16);
+      transform: translateY(-1px);
+      transition: box-shadow 160ms ease, transform 160ms ease;
+    }
+    .folders-mirror .mirror-head,
+    .folders-mirror .mirror-summary {
+      grid-template-columns: 16px minmax(200px, 1fr) 120px 120px 120px 120px 120px 140px;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .folders-mirror .mirror-head::before {
+      content: "";
+    }
+
+    .folders-mirror .mirror-summary::before {
+      content: "+";
+      width: 16px;
+      color: var(--muted);
+      text-align: center;
+    }
+
+    .folders-mirror .mirror-folder[open] .mirror-summary::before {
+      content: "-";
+    }
+
+    .folders-mirror .mirror-head {
+      background: #3b6cb4;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.25);
+      min-height: 86px;
+      padding: 10px 12px;
+      color: #ffffff;
+      border-radius: 8px 8px 0 0;
+      align-items: center;
+    }
+
+    .folders-mirror .folders-head-wrapper {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      min-width: 0;
+      height: 100%;
+      justify-content: center;
+    }
+
+    .folders-mirror .folders-head-title {
+      color: #ffffff;
+      font-size: 31px;
+      font-weight: 720;
+      text-transform: none;
+      line-height: 1.1;
+    }
+
+    .folders-mirror .folders-head-subtitle {
+      color: #ffffff;
+      font-size: 13px;
+      font-weight: 650;
+      text-transform: none;
+    }
+
+    .folders-mirror .mirror-head > [role="columnheader"].folders-count-col {
+      color: #ffffff;
+      font-size: 16px;
+      font-weight: 700;
+      text-transform: uppercase;
+      text-align: center;
+      overflow: hidden;
+      white-space: nowrap;
+      cursor: pointer;
+      user-select: none;
+      transition: opacity 120ms ease;
+    }
+
+    .folders-mirror .mirror-head > [role="columnheader"].folders-count-col:hover {
+      opacity: 0.85;
+    }
+
+    .folders-mirror .mirror-head > [role="columnheader"].folders-count-col[data-dir="desc"]::after,
+    .folders-mirror .mirror-head > [role="columnheader"].folders-count-col[data-dir="asc"]::after {
+      content: "";
+      display: inline-block;
+      width: 0;
+      height: 0;
+      margin-left: 6px;
+      vertical-align: middle;
+      border-left: 4px solid transparent;
+      border-right: 4px solid transparent;
+    }
+
+    .folders-mirror .mirror-head > [role="columnheader"].folders-count-col[data-dir="desc"]::after {
+      border-top: 5px solid #ffffff;
+    }
+
+    .folders-mirror .mirror-head > [role="columnheader"].folders-count-col[data-dir="asc"]::after {
+      border-bottom: 5px solid #ffffff;
+    }
+
+    .folders-mirror .mirror-summary span.folders-count-cell {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      overflow: hidden;
+      white-space: nowrap;
+    }
+
+    .folders-mirror .mirror-summary .mirror-folder-name {
+      color: var(--text);
+      text-align: left;
+    }
+  </style>
+
+  <section class="folders-page">
   <section class="topbar">
     <div>
       <h1 class="dashboard-heading">SF folders</h1>
@@ -72,32 +225,31 @@
   </section>
 
   <section class="panel">
-    <div class="panel-header">
-      <h2 class="panel-title">Loaded Folders</h2>
-      <span class="muted">{{ mirror_summary.file_count }} files in data/inbox</span>
-    </div>
     <div class="panel-body">
       {% if folders %}
-        <div class="mirror-table" role="table" aria-label="ShareFile mirror folders">
+        <div class="mirror-table folders-mirror" role="table" aria-label="ShareFile mirror folders">
           <div class="mirror-head" role="row">
-            <div role="columnheader">Folder</div>
-            <div role="columnheader">Total Files</div>
-            <div role="columnheader">Processed</div>
-            <div role="columnheader">New</div>
-            <div role="columnheader">Active</div>
-            <div role="columnheader">Review</div>
-            <div role="columnheader">Deleted in SF</div>
+            <div class="folders-head-wrapper" role="columnheader">
+              <span class="folders-head-title">Loaded Folders</span>
+              <span class="folders-head-subtitle">{{ mirror_summary.file_count }} files in data/inbox</span>
+            </div>
+            <div class="folders-count-col" role="columnheader" data-sort="total">Total Files</div>
+            <div class="folders-count-col" role="columnheader" data-sort="processed">Processed</div>
+            <div class="folders-count-col" role="columnheader" data-sort="new">New</div>
+            <div class="folders-count-col" role="columnheader" data-sort="active">Active</div>
+            <div class="folders-count-col" role="columnheader" data-sort="review">Review</div>
+            <div class="folders-count-col" role="columnheader" data-sort="deleted">Deleted in SF</div>
           </div>
           {% for folder in folders %}
-            <details class="mirror-folder" {% if forloop.first %}open{% endif %}>
+              <details class="mirror-folder">
               <summary class="mirror-summary" role="row">
                 <span class="mirror-folder-name" role="cell">{{ folder.display_name }}</span>
-                <span role="cell">{{ folder.counts.total }}</span>
-                <span class="status-blue" role="cell">{{ folder.counts.processed }}</span>
-                <span class="status-green" role="cell">{{ folder.counts.new }}</span>
-                <span class="status-orange" role="cell">{{ folder.counts.active }}</span>
-                <span class="status-purple" role="cell">{{ folder.counts.review }}</span>
-                <span class="status-red" role="cell">{{ folder.counts.deleted }}</span>
+                <span class="folders-count-cell" role="cell">{{ folder.counts.total }}</span>
+                <span class="folders-count-cell status-blue" role="cell">{{ folder.counts.processed }}</span>
+                <span class="folders-count-cell status-green" role="cell">{{ folder.counts.new }}</span>
+                <span class="folders-count-cell status-orange" role="cell">{{ folder.counts.active }}</span>
+                <span class="folders-count-cell status-purple" role="cell">{{ folder.counts.review }}</span>
+                <span class="folders-count-cell status-red" role="cell">{{ folder.counts.deleted }}</span>
               </summary>
               <div
                 class="mirror-files"
@@ -532,5 +684,79 @@
         processButton.disabled = false;
       }
     });
+
+    // Folder row sorting
+    (function () {
+      const table = document.querySelector(".folders-mirror");
+      if (!table) return;
+
+      const headers = Array.from(table.querySelectorAll("[data-sort]"));
+      let currentKey = null;
+      let currentDir = null;
+
+      function getValue(row, key) {
+        const map = {
+          total: 0,
+          processed: 1,
+          new: 2,
+          active: 3,
+          review: 4,
+          deleted: 5,
+        };
+        const idx = map[key];
+        if (idx === undefined) return 0;
+        const cells = row.querySelectorAll(".folders-count-cell");
+        const cell = cells[idx];
+        if (!cell) return 0;
+        return parseInt(cell.textContent.replace(/\D/g, ""), 10) || 0;
+      }
+
+      function sortRows(key, dir) {
+        const rows = Array.from(table.querySelectorAll(".mirror-folder"));
+        rows.sort((a, b) => {
+          const av = getValue(a, key);
+          const bv = getValue(b, key);
+          return dir === "asc" ? av - bv : bv - av;
+        });
+        rows.forEach((row) => table.appendChild(row));
+      }
+
+      function clearArrows() {
+        headers.forEach((h) => {
+          h.removeAttribute("data-dir");
+        });
+      }
+
+      function applyInitialSort() {
+        const newHeader = headers.find((h) => h.dataset.sort === "new");
+        if (!newHeader) return;
+        currentKey = "new";
+        currentDir = "desc";
+        clearArrows();
+        newHeader.setAttribute("data-dir", "desc");
+        sortRows("new", "desc");
+      }
+
+      headers.forEach((header) => {
+        header.addEventListener("click", () => {
+          const key = header.dataset.sort;
+          if (!key) return;
+
+          if (currentKey === key) {
+            currentDir = currentDir === "desc" ? "asc" : "desc";
+          } else {
+            currentKey = key;
+            currentDir = "desc";
+          }
+
+          clearArrows();
+          header.setAttribute("data-dir", currentDir);
+          sortRows(key, currentDir);
+        });
+      });
+
+      applyInitialSort();
+    })();
   </script>
+</section>
 {% endblock %}
