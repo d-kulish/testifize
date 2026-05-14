@@ -74,6 +74,14 @@ def load_sharefile_mirror() -> MirrorData:
 
     annotate_duplicate_names(grouped)
 
+    # Ensure every folder from the snapshot appears (even if empty)
+    for folder_info in snapshot.get("folders", []):
+        folder_path = folder_info.get("path", "")
+        if not folder_path or _is_internal_workflow_folder(folder_path):
+            continue
+        if folder_path not in grouped:
+            grouped[folder_path] = []
+
     folders = []
     for folder_path, files in grouped.items():
         counts = {
