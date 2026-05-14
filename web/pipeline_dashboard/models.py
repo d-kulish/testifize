@@ -89,6 +89,15 @@ class Asset(models.Model):
     parser_version = models.CharField(max_length=120, blank=True)
     content_hash = models.CharField(max_length=128, blank=True)
     duplicate_group = models.CharField(max_length=255, blank=True, db_index=True)
+    duplicate_role = models.CharField(
+        max_length=20,
+        choices=[
+            ("original", "Original"),
+            ("duplicate", "Duplicate"),
+        ],
+        blank=True,
+        db_index=True,
+    )
     status_reason = models.TextField(blank=True)
     first_seen_at = models.DateTimeField(default=timezone.now, editable=False)
     last_seen_at = models.DateTimeField(default=timezone.now)

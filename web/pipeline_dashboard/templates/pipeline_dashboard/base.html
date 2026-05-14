@@ -517,8 +517,8 @@
     }
 
     .mirror-files {
-      border-top: 1px solid #edf0f4;
-      background: #fbfcfe;
+      border-top: 1px solid var(--border-soft);
+      background: #ffffff;
       overflow-x: auto;
     }
 
@@ -2582,13 +2582,13 @@
           <span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3 7.5V18a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-7l-2-2H5a2 2 0 0 0-2 2.5Z"></path></svg></span>
           <span class="nav-label">SF folders</span>
         </a>
-        <a class="{% if active_nav == 'vendors' %}active{% endif %}" href="{% url 'pipeline_dashboard:vendors' %}" title="Vendors">
-          <span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M22 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg></span>
-          <span class="nav-label">Vendors</span>
-        </a>
         <a class="{% if active_nav == 'process' %}active{% endif %}" href="{% url 'pipeline_dashboard:process' %}" title="Parsing">
           <span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6 5l-5 7 5 7"></path><path d="M18 5l5 7-5 7"></path><path d="M10 20L14 4"></path></svg></span>
           <span class="nav-label">Parsing</span>
+        </a>
+        <a class="{% if active_nav == 'vendors' %}active{% endif %}" href="{% url 'pipeline_dashboard:vendors' %}" title="Vendors">
+          <span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M22 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg></span>
+          <span class="nav-label">Vendors</span>
         </a>
       </nav>
     </aside>

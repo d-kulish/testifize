@@ -1,4 +1,5 @@
 {% extends "pipeline_dashboard/base.html" %}
+{% load pipeline_numbers %}
 
 {% block title %}SF folders{% endblock %}
 
@@ -200,6 +201,16 @@
       color: var(--text);
       text-align: left;
     }
+
+    .folders-mirror .mirror-files {
+      background: #ffffff;
+    }
+
+    .duplicate-badge.original {
+      background: #ecfdf3;
+      color: #087443;
+      border-color: #abefc6;
+    }
   </style>
 
   <section class="folders-page">
@@ -333,17 +344,19 @@
                   </thead>
                   <tbody>
                     {% for file in folder.files %}
-                      <tr class="mirror-file-row {{ file.status }}{% if file.duplicate_name %} duplicate-name{% endif %}" data-file-row>
+                      <tr class="mirror-file-row {{ file.status }}{% if file.duplicate_role == 'duplicate' %} duplicate-name{% endif %}" data-file-row>
                         <td><span class="mirror-status {{ file.status }}">{{ file.status_label }}</span></td>
                         <td class="file-name" title="{% if file.duplicate_hint %}{{ file.duplicate_hint }}{% else %}{{ file.name }}{% endif %}">
                           {{ file.name }}
-                          {% if file.duplicate_name %}
+                          {% if file.duplicate_role == 'original' %}
+                            <span class="duplicate-badge original" title="{{ file.duplicate_hint }}">Original</span>
+                          {% elif file.duplicate_role == 'duplicate' %}
                             <span class="duplicate-badge" title="{{ file.duplicate_hint }}">Duplicate</span>
                           {% endif %}
                         </td>
-                        <td>{{ file.extension }}{% if file.profile_kind %} · {{ file.profile_kind }}{% endif %}</td>
+                        <td>{{ file.extension|type_label }}</td>
                         <td>{{ file.sheet_count|default:"-" }}</td>
-                        <td>{{ file.modified_at|default:"-" }}</td>
+                        <td>{{ file.modified_at|short_dt }}</td>
                         <td>{{ file.size|filesizeformat }}</td>
                         <td>{{ file.uploaded_by|default:"-" }}</td>
                         <td>{{ file.uploader_email|default:"-" }}</td>

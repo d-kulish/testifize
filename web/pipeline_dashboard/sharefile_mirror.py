@@ -67,7 +67,17 @@ def load_sharefile_mirror() -> MirrorData:
             assets_by_local_path,
             assets_by_remote_item_id,
         )
-        file_row = _file_row(local_path, remote, profile_row, status, user_cache)
+        remote_item_id = remote.get("remote_item_id") or ""
+        asset = assets_by_remote_item_id.get(remote_item_id) or assets_by_local_path.get(local_path)
+        file_row = _file_row(
+            local_path,
+            remote,
+            profile_row,
+            status,
+            user_cache,
+            duplicate_role=getattr(asset, "duplicate_role", "") or "",
+            duplicate_group=getattr(asset, "duplicate_group", "") or "",
+        )
         file_row["folder_path"] = folder_path
         file_row["folder_display_name"] = _display_folder_name(folder_path)
         grouped[folder_path].append(file_row)
@@ -128,6 +138,8 @@ def _file_row(
     profile: dict[str, Any],
     status: str,
     user_cache: dict[str, Any],
+    duplicate_role: str = "",
+    duplicate_group: str = "",
 ) -> dict[str, Any]:
     uploader = _uploader_for(remote, user_cache)
     return {
@@ -152,6 +164,8 @@ def _file_row(
         "profile_status": profile.get("status") or "",
         "sheet_count": profile.get("sheet_count"),
         "sharefile_hash": remote.get("sharefile_hash") or "",
+        "duplicate_role": duplicate_role,
+        "duplicate_group": duplicate_group,
     }
 
 
@@ -220,30 +234,60 @@ def _status_label(status: str) -> str:
 
 
 def duplicate_name_count(files: list[dict[str, Any]]) -> int:
-    return sum(1 for row in files if row.get("duplicate_name"))
+    return sum(1 for row in files if row.get("duplicate_role") == "duplicate")
 
 
 def annotate_duplicate_names(grouped: dict[str, list[dict[str, Any]]]) -> None:
-    rows_by_name: defaultdict[str, list[dict[str, Any]]] = defaultdict(list)
+    # Build a name index so we can detect duplicates even when DB roles are absent.
+    name_groups: dict[str, list[dict[str, Any]]] = defaultdict(list)
     for files in grouped.values():
         for row in files:
-            row["duplicate_name"] = False
-            row["duplicate_hint"] = ""
-            key = duplicate_name_key(row["name"])
+            key = duplicate_name_key(row.get("name", ""))
             if key:
-                rows_by_name[key].append(row)
+                name_groups[key].append(row)
 
-    for rows in rows_by_name.values():
+    # For groups with 2+ files and NO pre-existing DB roles, compute roles from
+    # ShareFile created_at (earliest = original).  If ANY file in the group already
+    # has a DB role we skip the snapshot-based assignment entirely and trust the DB.
+    for rows in name_groups.values():
         if len(rows) < 2:
             continue
-        locations = sorted({row["folder_display_name"] for row in rows})
-        for row in rows:
-            other_locations = [location for location in locations if location != row["folder_display_name"]]
-            row["duplicate_name"] = True
-            if other_locations:
-                row["duplicate_hint"] = f"Also in: {', '.join(other_locations)}"
-            else:
-                row["duplicate_hint"] = f"{len(rows)} files with this name in {row['folder_display_name']}"
+        has_db_role = any(row.get("duplicate_role") for row in rows)
+        if has_db_role:
+            continue
+        rows.sort(key=lambda r: _created_sort(r.get("created_at", "")))
+        rows[0]["duplicate_role"] = "original"
+        rows[0]["duplicate_group"] = duplicate_name_key(rows[0].get("name", ""))
+        for dup in rows[1:]:
+            dup["duplicate_role"] = "duplicate"
+            dup["duplicate_group"] = duplicate_name_key(dup.get("name", ""))
+
+    # Set display flags and hints
+    for files in grouped.values():
+        for row in files:
+            row["duplicate_name"] = bool(row.get("duplicate_role"))
+            row["duplicate_hint"] = _duplicate_hint(row)
+
+
+def _duplicate_hint(row: dict[str, Any]) -> str:
+    role = row.get("duplicate_role")
+    group = row.get("duplicate_group")
+    if not role or not group:
+        return ""
+    if role == "original":
+        return "Original file"
+    if role == "duplicate":
+        return "Duplicate copy"
+    return ""
+
+
+def _created_sort(value: str) -> float:
+    if not value:
+        return float("inf")  # files without created_at sort to the end (treated as newer)
+    try:
+        return datetime.fromisoformat(value.replace("Z", "+00:00")).timestamp()
+    except ValueError:
+        return float("inf")
 
 
 def duplicate_name_key(name: str) -> str:

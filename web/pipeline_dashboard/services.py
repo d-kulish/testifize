@@ -66,6 +66,7 @@ def upsert_asset_from_item(folder: ShareFileFolder, item: ShareFileItem) -> Asse
         "created_by_name": item.created_by_name or "",
         "created_by_email": item.created_by_email or "",
         "parser_key": folder.vendor.parser_key if folder.vendor else "",
+        "duplicate_group": " ".join(item.name.casefold().strip().split()),
         "last_seen_at": now,
         "raw_metadata": item.raw,
     }
@@ -84,13 +85,38 @@ def upsert_asset_from_item(folder: ShareFileFolder, item: ShareFileItem) -> Asse
                 to_status=existing.status,
                 message="Remote metadata changed during scan",
             )
+        _reconcile_duplicate_roles_for_group(existing.duplicate_group)
         return existing
 
     asset = Asset.objects.create(remote_item_id=item.id, first_seen_at=now, **defaults)
     record_asset_event(asset, "discovered", to_status=asset.status, message="New remote asset discovered")
+    _reconcile_duplicate_roles_for_group(asset.duplicate_group)
     return asset
 
 
+def _reconcile_duplicate_roles_for_group(duplicate_group: str | None) -> None:
+    if not duplicate_group:
+        return
+    assets = list(
+        Asset.objects.filter(duplicate_group=duplicate_group)
+        .exclude(duplicate_group="")
+        .order_by("remote_created_at", "first_seen_at", "remote_item_id")
+    )
+    if len(assets) < 2:
+        # Only one asset in this group — clear any stale role
+        for asset in assets:
+            if asset.duplicate_role:
+                asset.duplicate_role = ""
+                asset.save(update_fields=["duplicate_role", "updated_at"])
+        return
+    original = assets[0]
+    if original.duplicate_role != "original":
+        original.duplicate_role = "original"
+        original.save(update_fields=["duplicate_role", "updated_at"])
+    for dup in assets[1:]:
+        if dup.duplicate_role != "duplicate":
+            dup.duplicate_role = "duplicate"
+            dup.save(update_fields=["duplicate_role", "updated_at"])
 def download_asset(asset: Asset, client: ShareFileDownloadClient | None = None) -> Path:
     client = client or build_sharefile_client()
     destination = inbox_path_for_asset(asset)

@@ -54,7 +54,7 @@ class AssetAdmin(admin.ModelAdmin):
         "file_size",
         "created_by_display",
     ]
-    list_filter = ["status", "vendor", "source_folder", "parser_key", "duplicate_group"]
+    list_filter = ["status", "vendor", "source_folder", "parser_key", "duplicate_role", "duplicate_group"]
     search_fields = [
         "name",
         "remote_item_id",
@@ -73,6 +73,7 @@ class AssetAdmin(admin.ModelAdmin):
                     "status",
                     "vendor",
                     "parser_key",
+                    "duplicate_role",
                     "duplicate_group",
                     "status_reason",
                 ]

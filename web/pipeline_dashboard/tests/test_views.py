@@ -13,6 +13,7 @@ from openpyxl import Workbook
 
 from pipeline_dashboard.models import Asset, AssetEvent, AssetStatus, ParsedOutput, ShareFileFolder, Vendor
 from pipeline_dashboard.parser_workflow import approval_root_id, period_series_from_rows
+from pipeline_dashboard.services import _reconcile_duplicate_roles_for_group
 
 
 class FakeApprovalClient:
@@ -455,6 +456,24 @@ class DashboardViewTests(TestCase):
                 json.dumps({"processed_local_paths": [processed_duplicate_path]})
             )
 
+            Asset.objects.create(
+                remote_item_id="fi-internal-duplicate",
+                name=duplicate_name,
+                local_path=internal_duplicate_path,
+                status=AssetStatus.NEW,
+                duplicate_group=" ".join(duplicate_name.casefold().strip().split()),
+                remote_created_at="2026-05-08T12:00:00+00:00",
+            )
+            Asset.objects.create(
+                remote_item_id="fi-josh-duplicate",
+                name=duplicate_name,
+                local_path=processed_duplicate_path,
+                status=AssetStatus.NEW,
+                duplicate_group=" ".join(duplicate_name.casefold().strip().split()),
+                remote_created_at="2026-05-07T12:00:00+00:00",
+            )
+            _reconcile_duplicate_roles_for_group(" ".join(duplicate_name.casefold().strip().split()))
+
             with override_settings(REPO_ROOT=repo_root):
                 response = self.client.get(reverse("pipeline_dashboard:folders"))
 
@@ -463,9 +482,9 @@ class DashboardViewTests(TestCase):
             [folder["display_name"] for folder in response.context["folders"]],
             ["many_new", "May_2026_Internal_folders", "josh"],
         )
-        self.assertEqual(response.context["mirror_summary"]["duplicate_name_count"], 2)
+        self.assertEqual(response.context["mirror_summary"]["duplicate_name_count"], 1)
         self.assertEqual(response.context["folders"][1]["counts"]["duplicate_names"], 1)
-        self.assertEqual(response.context["folders"][2]["counts"]["duplicate_names"], 1)
+        self.assertEqual(response.context["folders"][2]["counts"]["duplicate_names"], 0)
         self.assertEqual(response.context["folders"][1]["allowed_vendor_names"], "RallyAdMedia, AdTaxi")
         duplicate_rows = [
             file
@@ -475,9 +494,9 @@ class DashboardViewTests(TestCase):
         ]
         self.assertEqual({row["local_path"] for row in duplicate_rows}, {internal_duplicate_path, processed_duplicate_path})
         content = response.content.decode()
-        self.assertEqual(content.count('class="duplicate-badge"'), 2)
-        self.assertIn("Also in: josh", content)
-        self.assertIn("Also in: May_2026_Internal_folders", content)
+        # One original badge, one duplicate badge
+        self.assertIn(">Original</span>", content)
+        self.assertIn(">Duplicate</span>", content)
         self.assertIn('data-allowed-vendor-names="RallyAdMedia, AdTaxi"', content)
 
     def test_review_file_preview_returns_csv_rows(self):

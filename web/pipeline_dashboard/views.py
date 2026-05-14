@@ -340,7 +340,7 @@ def _decorate_dashboard_asset(asset: Asset) -> None:
     else:
         asset.validation_label = "-"
         asset.validation_class = ""
-    asset.duplicate_label = "Check" if asset.duplicate_group else "-"
+    asset.duplicate_label = asset.duplicate_role.title() if asset.duplicate_role else "-"
 
 
 def _dashboard_tabs(status_counts: dict[str, int], mirror_summary: dict[str, int]) -> list[dict[str, object]]:

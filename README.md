@@ -407,6 +407,7 @@ parser
 parser_version
 content_hash
 duplicate_group
+duplicate_role
 status_reason
 first_seen_at
 last_seen_at
@@ -490,7 +491,7 @@ First v1 workflow:
 1. Create `Vendor` rows for each vendor.
 2. Create `ShareFileFolder` rows with the ShareFile folder ID, role, file patterns, and optional vendor.
 3. Open `SF folders` and click `Update` to refresh the local ShareFile mirror.
-4. Review mirrored folders sorted by new-file count and use duplicate badges to identify repeated file names across folders.
+4. Review mirrored folders sorted by new-file count. Files with the same normalized name are tagged as **Original** (the earliest ShareFile `created_at` in that group) or **Duplicate** (all uploaded copies). This applies to both the live JSON mirror and synced `Asset` records; the `duplicate_role` field is stored in the Django database and backfilled by the `reconcile_duplicates` management command.
 5. Open a file row, assign an allowed vendor, and move it to `Parsing`.
 6. On `Parsing`, open the file row, inspect raw workbook sheets, click `Parse`, and review the parsed charts plus final CSV preview.
 7. Click `Approval` only after the generated CSV preview and KPI charts look correct.
