@@ -100,7 +100,21 @@
       content: "-";
     }
 
-    .folders-mirror .mirror-head {
+    .folders-mirror .mirror-folder.is-empty {
+      background: #fef2f2;
+    }
+
+    .folders-mirror .mirror-folder.is-empty .mirror-summary {
+      background: #fef2f2;
+    }
+
+    .folders-mirror .mirror-folder.is-empty .mirror-folder-name {
+      color: #991b1b;
+    }
+
+    .folders-mirror .mirror-folder.is-empty .folders-count-cell {
+      color: #991b1b;
+    }
       background: #3b6cb4;
       border-bottom: 1px solid rgba(255, 255, 255, 0.25);
       min-height: 86px;
@@ -194,7 +208,7 @@
   </section>
 
   <section class="metrics metrics-compact folders-metrics" aria-label="ShareFile folder totals">
-    <div class="metric blue filter-tab" data-filter="with-files" role="button" tabindex="0">
+    <div class="metric blue filter-tab active" data-filter="with-files" role="button" tabindex="0">
       <div class="metric-icon" aria-hidden="true">
         <svg viewBox="0 0 24 24"><path d="M3 7.5V18a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-7l-2-2H5a2 2 0 0 0-2 2.5Z"></path></svg>
       </div>
@@ -204,7 +218,7 @@
         <div class="metric-note">Only folders containing files</div>
       </div>
     </div>
-    <div class="metric blue filter-tab active" data-filter="all" role="button" tabindex="0">
+    <div class="metric blue filter-tab" data-filter="all" role="button" tabindex="0">
       <div class="metric-icon" aria-hidden="true">
         <svg viewBox="0 0 24 24"><path d="M3 7.5V18a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-7l-2-2H5a2 2 0 0 0-2 2.5Z"></path></svg>
       </div>
@@ -828,12 +842,22 @@
         });
       });
 
-      // Default to "all" filter
-      const allTab = document.querySelector('[data-filter="all"]');
-      if (allTab) {
-        tabs.forEach((t) => t.classList.toggle("active", t === allTab));
-        setFilter("all");
+      // Default to "with-files" filter
+      const withFilesTab = document.querySelector('[data-filter="with-files"]');
+      if (withFilesTab) {
+        tabs.forEach((t) => t.classList.toggle("active", t === withFilesTab));
+        setFilter("with-files");
       }
+
+      // Mark empty rows for styling when visible
+      const rows = Array.from(table.querySelectorAll(".mirror-folder"));
+      rows.forEach((row) => {
+        const cells = row.querySelectorAll(".folders-count-cell");
+        const total = cells.length ? parseInt(cells[0].textContent.replace(/\D/g, ""), 10) : 0;
+        if (total === 0) {
+          row.classList.add("is-empty");
+        }
+      });
     })();
   </script>
 </section>
