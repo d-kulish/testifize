@@ -380,7 +380,7 @@ class DashboardViewTests(TestCase):
         self.assertContains(response, ">Deleted<", html=False)
         self.assertContains(response, "Active")
         self.assertContains(response, "Review")
-        self.assertContains(response, "Deleted in SF")
+        self.assertContains(response, "Deleted")
         self.assertContains(response, "PodcastOne, Octopus, Loop, TVM, TAIV")
         self.assertContains(response, 'class="metrics metrics-compact folders-metrics"', html=False)
         self.assertContains(response, 'class="metric blue update-metric"', html=False)
@@ -1643,3 +1643,88 @@ class DashboardViewTests(TestCase):
             local_path=local_path,
             file_size=workbook_path.stat().st_size,
         )
+
+    def test_inactive_asset_excluded_from_new_count(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            repo_root = Path(tmpdir)
+            state_root = repo_root / "data" / "state"
+            state_root.mkdir(parents=True)
+            (state_root / "sharefile_snapshot_latest.json").write_text(
+                json.dumps(
+                    {
+                        "run_id": "snapshot-inactive",
+                        "created_at": "2026-05-07T10:00:00Z",
+                        "files": [
+                            {
+                                "remote_item_id": "fi-inactive-new",
+                                "name": "inactive-new.xlsx",
+                                "remote_path": "home/josh/inactive-new.xlsx",
+                                "local_path": "data/inbox/home/josh/inactive-new.xlsx",
+                                "source_folder_path": "home/josh",
+                                "extension": ".xlsx",
+                                "size": 10,
+                                "modified_at": "2026-05-07T12:00:00Z",
+                                "creator": "Uploader One",
+                                "raw_metadata": {"LastModifiedByUserID": "user-1"},
+                            },
+                            {
+                                "remote_item_id": "fi-active-new",
+                                "name": "active-new.xlsx",
+                                "remote_path": "home/josh/active-new.xlsx",
+                                "local_path": "data/inbox/home/josh/active-new.xlsx",
+                                "source_folder_path": "home/josh",
+                                "extension": ".xlsx",
+                                "size": 10,
+                                "modified_at": "2026-05-07T12:00:00Z",
+                                "creator": "Uploader One",
+                                "raw_metadata": {"LastModifiedByUserID": "user-1"},
+                            },
+                        ],
+                    }
+                )
+            )
+            (state_root / "inbox_profile_latest.json").write_text(
+                json.dumps(
+                    {
+                        "files": [
+                            {
+                                "local_path": "data/inbox/home/josh/inactive-new.xlsx",
+                                "name": "inactive-new.xlsx",
+                                "kind": "excel",
+                                "status": "profiled",
+                                "sheet_count": 1,
+                            },
+                            {
+                                "local_path": "data/inbox/home/josh/active-new.xlsx",
+                                "name": "active-new.xlsx",
+                                "kind": "excel",
+                                "status": "profiled",
+                                "sheet_count": 1,
+                            },
+                        ]
+                    }
+                )
+            )
+            (state_root / "file_processing_state.json").write_text(json.dumps({}))
+            (state_root / "sharefile_users_latest.json").write_text(
+                json.dumps({"users_by_id": {"user-1": {"full_name": "Uploader One", "email": "one@example.com"}}})
+            )
+            (state_root / "sharefile_sync_state.json").write_text(json.dumps({}))
+
+            Asset.objects.create(
+                remote_item_id="fi-inactive-new",
+                status=AssetStatus.NEW,
+                name="inactive-new.xlsx",
+                local_path="data/inbox/home/josh/inactive-new.xlsx",
+                is_active=False,
+            )
+
+            with override_settings(REPO_ROOT=repo_root):
+                response = self.client.get(reverse("pipeline_dashboard:folders"))
+
+        self.assertEqual(response.status_code, 200)
+        josh_folder = next(f for f in response.context["folders"] if f["display_name"] == "josh")
+        self.assertEqual(josh_folder["counts"]["total"], 2)
+        self.assertEqual(josh_folder["counts"]["new"], 1)
+        self.assertEqual(josh_folder["counts"]["active"], 0)
+        self.assertEqual(josh_folder["counts"]["processed"], 0)

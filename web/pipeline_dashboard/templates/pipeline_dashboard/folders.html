@@ -95,14 +95,23 @@
     }
 
     .folders-mirror .mirror-summary::before {
-      content: "+";
-      width: 16px;
-      color: var(--muted);
-      text-align: center;
+      content: "";
+      width: 9px;
+      height: 9px;
+      border: none;
+      border-right: 2px solid var(--muted);
+      border-bottom: 2px solid var(--muted);
+      border-radius: 0;
+      background: none;
+      transform: rotate(-45deg);
+      transition: transform 160ms ease;
+      justify-self: center;
     }
 
     .folders-mirror .mirror-folder[open] .mirror-summary::before {
-      content: "-";
+      content: "";
+      background: none;
+      transform: rotate(45deg);
     }
 
     .folders-mirror .mirror-folder.is-empty {
@@ -192,6 +201,10 @@
       border-bottom: 5px solid #ffffff;
     }
 
+    .folders-mirror .mirror-summary {
+      font-size: 16px;
+    }
+
     .folders-mirror .mirror-summary span.folders-count-cell {
       display: flex;
       justify-content: center;
@@ -208,6 +221,11 @@
 
     .folders-mirror .mirror-files {
       background: #ffffff;
+    }
+
+    .folders-mirror .mirror-files table thead th {
+      background: #dbeafe;
+      color: #000000;
     }
 
     .status-text {
@@ -496,23 +514,23 @@
                 <path d="M21 21l-4.35-4.35" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path>
               </svg>
             </div>
-            <div class="folders-count-col" role="columnheader" data-sort="total">Total Files</div>
-            <div class="folders-count-col" role="columnheader" data-sort="processed">Processed</div>
             <div class="folders-count-col" role="columnheader" data-sort="new">New</div>
             <div class="folders-count-col" role="columnheader" data-sort="active">Active</div>
             <div class="folders-count-col" role="columnheader" data-sort="review">Review</div>
-            <div class="folders-count-col" role="columnheader" data-sort="deleted">Deleted in SF</div>
+            <div class="folders-count-col" role="columnheader" data-sort="processed">Processed</div>
+            <div class="folders-count-col" role="columnheader" data-sort="deleted">Deleted</div>
+            <div class="folders-count-col" role="columnheader" data-sort="total">Total</div>
           </div>
           {% for folder in folders %}
               <details class="mirror-folder">
               <summary class="mirror-summary" role="row">
                 <span class="mirror-folder-name" role="cell">{{ folder.display_name }}</span>
-                <span class="folders-count-cell" role="cell">{{ folder.counts.total }}</span>
-                <span class="folders-count-cell status-blue" role="cell">{{ folder.counts.processed }}</span>
                 <span class="folders-count-cell status-green" role="cell">{{ folder.counts.new }}</span>
                 <span class="folders-count-cell status-orange" role="cell">{{ folder.counts.active }}</span>
                 <span class="folders-count-cell status-purple" role="cell">{{ folder.counts.review }}</span>
+                <span class="folders-count-cell status-blue" role="cell">{{ folder.counts.processed }}</span>
                 <span class="folders-count-cell status-red" role="cell">{{ folder.counts.deleted }}</span>
+                <span class="folders-count-cell" role="cell">{{ folder.counts.total }}</span>
               </summary>
               <div
                 class="mirror-files"
@@ -979,12 +997,12 @@
 
       function getValue(row, key) {
         const map = {
-          total: 0,
-          processed: 1,
-          new: 2,
-          active: 3,
-          review: 4,
-          deleted: 5,
+          new: 0,
+          active: 1,
+          review: 2,
+          processed: 3,
+          deleted: 4,
+          total: 5,
         };
         const idx = map[key];
         if (idx === undefined) return 0;
@@ -1053,7 +1071,7 @@
           const hasFiles = row.querySelectorAll(".folders-count-cell").length > 0;
           if (!hasFiles) return;
           const total = parseInt(
-            row.querySelectorAll(".folders-count-cell")[0]?.textContent.replace(/\D/g, "") || "0", 10);
+            row.querySelectorAll(".folders-count-cell")[5]?.textContent.replace(/\D/g, "") || "0", 10);
           if (mode === "with-files") {
             row.hidden = total === 0;
           } else {
@@ -1081,7 +1099,7 @@
       const rows = Array.from(table.querySelectorAll(".mirror-folder"));
       rows.forEach((row) => {
         const cells = row.querySelectorAll(".folders-count-cell");
-        const total = cells.length ? parseInt(cells[0].textContent.replace(/\D/g, ""), 10) : 0;
+        const total = cells.length ? parseInt(cells[5].textContent.replace(/\D/g, ""), 10) : 0;
         if (total === 0) {
           row.classList.add("is-empty");
         }
@@ -1240,7 +1258,6 @@
       function resetSearch() {
         const folders = document.querySelectorAll(".mirror-folder");
         folders.forEach((folder) => {
-          folder.hidden = false;
           folder.open = false;
           const rows = Array.from(folder.querySelectorAll("[data-file-row]"));
           const pager = folder.querySelector("[data-mirror-pager]");
@@ -1259,6 +1276,20 @@
             if (pagerApi) {
               pagerApi.setPage(1);
             }
+          }
+        });
+        // Re-apply the active filter so empty folders stay hidden if needed
+        const activeTab = document.querySelector("[data-filter].active");
+        const filterMode = activeTab ? activeTab.dataset.filter : "with-files";
+        folders.forEach((folder) => {
+          const hasFiles = folder.querySelectorAll(".folders-count-cell").length > 0;
+          if (!hasFiles) return;
+          const total = parseInt(
+            folder.querySelectorAll(".folders-count-cell")[5]?.textContent.replace(/\D/g, "") || "0", 10);
+          if (filterMode === "with-files") {
+            folder.hidden = total === 0;
+          } else {
+            folder.hidden = false;
           }
         });
       }

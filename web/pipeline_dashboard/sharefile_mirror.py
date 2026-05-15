@@ -97,10 +97,10 @@ def load_sharefile_mirror() -> MirrorData:
     for folder_path, files in grouped.items():
         counts = {
             "total": len(files),
-            "new": sum(1 for row in files if row["status"] == "new"),
-            "active": sum(1 for row in files if row["status"] == "active"),
-            "review": sum(1 for row in files if row["status"] == "review"),
-            "processed": sum(1 for row in files if row["status"] == "processed"),
+            "new": sum(1 for row in files if row["status"] == "new" and row.get("is_active", True)),
+            "active": sum(1 for row in files if row["status"] == "active" and row.get("is_active", True)),
+            "review": sum(1 for row in files if row["status"] == "review" and row.get("is_active", True)),
+            "processed": sum(1 for row in files if row["status"] == "processed" and row.get("is_active", True)),
             "deleted": sum(1 for row in files if row["status"] == "deleted_remote"),
             "duplicate_names": duplicate_name_count(files),
         }

@@ -632,6 +632,17 @@ When a review file is approved, the app ensures this final path under the select
 Final/<Reporting_Period>/<Vendor>_<Reporting_Period>.csv
 ```
 
+## Recent Changes
+
+### SF Folders page (2026-05-15)
+
+- **Column renames and reorder**: "Total Files" → "Total", "Deleted in SF" → "Deleted". Column order changed to `New | Active | Review | Processed | Deleted | Total`.
+- **Inactive file exclusion**: toggled-off (inactive) files are no longer counted in New, Active, Review, or Processed folder totals. Total and Deleted counts remain unchanged.
+- **Search reset fix**: clearing the search input now re-applies the active "with-files" filter, so empty folders stay hidden.
+- **Folder row styling**: folder names and file stat text increased from 14px to 16px for better readability.
+- **Expand/collapse icon**: replaced `+`/`-` text symbols with a CSS chevron (`>` / `v`) and reduced size by ~15%.
+- **File table header**: the header row inside an expanded folder now uses a light-blue background (`#dbeafe`) with solid black column text, matching the chapter header palette.
+
 ## Immediate Next Steps
 
 1. Define the shared target schema location and validation rules for final approved outputs.
