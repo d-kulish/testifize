@@ -444,8 +444,9 @@ Files with the same normalized name are tagged as **Original** (the earliest Sha
 
 Every file in the catalogue has an `is_active` boolean, defaulting to **Active**. In the SF folders UI, each file row has an Active toggle:
 
-- **Active** (default): file behaves normally, Review button is available
+- **Active** (default): file behaves normally, Review button is available, row has a light green background when the status is new/active/review
 - **Inactive**: file row background turns grey and faded, Review button is disabled
+- **Processed** and **Deleted** files are visually identical to inactive files (grey background, disabled Review button) because they are already out of the workflow
 
 The `is_active` field is a database-level toggle, so setting a file to Inactive excludes it from processing and persists across mirror refreshes. The toggle saves to the Django database via an async POST, automatically creating an Asset record for files that only exist in the mirror and don't have one yet.
 
@@ -495,7 +496,7 @@ App pages:
 
 ```text
 /          dashboard
-/folders/  ShareFile folder catalogue and review entrypoint
+/folders/  ShareFile folder catalogue, file search, status sorting, and review entrypoint
 /process/  Parsing page, parser preview, generated CSV review, approval queue
 /admin/    Django Admin back office
 ```
@@ -508,9 +509,11 @@ First v1 workflow:
 2. Create `ShareFileFolder` rows with the ShareFile folder ID, role, file patterns, and optional vendor.
 3. Open `SF folders` and click `Update` to refresh the local ShareFile mirror.
 4. Review mirrored folders sorted by new-file count. Files with the same normalized name are tagged as **Original** (the earliest ShareFile `created_at` in that group) or **Duplicate** (all uploaded copies). This applies to both the live JSON mirror and synced `Asset` records; the `duplicate_role` field is stored in the Django database and backfilled by the `reconcile_duplicates` management command.
-5. Open a file row, assign an allowed vendor, and move it to `Parsing`.
-6. On `Parsing`, open the file row, inspect raw workbook sheets, click `Parse`, and review the parsed charts plus final CSV preview.
-7. Click `Approval` only after the generated CSV preview and KPI charts look correct.
+5. Use the search bar in the header to find files by name or uploader email. Matching folders auto-expand and matching file names are highlighted.
+6. Inside each folder, files are sorted into three tiers: active under-review files at the top (light green), active finished files in the middle (grey), and inactive files at the bottom (grey). Within each tier files are sorted by modified timestamp, newest first.
+7. Open a file row, assign an allowed vendor, and move it to `Parsing`.
+8. On `Parsing`, open the file row, inspect raw workbook sheets, click `Parse`, and review the parsed charts plus final CSV preview.
+9. Click `Approval` only after the generated CSV preview and KPI charts look correct.
 
 The SF folders review modal can restrict the vendor dropdown by source folder. The current rule for `home/josh` allows only:
 

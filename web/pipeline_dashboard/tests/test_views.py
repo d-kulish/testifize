@@ -393,6 +393,62 @@ class DashboardViewTests(TestCase):
         self.assertNotContains(response, "Loop_April_2026.csv")
         self.assertNotContains(response, "profile-only.csv")
 
+    def test_folders_page_renders_search_bar(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            repo_root = Path(tmpdir)
+            state_root = repo_root / "data" / "state"
+            state_root.mkdir(parents=True)
+            (state_root / "sharefile_snapshot_latest.json").write_text(
+                json.dumps(
+                    {
+                        "run_id": "snapshot-search",
+                        "created_at": "2026-05-07T10:00:00Z",
+                        "files": [
+                            {
+                                "remote_item_id": "fi-search",
+                                "name": "search-me.xlsx",
+                                "local_path": "data/inbox/home/josh/search-me.xlsx",
+                                "source_folder_path": "home/josh",
+                                "extension": ".xlsx",
+                                "size": 10,
+                                "modified_at": "2026-05-07T12:00:00Z",
+                                "creator": "Uploader One",
+                                "raw_metadata": {"LastModifiedByUserID": "user-1"},
+                            },
+                        ],
+                    }
+                )
+            )
+            (state_root / "inbox_profile_latest.json").write_text(
+                json.dumps(
+                    {
+                        "files": [
+                            {
+                                "local_path": "data/inbox/home/josh/search-me.xlsx",
+                                "name": "search-me.xlsx",
+                                "kind": "excel",
+                                "status": "profiled",
+                            }
+                        ]
+                    }
+                )
+            )
+            (state_root / "file_processing_state.json").write_text(json.dumps({}))
+            (state_root / "sharefile_users_latest.json").write_text(
+                json.dumps({"users_by_id": {"user-1": {"full_name": "Uploader One", "email": "one@example.com"}}})
+            )
+            (state_root / "sharefile_sync_state.json").write_text(json.dumps({}))
+
+            with override_settings(REPO_ROOT=repo_root):
+                response = self.client.get(reverse("pipeline_dashboard:folders"))
+
+        self.assertEqual(response.status_code, 200)
+        content = response.content.decode()
+        self.assertIn("data-folder-search", content)
+        self.assertIn("Search files by name or uploader email", content)
+        self.assertIn("mirror-head-search", content)
+        self.assertIn("mirror-search-input", content)
+
     def test_folders_page_sorts_files_by_status_tiers_and_modified(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             repo_root = Path(tmpdir)

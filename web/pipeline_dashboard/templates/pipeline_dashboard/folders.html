@@ -81,9 +81,13 @@
 
     .folders-mirror .mirror-head,
     .folders-mirror .mirror-summary {
-      grid-template-columns: 16px minmax(200px, 1fr) 120px 120px 120px 120px 120px 140px;
+      grid-template-columns: 16px minmax(200px, 1fr) minmax(200px, 1fr) 120px 120px 120px 120px 120px 140px;
       align-items: center;
       gap: 16px;
+    }
+
+    .folders-mirror .mirror-summary .mirror-folder-name {
+      grid-column: span 2;
     }
 
     .folders-mirror .mirror-head::before {
@@ -317,6 +321,53 @@
       cursor: not-allowed;
     }
 
+    .mirror-head-search {
+      position: relative;
+      display: flex;
+      align-items: center;
+      min-width: 0;
+    }
+
+    .mirror-head-search .mirror-search-input {
+      width: 100%;
+      min-height: 32px;
+      padding: 4px 32px 4px 12px;
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      border-radius: 6px;
+      background: rgba(255, 255, 255, 0.12);
+      color: #ffffff;
+      font-size: 13px;
+      font-family: inherit;
+      outline: none;
+      transition: background 120ms ease, border-color 120ms ease;
+    }
+
+    .mirror-head-search .mirror-search-input::placeholder {
+      color: rgba(255, 255, 255, 0.6);
+    }
+
+    .mirror-head-search .mirror-search-input:focus {
+      background: rgba(255, 255, 255, 0.25);
+      border-color: rgba(255, 255, 255, 0.5);
+    }
+
+    .mirror-head-search .search-icon {
+      position: absolute;
+      right: 10px;
+      width: 16px;
+      height: 16px;
+      color: rgba(255, 255, 255, 0.5);
+      pointer-events: none;
+      flex-shrink: 0;
+    }
+
+    .file-name mark {
+      background: #fef08a;
+      color: inherit;
+      border-radius: 2px;
+      padding: 0 1px;
+    }
+
     .mirror-file-row.inactive .file-name,
     .mirror-file-row.processed .file-name {
       color: #9ca3af;
@@ -430,6 +481,20 @@
             <div class="folders-head-wrapper" role="columnheader">
               <span class="folders-head-title">Loaded Folders</span>
               <span class="folders-head-subtitle">{{ mirror_summary.file_count }} files in data/inbox</span>
+            </div>
+            <div class="mirror-head-search" role="search">
+              <input
+                type="search"
+                class="mirror-search-input"
+                placeholder="Search files by name or uploader email..."
+                aria-label="Search files by name or uploader email"
+                data-folder-search
+                autocomplete="off"
+              />
+              <svg class="search-icon" viewBox="0 0 24 24" aria-hidden="true">
+                <circle cx="11" cy="11" r="8" fill="none" stroke="currentColor" stroke-width="2"></circle>
+                <path d="M21 21l-4.35-4.35" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path>
+              </svg>
             </div>
             <div class="folders-count-col" role="columnheader" data-sort="total">Total Files</div>
             <div class="folders-count-col" role="columnheader" data-sort="processed">Processed</div>
@@ -694,6 +759,8 @@
         next.disabled = page === totalPages;
         pager.classList.toggle("single-page", totalPages <= 1);
       }
+
+      pager._mirrorPager = { render, setPage: (p) => { page = p; render(); }, getPage: () => page };
 
       prev.addEventListener("click", () => {
         page = Math.max(1, page - 1);
@@ -1065,6 +1132,151 @@
         }
       });
     });
+
+    // Folder file search
+    (function () {
+      const searchInput = document.querySelector("[data-folder-search]");
+      if (!searchInput) return;
+
+      let timer = null;
+
+      function getFileNameCell(row) {
+        return row.querySelector(".file-name");
+      }
+
+      function getEmailCell(row) {
+        return row.querySelector("td:nth-child(10)");
+      }
+
+      function storeOriginalNames() {
+        document.querySelectorAll("[data-file-row]").forEach((row) => {
+          const cell = getFileNameCell(row);
+          if (cell && !cell.dataset.originalName) {
+            cell.dataset.originalName = cell.textContent;
+          }
+        });
+      }
+
+      function highlightText(cell, query) {
+        const original = cell.dataset.originalName || cell.textContent;
+        if (!query) {
+          cell.innerHTML = "";
+          cell.appendChild(document.createTextNode(original));
+          return;
+        }
+        const lowerQuery = query.toLowerCase();
+        const lowerOriginal = original.toLowerCase();
+        cell.innerHTML = "";
+        let start = 0;
+        let index = lowerOriginal.indexOf(lowerQuery, start);
+        while (index !== -1) {
+          if (index > start) {
+            cell.appendChild(document.createTextNode(original.slice(start, index)));
+          }
+          const mark = document.createElement("mark");
+          mark.textContent = original.slice(index, index + query.length);
+          cell.appendChild(mark);
+          start = index + query.length;
+          index = lowerOriginal.indexOf(lowerQuery, start);
+        }
+        if (start < original.length) {
+          cell.appendChild(document.createTextNode(original.slice(start)));
+        }
+      }
+
+      function getPagerState(container) {
+        const prev = container.querySelector(".mirror-page-prev");
+        const next = container.querySelector(".mirror-page-next");
+        const status = container.querySelector(".mirror-page-status");
+        return { prev, next, status };
+      }
+
+      function performSearch(query) {
+        const folders = document.querySelectorAll(".mirror-folder");
+        let totalMatches = 0;
+        let matchingFolders = 0;
+
+        folders.forEach((folder) => {
+          const rows = Array.from(folder.querySelectorAll("[data-file-row]"));
+          const pager = folder.querySelector("[data-mirror-pager]");
+          let folderMatches = 0;
+
+          rows.forEach((row) => {
+            const nameCell = getFileNameCell(row);
+            const emailCell = getEmailCell(row);
+            const nameText = (nameCell?.dataset.originalName || nameCell?.textContent || "").toLowerCase();
+            const emailText = (emailCell?.textContent || "").toLowerCase();
+            const matches = nameText.includes(query) || emailText.includes(query);
+
+            if (matches) {
+              row.hidden = false;
+              folderMatches += 1;
+            } else {
+              row.hidden = true;
+            }
+
+            if (nameCell) {
+              highlightText(nameCell, query);
+            }
+          });
+
+          // Manage pagination visibility
+          if (pager) {
+            pager.querySelector(".mirror-pager")?.setAttribute("hidden", "true");
+          }
+
+          if (folderMatches > 0) {
+            folder.hidden = false;
+            folder.open = true;
+            totalMatches += folderMatches;
+            matchingFolders += 1;
+          } else {
+            folder.hidden = true;
+          }
+        });
+
+      }
+
+      function resetSearch() {
+        const folders = document.querySelectorAll(".mirror-folder");
+        folders.forEach((folder) => {
+          folder.hidden = false;
+          folder.open = false;
+          const rows = Array.from(folder.querySelectorAll("[data-file-row]"));
+          const pager = folder.querySelector("[data-mirror-pager]");
+
+          rows.forEach((row) => {
+            row.hidden = false;
+            const nameCell = getFileNameCell(row);
+            if (nameCell) {
+              highlightText(nameCell, "");
+            }
+          });
+
+          if (pager) {
+            pager.querySelector(".mirror-pager")?.removeAttribute("hidden");
+            const pagerApi = pager._mirrorPager;
+            if (pagerApi) {
+              pagerApi.setPage(1);
+            }
+          }
+        });
+      }
+
+      storeOriginalNames();
+
+      searchInput.addEventListener("input", () => {
+        const query = searchInput.value.trim().toLowerCase();
+        window.clearTimeout(timer);
+        timer = window.setTimeout(() => {
+          if (query) {
+            performSearch(query);
+          } else {
+            resetSearch();
+          }
+        }, 150);
+      });
+    })();
   </script>
 </section>
 {% endblock %}
