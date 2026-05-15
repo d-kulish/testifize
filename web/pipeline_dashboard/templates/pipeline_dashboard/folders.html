@@ -286,27 +286,59 @@
       cursor: not-allowed;
     }
 
-    .mirror-file-row.inactive {
+    .mirror-file-row.new,
+    .mirror-file-row.active,
+    .mirror-file-row.review {
+      background: #f0fdf4;
+    }
+
+    .mirror-file-row.inactive,
+    .mirror-file-row.processed {
       background: #f9fafb;
     }
 
-    .mirror-file-row.inactive .file-name {
+    .review-button {
+      background: #16a34a;
+      border-color: transparent;
+      color: #ffffff;
+      padding: 5px 12px;
+    }
+
+    .review-button:hover:not(:disabled) {
+      background: #15803d;
+      border-color: transparent;
+      color: #ffffff;
+    }
+
+    .review-button:disabled {
+      background: #d1d5db;
+      border-color: transparent;
+      color: #6b7280;
+      cursor: not-allowed;
+    }
+
+    .mirror-file-row.inactive .file-name,
+    .mirror-file-row.processed .file-name {
       color: #9ca3af;
     }
 
-    .mirror-file-row.inactive td {
+    .mirror-file-row.inactive td,
+    .mirror-file-row.processed td {
       opacity: 0.7;
     }
 
-    .mirror-file-row.inactive .status-text {
+    .mirror-file-row.inactive .status-text,
+    .mirror-file-row.processed .status-text {
       color: #9ca3af;
     }
 
-    .mirror-file-row.inactive .duplicate-text.original {
+    .mirror-file-row.inactive .duplicate-text.original,
+    .mirror-file-row.processed .duplicate-text.original {
       color: #87bfa2;
     }
 
-    .mirror-file-row.inactive .duplicate-text.duplicate {
+    .mirror-file-row.inactive .duplicate-text.duplicate,
+    .mirror-file-row.processed .duplicate-text.duplicate {
       color: #d19a9a;
     }
   </style>
@@ -476,7 +508,7 @@
                         <td>{{ file.uploader_email|default:"-" }}</td>
                         <td>
                           <button
-                            class="button small"
+                            class="button small review-button"
                             type="button"
                             data-review-button
                             data-local-path="{{ file.local_path }}"

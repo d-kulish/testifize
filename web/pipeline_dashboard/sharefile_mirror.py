@@ -297,9 +297,23 @@ def duplicate_name_key(name: str) -> str:
     return " ".join(name.casefold().strip().split())
 
 
+FINISHED_STATUSES = {"processed", "deleted_remote"}
+
+
 def newest_first(files: list[dict[str, Any]]) -> list[dict[str, Any]]:
-    named = sorted(files, key=lambda row: row["name"].lower())
-    return sorted(named, key=lambda row: row["modified_sort"], reverse=True)
+    def _sort_key(row: dict[str, Any]) -> tuple[int, float, str]:
+        is_active = row.get("is_active", True)
+        status = row.get("status", "")
+        if not is_active:
+            tier = 2
+        elif status in FINISHED_STATUSES:
+            tier = 1
+        else:
+            tier = 0
+        modified_sort = row.get("modified_sort", 0)
+        return (tier, -modified_sort, row.get("name", "").lower())
+
+    return sorted(files, key=_sort_key)
 
 
 def modified_sort_value(value: str) -> float:

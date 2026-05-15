@@ -393,6 +393,108 @@ class DashboardViewTests(TestCase):
         self.assertNotContains(response, "Loop_April_2026.csv")
         self.assertNotContains(response, "profile-only.csv")
 
+    def test_folders_page_sorts_files_by_status_tiers_and_modified(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            repo_root = Path(tmpdir)
+            state_root = repo_root / "data" / "state"
+            state_root.mkdir(parents=True)
+            (state_root / "sharefile_snapshot_latest.json").write_text(
+                json.dumps(
+                    {
+                        "run_id": "snapshot-sort",
+                        "created_at": "2026-05-07T10:00:00Z",
+                        "files": [
+                            {
+                                "remote_item_id": "fi-processed-active-recent",
+                                "name": "processed-active-recent.csv",
+                                "local_path": "data/inbox/home/josh/processed-active-recent.csv",
+                                "source_folder_path": "home/josh",
+                                "extension": ".csv",
+                                "size": 10,
+                                "modified_at": "2026-05-07T14:00:00Z",
+                            },
+                            {
+                                "remote_item_id": "fi-new-active-old",
+                                "name": "new-active-old.csv",
+                                "local_path": "data/inbox/home/josh/new-active-old.csv",
+                                "source_folder_path": "home/josh",
+                                "extension": ".csv",
+                                "size": 10,
+                                "modified_at": "2026-05-06T12:00:00Z",
+                            },
+                            {
+                                "remote_item_id": "fi-new-active-recent",
+                                "name": "new-active-recent.csv",
+                                "local_path": "data/inbox/home/josh/new-active-recent.csv",
+                                "source_folder_path": "home/josh",
+                                "extension": ".csv",
+                                "size": 10,
+                                "modified_at": "2026-05-07T12:00:00Z",
+                            },
+                        ],
+                    }
+                )
+            )
+            (state_root / "inbox_profile_latest.json").write_text(
+                json.dumps(
+                    {
+                        "files": [
+                            {"local_path": "data/inbox/home/josh/processed-active-recent.csv", "name": "processed-active-recent.csv", "kind": "csv"},
+                            {"local_path": "data/inbox/home/josh/new-active-old.csv", "name": "new-active-old.csv", "kind": "csv"},
+                            {"local_path": "data/inbox/home/josh/new-active-recent.csv", "name": "new-active-recent.csv", "kind": "csv"},
+                            {"local_path": "data/inbox/home/josh/deleted-active-old.csv", "name": "deleted-active-old.csv", "kind": "csv", "status": "profiled"},
+                            {"local_path": "data/inbox/home/josh/new-inactive-recent.csv", "name": "new-inactive-recent.csv", "kind": "csv"},
+                            {"local_path": "data/inbox/home/josh/processed-inactive-old.csv", "name": "processed-inactive-old.csv", "kind": "csv"},
+                        ]
+                    }
+                )
+            )
+            (state_root / "file_processing_state.json").write_text(
+                json.dumps(
+                    {
+                        "processed_local_paths": [
+                            "data/inbox/home/josh/processed-active-recent.csv",
+                            "data/inbox/home/josh/processed-inactive-old.csv",
+                        ]
+                    }
+                )
+            )
+            (state_root / "sharefile_users_latest.json").write_text(json.dumps({}))
+            (state_root / "sharefile_sync_state.json").write_text(json.dumps({}))
+
+            Asset.objects.create(
+                remote_item_id="fi-new-inactive-recent",
+                status=AssetStatus.NEW,
+                name="new-inactive-recent.csv",
+                local_path="data/inbox/home/josh/new-inactive-recent.csv",
+                is_active=False,
+            )
+            Asset.objects.create(
+                remote_item_id="fi-processed-inactive-old",
+                status=AssetStatus.PROCESSED,
+                name="processed-inactive-old.csv",
+                local_path="data/inbox/home/josh/processed-inactive-old.csv",
+                is_active=False,
+            )
+
+            with override_settings(REPO_ROOT=repo_root):
+                response = self.client.get(reverse("pipeline_dashboard:folders"))
+
+        self.assertEqual(response.status_code, 200)
+        content = response.content.decode()
+        # Tier 0 (active under-review) at top, sorted by modified desc
+        self.assertLess(content.index("new-active-recent.csv"), content.index("new-active-old.csv"))
+        # Tier 0 above tier 1 (active finished)
+        self.assertLess(content.index("new-active-old.csv"), content.index("processed-active-recent.csv"))
+        self.assertLess(content.index("new-active-recent.csv"), content.index("processed-active-recent.csv"))
+        # Tier 1 sorted by modified desc
+        self.assertLess(content.index("processed-active-recent.csv"), content.index("deleted-active-old.csv"))
+        # Tier 1 above tier 2 (inactive)
+        self.assertLess(content.index("deleted-active-old.csv"), content.index("new-inactive-recent.csv"))
+        self.assertLess(content.index("processed-active-recent.csv"), content.index("processed-inactive-old.csv"))
+        # Tier 2 sorted by modified desc
+        self.assertLess(content.index("new-inactive-recent.csv"), content.index("processed-inactive-old.csv"))
+
     def test_folders_page_sorts_by_new_count_and_marks_cross_folder_duplicates(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             repo_root = Path(tmpdir)
