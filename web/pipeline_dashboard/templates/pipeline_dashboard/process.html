@@ -218,7 +218,9 @@
       <div class="review-body">
         <div class="review-sheet-tabs" data-parse-tabs></div>
         <div class="review-preview" data-parse-preview>
-          <div class="review-message">Choose a parsing file to preview.</div>
+          <div class="review-preview-scroll" data-parse-scroll>
+            <div class="review-message">Choose a parsing file to preview.</div>
+          </div>
         </div>
         <div class="parse-result" data-chart-preview hidden></div>
       </div>
@@ -273,6 +275,7 @@
     const parseValidation = document.querySelector("[data-parse-validation]");
     const parseTabs = document.querySelector("[data-parse-tabs]");
     const parsePreview = document.querySelector("[data-parse-preview]");
+    const parsePreviewScroll = parsePreview.querySelector("[data-parse-scroll]");
     const chartPreview = document.querySelector("[data-chart-preview]");
     const parseSubmit = document.querySelector("[data-parse-submit]");
     const approvalSubmit = document.querySelector("[data-approval-submit]");
@@ -299,11 +302,11 @@
       if (!keepTabs) {
         parseTabs.replaceChildren();
       }
-      parsePreview.replaceChildren();
+      parsePreviewScroll.replaceChildren();
       const element = document.createElement("div");
       element.className = "review-message";
       element.textContent = message;
-      parsePreview.appendChild(element);
+      parsePreviewScroll.appendChild(element);
     }
 
     function resetParseModal() {
@@ -369,7 +372,7 @@
     }
 
     function renderSheet(sheet) {
-      parsePreview.replaceChildren();
+      parsePreviewScroll.replaceChildren();
       if (!sheet.rows || !sheet.rows.length) {
         showParseMessage("No previewable rows were found.", true);
         return;
@@ -395,7 +398,7 @@
         tbody.appendChild(tr);
       });
       table.append(thead, tbody);
-      parsePreview.appendChild(table);
+      parsePreviewScroll.appendChild(table);
     }
 
     function renderSheets(file) {

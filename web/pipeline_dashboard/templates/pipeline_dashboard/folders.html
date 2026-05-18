@@ -636,12 +636,18 @@
       </header>
       <div class="review-body">
         <div class="review-tabs-row" data-review-tabs-row>
-          <button class="tab-edge-btn" type="button" data-tab-prev aria-label="Previous tabs">&lt;</button>
+          <button class="tab-edge-btn" type="button" data-tab-prev aria-label="Previous tabs">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="15 18 9 12 15 6"></polyline></svg>
+          </button>
           <div class="review-sheet-tabs" data-review-tabs></div>
-          <button class="tab-edge-btn" type="button" data-tab-next aria-label="Next tabs">&gt;</button>
+          <button class="tab-edge-btn" type="button" data-tab-next aria-label="Next tabs">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="9 18 15 12 9 6"></polyline></svg>
+          </button>
         </div>
-        <div class="review-preview" data-review-preview>
-          <div class="review-message">Choose a file to preview.</div>
+        <div class="review-preview">
+          <div class="review-preview-scroll" data-review-scroll>
+            <div class="review-message">Choose a file to preview.</div>
+          </div>
         </div>
       </div>
       <footer class="review-footer">
@@ -801,7 +807,7 @@
     const reviewTitle = document.querySelector("#review-title");
     const reviewDetails = document.querySelector("[data-review-details]");
     const reviewTabs = document.querySelector("[data-review-tabs]");
-    const reviewPreview = document.querySelector("[data-review-preview]");
+    const reviewPreview = document.querySelector("[data-review-scroll]");
     const reviewVendor = document.querySelector("[data-review-vendor]");
     const processButton = document.querySelector("[data-review-process]");
     const reviewDetailsToggle = document.querySelector("[data-review-details-toggle]");
