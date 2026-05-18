@@ -625,15 +625,21 @@
       <header class="review-header">
         <div class="review-titlebar">
           <div>
-            <div class="review-kicker">File preview</div>
             <h2 class="review-title" id="review-title">Review file</h2>
           </div>
-          <button class="button small review-close-button" type="button" data-review-close>Close</button>
+          <button class="button small review-details-toggle" type="button" data-review-details-toggle aria-label="Show file details" aria-expanded="false">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18l6-6-6-6"></path></svg>
+          </button>
         </div>
+        <div class="review-separator" data-review-separator aria-hidden="true"></div>
         <div class="review-details" data-review-details></div>
       </header>
       <div class="review-body">
-        <div class="review-sheet-tabs" data-review-tabs></div>
+        <div class="review-tabs-row" data-review-tabs-row>
+          <button class="tab-edge-btn" type="button" data-tab-prev aria-label="Previous tabs">&lt;</button>
+          <div class="review-sheet-tabs" data-review-tabs></div>
+          <button class="tab-edge-btn" type="button" data-tab-next aria-label="Next tabs">&gt;</button>
+        </div>
         <div class="review-preview" data-review-preview>
           <div class="review-message">Choose a file to preview.</div>
         </div>
@@ -798,6 +804,10 @@
     const reviewPreview = document.querySelector("[data-review-preview]");
     const reviewVendor = document.querySelector("[data-review-vendor]");
     const processButton = document.querySelector("[data-review-process]");
+    const reviewDetailsToggle = document.querySelector("[data-review-details-toggle]");
+    const reviewSeparator = document.querySelector("[data-review-separator]");
+    const tabNavPrev = document.querySelector("[data-tab-prev]");
+    const tabNavNext = document.querySelector("[data-tab-next]");
     const csrfToken = document.querySelector("[name=csrfmiddlewaretoken]")?.value || "";
     let activeReview = null;
 
@@ -842,27 +852,77 @@
       return `${size.toFixed(unit === 0 ? 0 : 1)} ${units[unit]}`;
     }
 
+    function formatDateTime(isoString) {
+      if (!isoString || isoString === "-") return "-";
+      const date = new Date(isoString);
+      if (isNaN(date.getTime())) return isoString;
+      const day = date.getDate();
+      const month = date.getMonth() + 1;
+      const year = date.getFullYear();
+      const hours = String(date.getHours()).padStart(2, "0");
+      const minutes = String(date.getMinutes()).padStart(2, "0");
+      return day + "/" + month + "/" + year + " " + hours + ":" + minutes;
+    }
+
+    function truncateFolder(name) {
+      if (!name || name === "-") return "-";
+      return name.length > 40 ? name.slice(0, 40) + "..." : name;
+    }
+
+    function makeDetailRow(label, value) {
+      const row = document.createElement("div");
+      row.className = "detail-row";
+      const labelSpan = document.createElement("span");
+      labelSpan.className = "detail-label";
+      labelSpan.textContent = label + ":";
+      const valueSpan = document.createElement("span");
+      valueSpan.className = "detail-value";
+      valueSpan.textContent = value;
+      row.appendChild(labelSpan);
+      row.appendChild(valueSpan);
+      return row;
+    }
+
     function setReviewDetails(file) {
       reviewTitle.textContent = file.name || "Review file";
-      const details = [
-        ["Folder", file.folder || "-"],
-        ["Size", formatBytes(file.size)],
-        ["Type", file.kind || file.extension || "-"],
-        ["Pages", file.sheet_count || "-"],
-        ["Created", file.created_at || "-"],
-        ["Modified", file.modified_at || "-"],
-        ["Uploader", file.uploaded_by || "-"],
-        ["Mail", file.uploader_email || "-"],
-      ];
+      if (reviewDetailsToggle) {
+        reviewDetailsToggle.setAttribute("aria-expanded", "false");
+        reviewDetailsToggle.setAttribute("aria-label", "Show file details");
+        reviewDetails.classList.add("collapsed");
+        reviewSeparator?.classList.add("collapsed");
+      }
       reviewDetails.replaceChildren();
-      details.forEach(([label, value]) => {
-        const item = document.createElement("div");
-        const strong = document.createElement("strong");
-        strong.textContent = value;
-        item.appendChild(strong);
-        item.append(label);
-        reviewDetails.appendChild(item);
-      });
+
+      // Row 1
+      const cell1 = document.createElement("div");
+      cell1.appendChild(makeDetailRow("Folder", truncateFolder(file.folder)));
+      reviewDetails.appendChild(cell1);
+
+      const cell2 = document.createElement("div");
+      cell2.appendChild(makeDetailRow("Uploader", file.uploaded_by || "-"));
+      reviewDetails.appendChild(cell2);
+
+      const cell3 = document.createElement("div");
+      cell3.appendChild(makeDetailRow("Created", formatDateTime(file.created_at)));
+      reviewDetails.appendChild(cell3);
+
+      // Row 2
+      const cell4 = document.createElement("div");
+      const stack = document.createElement("div");
+      stack.className = "detail-stack";
+      stack.appendChild(makeDetailRow("Size", formatBytes(file.size)));
+      stack.appendChild(makeDetailRow("Type", file.kind || file.extension || "-"));
+      stack.appendChild(makeDetailRow("Pages", file.sheet_count || "-"));
+      cell4.appendChild(stack);
+      reviewDetails.appendChild(cell4);
+
+      const cell5 = document.createElement("div");
+      cell5.appendChild(makeDetailRow("Mail", file.uploader_email || "-"));
+      reviewDetails.appendChild(cell5);
+
+      const cell6 = document.createElement("div");
+      cell6.appendChild(makeDetailRow("Modified", formatDateTime(file.modified_at)));
+      reviewDetails.appendChild(cell6);
     }
 
     function renderSheet(sheet) {
@@ -895,8 +955,18 @@
       reviewPreview.appendChild(table);
     }
 
+    function updateTabNav() {
+      if (!tabNavPrev || !tabNavNext) return;
+      const maxScroll = reviewTabs.scrollWidth - reviewTabs.clientWidth;
+      const canScrollLeft = reviewTabs.scrollLeft > 2;
+      const canScrollRight = maxScroll > 2 && reviewTabs.scrollLeft < maxScroll - 2;
+      tabNavPrev.classList.toggle("at-edge", !canScrollLeft);
+      tabNavNext.classList.toggle("at-edge", !canScrollRight);
+    }
+
     function renderSheets(file) {
       reviewTabs.replaceChildren();
+      reviewTabs.scrollLeft = 0;
       if (file.warning) {
         showReviewMessage(file.warning);
         return;
@@ -908,7 +978,7 @@
       file.sheets.forEach((sheet, index) => {
         const button = document.createElement("button");
         button.type = "button";
-        button.textContent = `${sheet.name} (${sheet.row_count || 0} x ${sheet.column_count || 0})`;
+        button.textContent = sheet.name;
         button.addEventListener("click", () => {
           reviewTabs.querySelectorAll("button").forEach((tab) => tab.classList.remove("active"));
           button.classList.add("active");
@@ -920,16 +990,61 @@
           renderSheet(sheet);
         }
       });
+      window.requestAnimationFrame(() => {
+        updateTabNav();
+        window.setTimeout(updateTabNav, 100);
+        window.setTimeout(updateTabNav, 400);
+      });
+    }
+
+    if (tabNavPrev) {
+      tabNavPrev.addEventListener("click", () => {
+        reviewTabs.scrollBy({ left: -200, behavior: "smooth" });
+        window.setTimeout(updateTabNav, 350);
+      });
+    }
+    if (tabNavNext) {
+      tabNavNext.addEventListener("click", () => {
+        reviewTabs.scrollBy({ left: 200, behavior: "smooth" });
+        window.setTimeout(updateTabNav, 350);
+      });
     }
 
     function closeReview() {
       reviewModal.hidden = true;
       activeReview = null;
+      reviewDetails.classList.add("collapsed");
+      reviewSeparator?.classList.add("collapsed");
     }
 
     document.querySelectorAll("[data-review-close]").forEach((button) => {
       button.addEventListener("click", closeReview);
     });
+
+    if (reviewDetailsToggle) {
+      reviewDetailsToggle.addEventListener("click", () => {
+        const expanded = reviewDetailsToggle.getAttribute("aria-expanded") === "true";
+        reviewDetailsToggle.setAttribute("aria-expanded", String(!expanded));
+        reviewDetailsToggle.setAttribute("aria-label", !expanded ? "Hide file details" : "Show file details");
+        reviewDetails.classList.toggle("collapsed", expanded);
+        reviewSeparator?.classList.toggle("collapsed", expanded);
+      });
+    }
+
+    const reviewDialog = document.querySelector(".review-dialog");
+    if (reviewDialog) {
+      reviewDialog.addEventListener("click", (event) => {
+        if (reviewDetails.classList.contains("collapsed")) return;
+        const isInsideDetails = reviewDetails.contains(event.target);
+        const isToggle = reviewDetailsToggle && reviewDetailsToggle.contains(event.target);
+        if (!isInsideDetails && !isToggle) {
+          reviewDetailsToggle.setAttribute("aria-expanded", "false");
+          reviewDetailsToggle.setAttribute("aria-label", "Show file details");
+          reviewDetails.classList.add("collapsed");
+          reviewSeparator?.classList.add("collapsed");
+        }
+      });
+    }
 
     document.querySelectorAll("[data-review-button]").forEach((button) => {
       button.addEventListener("click", async () => {

@@ -678,15 +678,16 @@
 
     .review-header {
       display: grid;
-      gap: 14px;
+      gap: 0;
       border-bottom: 1px solid #edf0f4;
       background: rgba(255, 255, 255, 0.96);
+      position: relative;
     }
 
     .review-titlebar,
     .review-footer {
       display: flex;
-      align-items: flex-start;
+      align-items: center;
       justify-content: space-between;
       gap: 12px;
     }
@@ -706,7 +707,7 @@
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
-      font-size: 19px;
+      font-size: 24px;
       line-height: 1.25;
       font-weight: 760;
     }
@@ -716,32 +717,112 @@
       box-shadow: none;
     }
 
+    .button.review-details-toggle {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 40px;
+      height: 40px;
+      border: 1px solid #111827;
+      border-radius: 8px;
+      background: #ffffff;
+      color: #111827;
+      cursor: pointer;
+      box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04);
+      padding: 0;
+    }
+
+    .button.review-details-toggle:hover {
+      border-color: #111827;
+      color: #000000;
+      background: #f8fbff;
+    }
+
+    .button.review-details-toggle svg {
+      width: 20px;
+      height: 20px;
+      stroke: currentColor;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      fill: none;
+      transition: transform 160ms ease;
+    }
+
+    .review-details-toggle[aria-expanded="true"] svg {
+      transform: rotate(90deg);
+    }
+
+    .review-details-toggle[aria-expanded="false"] svg {
+      transform: rotate(0deg);
+    }
+
+    .review-separator {
+      height: 1px;
+      background: linear-gradient(to right, transparent 0%, #111827 20%, #111827 80%, transparent 100%);
+      margin: 8px 0;
+    }
+
+    .review-separator.collapsed {
+      display: none;
+    }
+
+    .review-details.collapsed {
+      display: none;
+    }
+
     .review-details {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      grid-template-rows: auto auto;
+      gap: 8px 20px;
       color: var(--muted);
-      font-size: 11px;
+      font-size: 14px;
       font-weight: 650;
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+      z-index: 10;
+      background: rgba(255, 255, 255, 0.98);
+      padding: 2px 18px 14px 24px;
+      border-bottom: 1px solid #edf0f4;
+      box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08);
     }
 
     .review-details > div {
-      min-width: 120px;
-      max-width: 220px;
-      padding: 8px 10px;
-      border: 1px solid #edf0f4;
-      border-radius: 8px;
-      background: #f8fafc;
-      line-height: 1.3;
+      line-height: 1.4;
+      overflow-wrap: anywhere;
     }
 
-    .review-details strong {
-      display: block;
-      margin-bottom: 3px;
+    .review-details > div:nth-child(3n+2),
+    .review-details > div:nth-child(3n+3) {
+      padding-left: 38px;
+    }
+
+    .detail-row {
+      display: flex;
+      align-items: baseline;
+      gap: 4px;
+    }
+
+    .detail-stack {
+      display: flex;
+      flex-direction: row;
+      flex-wrap: wrap;
+      gap: 4px 16px;
+    }
+
+    .review-details .detail-label {
+      color: var(--muted);
+      font-weight: 650;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    .review-details .detail-value {
       color: var(--text);
-      font-size: 12px;
       font-weight: 700;
-      overflow-wrap: anywhere;
     }
 
     .review-body {
@@ -752,39 +833,110 @@
       background: var(--panel);
     }
 
+    .review-tabs-row {
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      align-items: center;
+      gap: 6px;
+      background: var(--panel);
+      border-bottom: 1px solid #111827;
+      padding: 4px 8px 0;
+    }
+
     .review-sheet-tabs {
       display: flex;
-      gap: 14px;
+      gap: 0;
       overflow-x: auto;
-      padding: 10px 18px 0;
-      border-bottom: 1px solid #edf0f4;
-      background: var(--panel);
+      padding: 0;
+      background: transparent;
+      border-bottom: 0;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+      flex: 1;
+      min-width: 0;
+    }
+
+    .review-sheet-tabs::-webkit-scrollbar {
+      display: none;
     }
 
     .review-sheet-tabs button {
-      min-height: 34px;
-      padding: 0 0 9px;
-      border: 0;
-      border-bottom: 2px solid transparent;
-      border-radius: 0;
-      background: transparent;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 120px;
+      max-width: 160px;
+      width: 100%;
+      height: 32px;
+      padding: 0 12px;
+      border: 1px solid #111827;
+      border-bottom: 0;
+      border-radius: 8px 8px 0 0;
+      background: #e2e4e9;
       color: var(--muted);
-      font-size: 12px;
+      font-size: 13px;
       font-weight: 700;
       white-space: nowrap;
       box-shadow: none;
+      cursor: pointer;
+      transition: background 120ms ease, color 120ms ease;
+      flex-shrink: 0;
+    }
+
+    .review-sheet-tabs button:not(:first-child) {
+      margin-left: -1px;
+    }
+
+    .review-sheet-tabs button:hover:not(.active) {
+      background: #c9cdd3;
     }
 
     .review-sheet-tabs button.active {
-      border-bottom-color: var(--accent);
-      background: transparent;
-      color: var(--accent-strong);
+      background: #ffffff;
+      color: var(--text);
+      border-color: #111827;
+      z-index: 1;
+      box-shadow: 0 -2px 4px rgba(0,0,0,0.04);
+    }
+
+    .tab-edge-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 40px;
+      height: 40px;
+      border: 1px solid #111827;
+      border-radius: 8px;
+      background: #ffffff;
+      color: #111827;
+      font-size: 18px;
+      font-weight: 700;
+      cursor: pointer;
+      padding: 0;
+      box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04);
+      transition: background 120ms ease;
+    }
+
+    .tab-edge-btn:hover {
+      background: #f8fbff;
+    }
+
+    .tab-edge-btn.at-edge {
+      background: #f2f4f7;
+      color: #9ca3af;
+      border-color: #d1d5db;
+      cursor: default;
+    }
+
+    .tab-edge-btn.at-edge:hover {
+      background: #f2f4f7;
     }
 
     .review-preview {
       min-height: 0;
       overflow: auto;
       background: var(--panel);
+      padding: 12px 14px;
     }
 
     .review-preview table {
@@ -2448,7 +2600,7 @@
     }
 
     .review-title {
-      font-size: 19px;
+      font-size: 24px;
       font-weight: 760;
     }
 
@@ -2456,29 +2608,65 @@
       padding-top: 0;
     }
 
+    .review-tabs-row {
+      padding: 4px 8px 0;
+      grid-template-columns: auto 1fr auto;
+      gap: 6px;
+    }
+
     .review-sheet-tabs {
-      padding: 10px 18px 0;
-      gap: 14px;
+      padding: 0;
+      gap: 0;
     }
 
     .review-sheet-tabs button {
-      min-height: 34px;
-      padding: 0 0 9px;
-      border: 0;
-      border-bottom: 2px solid transparent;
-      border-radius: 0;
-      box-shadow: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 100px;
+      max-width: 140px;
+      width: 100%;
+      height: 32px;
+      padding: 0 12px;
+      border: 1px solid #111827;
+      border-bottom: 0;
+      border-radius: 8px 8px 0 0;
+      background: #e2e4e9;
       color: var(--muted);
+      font-size: 13px;
+      font-weight: 700;
+      white-space: nowrap;
+      box-shadow: none;
+      cursor: pointer;
+      transition: background 120ms ease, color 120ms ease;
+      flex-shrink: 0;
+    }
+
+    .review-sheet-tabs button:not(:first-child) {
+      margin-left: -1px;
+    }
+
+    .review-sheet-tabs button:hover:not(.active) {
+      background: #c9cdd3;
     }
 
     .review-sheet-tabs button.active {
-      border-bottom-color: var(--accent);
-      background: transparent;
-      color: var(--accent-strong);
+      background: #ffffff;
+      color: var(--text);
+      border-color: #111827;
+      z-index: 1;
+      box-shadow: 0 -2px 4px rgba(0,0,0,0.04);
+    }
+
+    .tab-edge-btn {
+      width: 36px;
+      height: 36px;
+      font-size: 16px;
     }
 
     .review-preview {
       background: var(--panel);
+      padding: 10px 12px;
     }
 
     .review-preview table {
