@@ -237,7 +237,7 @@ def _status_label(status: str) -> str:
 
 
 def duplicate_name_count(files: list[dict[str, Any]]) -> int:
-    return sum(1 for row in files if row.get("duplicate_role") == "duplicate")
+    return sum(1 for row in files if row.get("duplicate_role") == "duplicate" and row.get("is_active", True))
 
 
 def annotate_duplicate_names(grouped: dict[str, list[dict[str, Any]]]) -> None:
