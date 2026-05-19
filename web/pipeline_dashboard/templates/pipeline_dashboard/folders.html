@@ -652,9 +652,8 @@
       </div>
       <footer class="review-footer">
         <label class="review-vendor">
-          <span>Vendor</span>
           <select data-review-vendor>
-            <option value="">Choose vendor</option>
+            <option value="">Vendor</option>
             {% for vendor in vendors %}
               <option value="{{ vendor.id }}">{{ vendor.name }}</option>
             {% endfor %}
@@ -824,7 +823,7 @@
         if (!option.value) {
           option.hidden = false;
           option.disabled = false;
-          option.textContent = allowed.length ? `Choose vendor (${allowedNames})` : "Choose vendor";
+          option.textContent = "Vendor";
           return;
         }
         const available = !allowed.length || allowed.includes(option.value);
