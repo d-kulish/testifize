@@ -4,17 +4,19 @@
 {% block title %}Parsing{% endblock %}
 
 {% block content %}
+<style>
+  .process-metrics {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  }
+</style>
+
   <section class="topbar">
     <div>
-      <h1>Parsing</h1>
-      <p class="subtitle">Files assigned to a vendor and ready for parser review.</p>
-    </div>
-    <div class="actions">
-      <a class="button" href="{% url 'pipeline_dashboard:folders' %}">SF folders</a>
+      <h1 class="dashboard-heading">Parsing</h1>
     </div>
   </section>
 
-  <section class="metrics metrics-compact" aria-label="Parsing totals">
+  <section class="metrics metrics-compact process-metrics" aria-label="Parsing totals">
     <div class="metric amber">
       <div class="metric-icon" aria-hidden="true">
         <svg viewBox="0 0 24 24"><path d="M4 7h16"></path><path d="M4 12h10"></path><path d="M4 17h7"></path><path d="m16 16 2 2 4-5"></path></svg>
@@ -237,34 +239,37 @@
 
   <script>
     document.querySelectorAll("[data-cancel-process-form]").forEach((form) => {
-      form.addEventListener("submit", (event) => {
+      form.addEventListener("submit", async (event) => {
+        event.preventDefault();
         const row = form.closest("tr");
         const fileName = row?.querySelector(".file-name")?.textContent?.trim() || "this file";
-        const confirmed = window.confirm(`Cancel processing for ${fileName} and return it to New?`);
-        if (!confirmed) {
-          event.preventDefault();
+        const confirmed = await showConfirmModal("Cancel processing", fileName);
+        if (confirmed) {
+          form.submit();
         }
       });
     });
 
     document.querySelectorAll("[data-approve-final-form]").forEach((form) => {
-      form.addEventListener("submit", (event) => {
+      form.addEventListener("submit", async (event) => {
+        event.preventDefault();
         const row = form.closest("tr");
         const sourceName = row?.querySelectorAll(".file-name")?.[1]?.textContent?.trim() || "this parsed file";
-        const confirmed = window.confirm(`Mark ${sourceName} approved and store the final CSV in ShareFile Final?`);
-        if (!confirmed) {
-          event.preventDefault();
+        const confirmed = await showConfirmModal("Approve parsed output", sourceName);
+        if (confirmed) {
+          form.submit();
         }
       });
     });
 
     document.querySelectorAll("[data-cancel-approval-form]").forEach((form) => {
-      form.addEventListener("submit", (event) => {
+      form.addEventListener("submit", async (event) => {
+        event.preventDefault();
         const row = form.closest("tr");
         const fileName = row?.querySelectorAll(".file-name")?.[1]?.textContent?.trim() || "this parsed file";
-        const confirmed = window.confirm(`Cancel approval for ${fileName} and return it to Parsing Files?`);
-        if (!confirmed) {
-          event.preventDefault();
+        const confirmed = await showConfirmModal("Cancel approval", fileName);
+        if (confirmed) {
+          form.submit();
         }
       });
     });

@@ -2458,6 +2458,95 @@
       border-top-color: var(--danger);
     }
 
+    .confirm-modal[hidden] {
+      display: none;
+    }
+
+    .confirm-modal {
+      position: fixed;
+      inset: 0;
+      z-index: 40;
+      display: grid;
+      place-items: center;
+      padding: 24px;
+    }
+
+    .confirm-backdrop {
+      position: absolute;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.34);
+      backdrop-filter: blur(4px);
+    }
+
+    .confirm-dialog {
+      position: relative;
+      z-index: 1;
+      display: grid;
+      justify-items: center;
+      gap: 16px;
+      width: min(570px, 100%);
+      padding: 36px 32px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.96);
+      box-shadow: 0 24px 64px rgba(15, 23, 42, 0.22);
+      text-align: center;
+    }
+
+    .confirm-title {
+      margin: 2px 0 0;
+      font-size: 27px;
+      line-height: 1.25;
+      font-weight: 760;
+    }
+
+    .confirm-item {
+      margin: 0;
+      color: var(--text);
+      font-size: 18px;
+      line-height: 1.45;
+      font-weight: 600;
+      word-break: break-all;
+    }
+
+    .confirm-actions {
+      display: flex;
+      gap: 16px;
+      margin-top: 4px;
+    }
+
+    .confirm-actions .button {
+      min-width: 140px;
+      padding: 8px 24px;
+      font-size: 14px;
+    }
+
+    .confirm-actions .button.confirm-ok {
+      border-color: #16a34a;
+      background: #dcfce7;
+      color: #166534;
+    }
+
+    .confirm-actions .button.confirm-ok:hover,
+    .confirm-actions .button.confirm-ok:active {
+      background: #16a34a;
+      color: #ffffff;
+      border-color: #16a34a;
+    }
+
+    .confirm-actions .button.confirm-cancel {
+      border-color: #ef4444;
+      background: #fee2e2;
+      color: #991b1b;
+    }
+
+    .confirm-actions .button.confirm-cancel:hover,
+    .confirm-actions .button.confirm-cancel:active {
+      background: #ef4444;
+      color: #ffffff;
+      border-color: #ef4444;
+    }
+
     .metric,
     .panel {
       border-color: var(--border);
@@ -2857,18 +2946,63 @@
 
     <main class="main">
       <section class="content">
-        {% if messages %}
-          <div class="messages">
-            {% for message in messages %}
-              <div class="message {{ message.tags }}">{{ message }}</div>
-            {% endfor %}
-          </div>
-        {% endif %}
         {% block content %}{% endblock %}
       </section>
     </main>
   </div>
+  <div class="confirm-modal" data-confirm-modal hidden>
+    <div class="confirm-backdrop" data-confirm-close aria-hidden="true"></div>
+    <section class="confirm-dialog" role="dialog" aria-modal="true" aria-labelledby="confirm-title">
+      <h2 class="confirm-title" id="confirm-title" data-confirm-title>Confirm</h2>
+      <p class="confirm-item" data-confirm-item></p>
+      <div class="confirm-actions">
+        <button class="button confirm-ok" type="button" data-confirm-ok>Confirm</button>
+        <button class="button confirm-cancel" type="button" data-confirm-cancel>Cancel</button>
+      </div>
+    </section>
+  </div>
+
   <script>
+    const confirmModal = document.querySelector("[data-confirm-modal]");
+    const confirmTitle = document.querySelector("[data-confirm-title]");
+    const confirmItem = document.querySelector("[data-confirm-item]");
+    const confirmOk = document.querySelector("[data-confirm-ok]");
+    const confirmCancel = document.querySelector("[data-confirm-cancel]");
+    let confirmResolve = null;
+
+    function truncateName(name, maxLen = 30) {
+      if (!name) return "";
+      return name.length > maxLen ? name.slice(0, maxLen) + "..." : name;
+    }
+
+    function showConfirmModal(title, itemName) {
+      return new Promise((resolve) => {
+        confirmResolve = resolve;
+        if (confirmTitle) confirmTitle.textContent = title || "Confirm";
+        if (confirmItem) confirmItem.textContent = truncateName(itemName);
+        if (confirmModal) confirmModal.hidden = false;
+      });
+    }
+
+    function closeConfirmModal(result) {
+      if (confirmModal) confirmModal.hidden = true;
+      if (confirmItem) confirmItem.textContent = "";
+      if (confirmResolve) {
+        confirmResolve(result);
+        confirmResolve = null;
+      }
+    }
+
+    if (confirmOk) {
+      confirmOk.addEventListener("click", () => closeConfirmModal(true));
+    }
+    if (confirmCancel) {
+      confirmCancel.addEventListener("click", () => closeConfirmModal(false));
+    }
+    document.querySelectorAll("[data-confirm-close]").forEach((el) => {
+      el.addEventListener("click", () => closeConfirmModal(false));
+    });
+
     (() => {
       const shell = document.querySelector("[data-shell]");
       const toggle = document.querySelector("[data-nav-toggle]");
