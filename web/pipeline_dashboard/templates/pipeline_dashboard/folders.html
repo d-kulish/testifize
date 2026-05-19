@@ -875,6 +875,11 @@
       return name.length > 40 ? name.slice(0, 40) + "..." : name;
     }
 
+    function truncateSheetName(name) {
+      if (!name || name === "-") return "-";
+      return name.length > 15 ? name.slice(0, 15) + "..." : name;
+    }
+
     function makeDetailRow(label, value) {
       const row = document.createElement("div");
       row.className = "detail-row";
@@ -984,7 +989,7 @@
       file.sheets.forEach((sheet, index) => {
         const button = document.createElement("button");
         button.type = "button";
-        button.textContent = sheet.name;
+        button.textContent = truncateSheetName(sheet.name);
         button.addEventListener("click", () => {
           reviewTabs.querySelectorAll("button").forEach((tab) => tab.classList.remove("active"));
           button.classList.add("active");
