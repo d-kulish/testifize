@@ -1026,6 +1026,107 @@ class DashboardViewTests(TestCase):
         self.assertEqual(series["points"][0]["impressions"], 500.0)
         self.assertEqual(series["points"][0]["cpm"], 0.05)
 
+    def test_old_final_csv_is_used_for_baseline_comparison(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            repo_root = Path(tmpdir)
+            project_root = Path(__file__).resolve().parents[3]
+            parser_root = repo_root / "parsers" / "S2"
+            parser_root.mkdir(parents=True)
+            shutil.copy2(project_root / "parsers" / "S2" / "input_schema.json", parser_root / "input_schema.json")
+            shutil.copy2(project_root / "parsers" / "S2" / "parser.py", parser_root / "parser.py")
+
+            old_final = repo_root / "_old" / "final" / "S2.csv"
+            old_final.parent.mkdir(parents=True)
+            old_final.write_text(
+                "\n".join(
+                    [
+                        "Date,Vendor,Brand,Channel,Platform,Spend,Impressions,Data_Grain,Processed_At,Source_File",
+                        "2025-03-01,S2,BetOnline,CTV,S2 Network,1000,20000,daily,approved,baseline1.csv",
+                        "2025-03-02,S2,BetOnline,CTV,S2 Network,1100,22000,daily,approved,baseline1.csv",
+                        "2025-03-03,S2,BetOnline,CTV,S2 Network,1200,24000,daily,approved,baseline1.csv",
+                        "2025-03-04,S2,BetOnline,CTV,S2 Network,1300,26000,daily,approved,baseline1.csv",
+                        "2025-03-05,S2,BetOnline,CTV,S2 Network,1400,28000,daily,approved,baseline1.csv",
+                        "2025-02-01,S2,BetOnline,CTV,S2 Network,900,18000,daily,approved,baseline2.csv",
+                        "2025-02-02,S2,BetOnline,CTV,S2 Network,950,19000,daily,approved,baseline2.csv",
+                        "2025-02-03,S2,BetOnline,CTV,S2 Network,1000,20000,daily,approved,baseline2.csv",
+                        "2025-02-04,S2,BetOnline,CTV,S2 Network,1050,21000,daily,approved,baseline2.csv",
+                        "2025-02-05,S2,BetOnline,CTV,S2 Network,1100,22000,daily,approved,baseline2.csv",
+                        "",
+                    ]
+                ),
+                encoding="utf-8",
+            )
+
+            local_path = "data/inbox/home/pm/April.Connected-TV.Data.xlsx"
+            workbook_path = repo_root / local_path
+            workbook_path.parent.mkdir(parents=True)
+            workbook = Workbook()
+            sheet = workbook.active
+            sheet.title = "April.26"
+            for row in range(1, 31):
+                for col in range(1, 16):
+                    sheet.cell(row, col).value = None
+            sheet["A31"] = "Day"
+            sheet["B31"] = "Spend"
+            sheet["C31"] = "Video Plays"
+            sheet["E31"] = "Day"
+            sheet["F31"] = "Spend"
+            sheet["G31"] = "Video Plays"
+            sheet["I31"] = "Day"
+            sheet["J31"] = "Spend"
+            sheet["K31"] = "Video Plays"
+            sheet["M31"] = "Day"
+            sheet["N31"] = "Spend"
+            sheet["O31"] = "Video Plays"
+            for idx, day in enumerate(range(1, 4), start=32):
+                date_str = f"2025-04-{day:02d}"
+                sheet.cell(idx, 1).value = date_str
+                sheet.cell(idx, 2).value = 500 + day * 10
+                sheet.cell(idx, 3).value = 10000 + day * 100
+                sheet.cell(idx, 5).value = date_str
+                sheet.cell(idx, 6).value = 500 + day * 10
+                sheet.cell(idx, 7).value = 10000 + day * 100
+                sheet.cell(idx, 9).value = date_str
+                sheet.cell(idx, 10).value = 500 + day * 10
+                sheet.cell(idx, 11).value = 10000 + day * 100
+                sheet.cell(idx, 13).value = date_str
+                sheet.cell(idx, 14).value = 500 + day * 10
+                sheet.cell(idx, 15).value = 10000 + day * 100
+            workbook.save(workbook_path)
+            workbook.close()
+
+            schema_path = parser_root / "input_schema.json"
+            schema = json.loads(schema_path.read_text(encoding="utf-8"))
+            schema["sheet_name"] = "April.26"
+            schema["header"]["row"] = 31
+            for table in schema.get("tables", []):
+                table["header_row"] = 31
+                table["first_data_row"] = 32
+            schema_path.write_text(json.dumps(schema, indent=2), encoding="utf-8")
+
+            s2, _ = Vendor.objects.get_or_create(name="S2", defaults={"parser_key": "S2"})
+            asset = Asset.objects.create(
+                remote_item_id="fi-s2-parse",
+                vendor=s2,
+                parser_key="S2",
+                status=AssetStatus.PROCESSING,
+                name="April.Connected-TV.Data.xlsx",
+                local_path=local_path,
+                file_size=workbook_path.stat().st_size,
+            )
+
+            with override_settings(REPO_ROOT=repo_root):
+                response = self.client.post(reverse("pipeline_dashboard:parse_process_file", args=[asset.remote_item_id]))
+
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertEqual(len(payload["charts"]["series"]), 3)
+        labels = [s["label"] for s in payload["charts"]["series"]]
+        self.assertEqual(labels[0], "Parsed April_2025")
+        self.assertIn("March_2025", labels[1:])
+        self.assertIn("February_2025", labels[1:])
+        self.assertEqual(payload["comparison"]["status"], "no_matching_history")
+
     def test_approve_process_file_sends_versioned_output_for_external_approval(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             repo_root = Path(tmpdir)

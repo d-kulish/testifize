@@ -667,6 +667,16 @@ Final/<Reporting_Period>/<Vendor>_<Reporting_Period>.csv
 - **Expand/collapse icon**: replaced the default `+`/`-` with the same CSS chevron used on SF folders.
 - **Inner table header**: the file table inside an expanded vendor group uses the same light-blue header (`#dbeafe`) as SF folders.
 
+### Parsing review charts (2026-05-20)
+
+- **Old final CSV baseline**: `approved_csv_paths()` now falls back to `_old/final/{Vendor}.csv` when `data/processed/{Vendor}/` has no approved CSVs. This gives S2 and other migrated vendors a usable comparison baseline from the historical export.
+- **Artifact month filtering**: `latest_approved_period_series()` now requires at least 5 rows per month before including that month as a baseline. This prevents sparse future-dated artifact rows (e.g. 2026-01 with a single row) from being selected over real historical periods.
+- **Comparison panel**: added a generated-vs-approved comparison panel below the summary on parse review, showing Spend, Impressions, and date-mismatch notes.
+- **Chart tab bar moved below chart**: the `Spend / Impressions / Cost / impression / Final CSV` tab buttons now render below the chart/table view instead of above it, so they are not occluded by the sticky modal header.
+- **Circle markers on chart lines**: each data point now renders a small circle marker, making individual days visible.
+- **Tab button cursor**: added `cursor: pointer` to chart tab buttons for clearer interactivity.
+- **Grid layout fix**: `.review-body > .parse-result:not([hidden])` now spans `grid-row: 1 / -1`, so the chart area fills the available modal height.
+
 ## Immediate Next Steps
 
 1. Define the shared target schema location and validation rules for final approved outputs.

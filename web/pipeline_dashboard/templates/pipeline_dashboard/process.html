@@ -194,6 +194,115 @@
     border-radius: 2px;
     padding: 0 1px;
   }
+
+  .parse-comparison-panel {
+    margin-bottom: 14px;
+    border: 1px solid var(--border-soft);
+    border-radius: 8px;
+    background: #ffffff;
+    overflow: hidden;
+  }
+
+  .parse-comparison-empty {
+    padding: 12px 14px;
+    color: var(--muted);
+    font-size: 13px;
+  }
+
+  .parse-comparison-header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border-soft);
+    background: #f8fafc;
+  }
+
+  .parse-comparison-header strong {
+    font-size: 13px;
+    font-weight: 760;
+  }
+
+  .parse-comparison-header span {
+    color: var(--muted);
+    font-size: 11px;
+    font-weight: 650;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .parse-comparison-rows {
+    padding: 10px 14px;
+    display: grid;
+    gap: 8px;
+  }
+
+  .parse-comparison-row {
+    display: grid;
+    grid-template-columns: 140px repeat(3, 1fr);
+    gap: 10px;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid #f1f5f9;
+  }
+
+  .parse-comparison-row:last-child {
+    border-bottom: 0;
+  }
+
+  .parse-comparison-label {
+    color: var(--muted);
+    font-size: 12px;
+    font-weight: 760;
+    text-transform: uppercase;
+  }
+
+  .parse-comparison-cell {
+    min-width: 0;
+    text-align: left;
+  }
+
+  .parse-comparison-cell strong {
+    display: block;
+    font-size: 14px;
+    font-weight: 780;
+    color: var(--text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .parse-comparison-cell strong.ok {
+    color: #087443;
+  }
+
+  .parse-comparison-cell strong.warn {
+    color: #b54708;
+  }
+
+  .parse-comparison-cell span {
+    display: block;
+    margin-top: 2px;
+    color: var(--muted);
+    font-size: 11px;
+    font-weight: 650;
+  }
+
+  .parse-comparison-note {
+    color: var(--warn);
+    font-size: 12px;
+    font-weight: 650;
+    padding-top: 4px;
+  }
+
+  @media (max-width: 760px) {
+    .parse-comparison-row {
+      grid-template-columns: 1fr;
+      gap: 6px;
+    }
+  }
 </style>
 
   <section class="topbar">
@@ -694,6 +803,7 @@
       tabs.className = "parse-result-tabs";
       tabs.setAttribute("role", "tablist");
       const summary = renderResultSummary(payload);
+      const comparison = renderComparisonPanel(payload);
       const view = document.createElement("div");
       view.className = "parse-result-view";
       const configs = [
@@ -730,8 +840,87 @@
         tabs.appendChild(button);
       });
 
-      chartPreview.append(tabs, summary, view);
+      chartPreview.append(summary, comparison, view, tabs);
       activate(configs[0]);
+    }
+
+    function renderComparisonPanel(payload) {
+      const comp = payload.comparison || {};
+      const panel = document.createElement("div");
+      panel.className = "parse-comparison-panel";
+      const status = comp.status || "no_approved_history";
+      if (status === "no_approved_history" || status === "no_matching_history") {
+        const empty = document.createElement("div");
+        empty.className = "parse-comparison-empty";
+        empty.textContent = status === "no_approved_history"
+          ? "No approved historical CSV exists for comparison."
+          : "No matching dates found in approved history for this period.";
+        panel.appendChild(empty);
+        return panel;
+      }
+
+      const generated = comp.generated || {};
+      const approved = comp.approved || {};
+      const header = document.createElement("div");
+      header.className = "parse-comparison-header";
+      const title = document.createElement("strong");
+      title.textContent = "Comparison with approved history";
+      const path = document.createElement("span");
+      path.textContent = comp.approved_path || "";
+      header.append(title, path);
+      panel.appendChild(header);
+
+      const rows = document.createElement("div");
+      rows.className = "parse-comparison-rows";
+
+      function row(label, generatedValue, approvedValue, diffValue, mode) {
+        const wrap = document.createElement("div");
+        wrap.className = "parse-comparison-row";
+        const left = document.createElement("div");
+        left.className = "parse-comparison-label";
+        left.textContent = label;
+        const gen = document.createElement("div");
+        gen.className = "parse-comparison-cell";
+        const genStrong = document.createElement("strong");
+        genStrong.textContent = formatMetric(generatedValue, mode);
+        const genSpan = document.createElement("span");
+        genSpan.textContent = "Generated";
+        gen.append(genStrong, genSpan);
+        const app = document.createElement("div");
+        app.className = "parse-comparison-cell";
+        const appStrong = document.createElement("strong");
+        appStrong.textContent = formatMetric(approvedValue, mode);
+        const appSpan = document.createElement("span");
+        appSpan.textContent = "Approved";
+        app.append(appStrong, appSpan);
+        const diff = document.createElement("div");
+        diff.className = "parse-comparison-cell";
+        const diffStrong = document.createElement("strong");
+        const diffNum = Number(diffValue || 0);
+        diffStrong.textContent = (diffNum > 0 ? "+" : "") + formatMetric(diffValue, mode);
+        diffStrong.className = diffNum === 0 ? "ok" : "warn";
+        const diffSpan = document.createElement("span");
+        diffSpan.textContent = "Difference";
+        diff.append(diffStrong, diffSpan);
+        wrap.append(left, gen, app, diff);
+        return wrap;
+      }
+
+      rows.appendChild(row("Spend", generated.total_spend, approved.total_spend, comp.spend_diff, "spend"));
+      rows.appendChild(row("Impressions", generated.total_impressions, approved.total_impressions, comp.impression_diff, "impressions"));
+
+      if (comp.missing_dates?.length || comp.extra_dates?.length) {
+        const note = document.createElement("div");
+        note.className = "parse-comparison-note";
+        const parts = [];
+        if (comp.missing_dates?.length) parts.push(`${comp.missing_dates.length} missing date${comp.missing_dates.length === 1 ? "" : "s"}`);
+        if (comp.extra_dates?.length) parts.push(`${comp.extra_dates.length} extra date${comp.extra_dates.length === 1 ? "" : "s"}`);
+        note.textContent = parts.join(" · ");
+        rows.appendChild(note);
+      }
+
+      panel.appendChild(rows);
+      return panel;
     }
 
     function renderResultSummary(payload) {
@@ -815,6 +1004,11 @@
           const y = top + plotHeight - (Number(point[mode] || 0) / maxValue) * plotHeight;
           return `${x.toFixed(2)},${y.toFixed(2)}`;
         });
+        const pointCoords = (item.points || []).map((point) => {
+          const x = left + ((Number(point.day) - 1) / Math.max(maxDay - 1, 1)) * plotWidth;
+          const y = top + plotHeight - (Number(point[mode] || 0) / maxValue) * plotHeight;
+          return {x, y};
+        });
         if (!points.length) return;
         const line = document.createElementNS("http://www.w3.org/2000/svg", "polyline");
         line.setAttribute("points", points.join(" "));
@@ -822,6 +1016,17 @@
         line.setAttribute("stroke", colors[index % colors.length]);
         line.setAttribute("stroke-width", index === 0 ? "3" : "2");
         svg.appendChild(line);
+
+        pointCoords.forEach((coord) => {
+          const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+          circle.setAttribute("cx", coord.x.toFixed(2));
+          circle.setAttribute("cy", coord.y.toFixed(2));
+          circle.setAttribute("r", index === 0 ? "3.5" : "2.5");
+          circle.setAttribute("fill", colors[index % colors.length]);
+          circle.setAttribute("stroke", "#ffffff");
+          circle.setAttribute("stroke-width", "1.5");
+          svg.appendChild(circle);
+        });
 
         const label = document.createElementNS("http://www.w3.org/2000/svg", "text");
         label.setAttribute("x", String(left + 12));

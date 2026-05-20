@@ -384,10 +384,14 @@ def approved_csv_path(vendor: Vendor | None) -> Path | None:
 def approved_csv_paths(vendor: Vendor | None) -> list[Path]:
     if not vendor:
         return []
+    paths: list[Path] = []
     processed_root = settings.REPO_ROOT / "data" / "processed" / vendor.name
-    if not processed_root.exists():
-        return []
-    return sorted(path for path in processed_root.glob("*.csv") if path.is_file())
+    if processed_root.exists():
+        paths.extend(sorted(path for path in processed_root.glob("*.csv") if path.is_file()))
+    old_final = settings.REPO_ROOT / "_old" / "final" / f"{vendor.name}.csv"
+    if old_final.exists():
+        paths.append(old_final)
+    return paths
 
 
 def monthly_processed_output_path(vendor: Vendor, at: datetime | None = None) -> Path:
@@ -590,7 +594,7 @@ def build_chart_payload(rows: list[dict[str, Any]], vendor: Vendor | None, summa
     }
 
 
-def latest_approved_period_series(vendor: Vendor | None, before_date: date | None, limit: int = 2) -> list[dict[str, Any]]:
+def latest_approved_period_series(vendor: Vendor | None, before_date: date | None, limit: int = 2, min_days: int = 5) -> list[dict[str, Any]]:
     grouped: dict[str, list[dict[str, str]]] = {}
     for path in approved_csv_paths(vendor):
         with path.open(newline="", encoding="utf-8") as file:
@@ -604,7 +608,8 @@ def latest_approved_period_series(vendor: Vendor | None, before_date: date | Non
                 key = f"{row_date:%Y-%m}"
                 grouped.setdefault(key, []).append(row)
 
-    selected = sorted(grouped.items(), key=lambda item: item[0], reverse=True)[:limit]
+    valid = {key: rows for key, rows in grouped.items() if len(rows) >= min_days}
+    selected = sorted(valid.items(), key=lambda item: item[0], reverse=True)[:limit]
     return [
         period_series_from_rows(period_rows, datetime.strptime(f"{period_key}-01", "%Y-%m-%d").strftime("%B_%Y"))
         for period_key, period_rows in selected
