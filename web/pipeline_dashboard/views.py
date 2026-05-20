@@ -50,6 +50,7 @@ REVIEW_STATUSES = [
 FOLDER_VENDOR_RULES = {
     "josh": ("PodcastOne", "Octopus", "Loop", "TVM", "TAIV"),
     "may_2026_internal_folders": ("RallyAdMedia", "AdTaxi"),
+    "pm": ("S2",),
 }
 
 DASHBOARD_FILE_EXTENSIONS = {".csv", ".xls", ".xlsx"}
@@ -1098,10 +1099,18 @@ def _source_folder_for_file(file_row: dict) -> ShareFileFolder | None:
     folder_id = file_row.get("source_folder_id") or ""
     if not folder_id:
         return None
+    folder_path = file_row.get("source_folder_path") or folder_id
     folder, _ = ShareFileFolder.objects.get_or_create(
         folder_id=folder_id,
-        defaults={"label": file_row.get("source_folder_path") or folder_id},
+        defaults={"label": folder_path},
     )
+    if folder.vendor_id is None:
+        allowed = _allowed_vendor_names_for_folder(folder_path)
+        if len(allowed) == 1:
+            vendor = Vendor.objects.filter(name__iexact=allowed[0]).first()
+            if vendor:
+                folder.vendor = vendor
+                folder.save(update_fields=["vendor", "updated_at"])
     return folder
 
 

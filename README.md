@@ -527,6 +527,12 @@ The current rule for `allshared/May_2026_Internal_folders` allows only:
 RallyAdMedia, AdTaxi
 ```
 
+The current rule for `home/pm` allows only:
+
+```text
+S2
+```
+
 The same rule is enforced server-side when moving a file from SF folders into Processing, so bypassing the UI cannot assign a disallowed vendor.
 
 Downloaded files land under:
@@ -598,7 +604,7 @@ as the month after the parsed reporting period:
 data/output/<Vendor>/<Vendor>_<Mon>_<Year>_vN.csv
 ```
 
-The first migrated parsers are `Loop`, `TVM`, `TAIV`, `PodcastOne`, `Octopus`, `RallyAdMedia`, and `AdTaxi`. TAIV combines the Prime and Retail tables on `Spend By Day` into one daily row per date, matching the approved TAIV history shape. PodcastOne combines the BASE daily sheet and WC daily sheet by `Day`. Octopus combines the `DOOH` and `Rideshare` tables on `Daily Spend` into one daily row per date. RallyAdMedia combines the `BOL`, `SB`, `WC`, and `SS` sheets by `DATE_LABEL`, summing `Imps.` into `Impressions` and `Total Spend` into `Spend`. AdTaxi reads the March 2026 date range from the `Dates` row, sums the three top-level `Advertiser Cost` and `Impressions` cells, and distributes each total across every date in that range.
+The first migrated parsers are `Loop`, `TVM`, `TAIV`, `PodcastOne`, `Octopus`, `RallyAdMedia`, `AdTaxi`, and `S2`. TAIV combines the Prime and Retail tables on `Spend By Day` into one daily row per date, matching the approved TAIV history shape. PodcastOne combines the BASE daily sheet and WC daily sheet by `Day`. Octopus combines the `DOOH` and `Rideshare` tables on `Daily Spend` into one daily row per date. RallyAdMedia combines the `BOL`, `SB`, `WC`, and `SS` sheets by `DATE_LABEL`, summing `Imps.` into `Impressions` and `Total Spend` into `Spend`. AdTaxi reads the March 2026 date range from the `Dates` row, sums the three top-level `Advertiser Cost` and `Impressions` cells, and distributes each total across every date in that range. S2 parses the `April.26` sheet, reads the four horizontal daily tables (`BOL`, `Wild Casino`, `Sportsbetting`, `Superslots`) starting at row 31, aggregates `Spend` and `Video Plays` by `Day` into one daily row per date, and outputs `Brand=BetOnline`, `Channel=CTV`, `Platform=S2 Network`.
 
 On the `/process/` Parsing page, opening a file first shows raw workbook sheets. Clicking `Parse` switches into a parsed-review state with four tabs: `Spend`, `Impressions`, `Cost / impression`, and `Final CSV`. The chart tabs compare the generated candidate against up to two latest approved vendor periods, grouping spend and impressions by date. The `Final CSV` tab shows the generated normalized rows for visual inspection before the user sends anything for ShareFile approval. This parse preview does not write the output CSV.
 
@@ -642,6 +648,16 @@ Final/<Reporting_Period>/<Vendor>_<Reporting_Period>.csv
 - **Folder row styling**: folder names and file stat text increased from 14px to 16px for better readability.
 - **Expand/collapse icon**: replaced `+`/`-` text symbols with a CSS chevron (`>` / `v`) and reduced size by ~15%.
 - **File table header**: the header row inside an expanded folder now uses a light-blue background (`#dbeafe`) with solid black column text, matching the chapter header palette.
+
+### S2 vendor parser (2026-05-20)
+
+- **New parser `S2`**: added `parsers/S2/input_schema.json` and `parsers/S2/parser.py` to handle the `pm` folder's Connected-TV Excel files.
+- **Sheet target**: `April.26` (configurable for other monthly sheets).
+- **Table layout**: four horizontal 3-column tables (`Day`, `Spend`, `Video Plays`) starting at row 31 — one per brand (`BOL`, `Wild Casino`, `Sportsbetting`, `Superslots`).
+- **Aggregation**: all four tables are aggregated by date into a single daily row with summed `Spend` and `Impressions`.
+- **Output defaults**: `Vendor=S2`, `Brand=BetOnline`, `Channel=CTV`, `Platform=S2 Network`, `Data_Grain=daily`.
+- **Folder vendor assignment**: added `pm` to `FOLDER_VENDOR_RULES` with a single allowed vendor `S2`, and added migration `0009_seed_s2_vendor.py` to create the vendor and bind existing `pm` folders.
+- **Auto-assignment fallback**: `_source_folder_for_file` now auto-assigns a vendor when a folder has exactly one allowed vendor and no vendor is currently set.
 
 ### Parsing page (2026-05-20)
 

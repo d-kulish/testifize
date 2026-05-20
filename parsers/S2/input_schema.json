@@ -1,0 +1,87 @@
+{
+  "source_file": "data/inbox/home/pm/April.Connected-TV.Data.xlsx",
+  "sheet_name": "April.26",
+  "file_type": "xlsx",
+  "header": {
+    "row": 31,
+    "columns": [
+      {
+        "letter": "A",
+        "name": "Day"
+      },
+      {
+        "letter": "B",
+        "name": "Spend"
+      },
+      {
+        "letter": "C",
+        "name": "Video Plays"
+      }
+    ]
+  },
+  "tables": [
+    {
+      "name": "BOL",
+      "header_row": 31,
+      "first_data_row": 32,
+      "columns": {
+        "date": "A",
+        "spend": "B",
+        "impressions": "C"
+      }
+    },
+    {
+      "name": "Wild Casino",
+      "header_row": 31,
+      "first_data_row": 32,
+      "columns": {
+        "date": "E",
+        "spend": "F",
+        "impressions": "G"
+      }
+    },
+    {
+      "name": "Sportsbetting",
+      "header_row": 31,
+      "first_data_row": 32,
+      "columns": {
+        "date": "I",
+        "spend": "J",
+        "impressions": "K"
+      }
+    },
+    {
+      "name": "Superslots",
+      "header_row": 31,
+      "first_data_row": 32,
+      "columns": {
+        "date": "M",
+        "spend": "N",
+        "impressions": "O"
+      }
+    }
+  ],
+  "selected_columns": {
+    "date": "Day",
+    "impressions": "Video Plays",
+    "spend": "Spend"
+  },
+  "skip_rules": [
+    "Skip rows where Day is blank, 'Total', or non-date.",
+    "Skip trailing blank rows after the tables end.",
+    "Aggregate all 4 horizontal tables into one daily row."
+  ],
+  "comparison_window": {
+    "start_date": "2026-04-01",
+    "end_date": "2026-04-30"
+  },
+  "output_defaults": {
+    "Vendor": "S2",
+    "Brand": "BetOnline",
+    "Channel": "CTV",
+    "Platform": "S2 Network",
+    "Data_Grain": "daily",
+    "Processed_At": "generated",
+    "Source_File": "April.Connected-TV.Data.xlsx"
+  }
+}
