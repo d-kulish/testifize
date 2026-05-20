@@ -39,6 +39,161 @@
   .process-metrics .metric.blue .metric-label {
     color: #1d4ed8;
   }
+
+  .process-panel {
+    background: #ffffff;
+    border: 1px solid #111827;
+    box-shadow: 0 1px 2px rgba(60, 64, 67, 0.08), 0 2px 6px rgba(60, 64, 67, 0.10), 0 4px 12px rgba(60, 64, 67, 0.12);
+  }
+
+  .process-mirror .mirror-head,
+  .process-mirror .mirror-summary {
+    grid-template-columns: 16px minmax(200px, 1fr) minmax(200px, 1fr) 120px 120px 120px 120px 120px;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .process-mirror .mirror-head {
+    background: #3b6cb4;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.25);
+    min-height: 86px;
+    padding: 10px 12px;
+    color: #ffffff;
+    border-radius: 8px 8px 0 0;
+  }
+
+  .process-mirror .process-head-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+    height: 100%;
+    justify-content: center;
+  }
+
+  .process-mirror .process-head-title {
+    color: #ffffff;
+    font-size: 31px;
+    font-weight: 720;
+    text-transform: none;
+    line-height: 1.1;
+  }
+
+  .process-mirror .process-head-subtitle {
+    color: #ffffff;
+    font-size: 13px;
+    font-weight: 650;
+    text-transform: none;
+  }
+
+  .process-mirror .mirror-head > [role="columnheader"].process-count-col {
+    color: #ffffff;
+    font-size: 16px;
+    font-weight: 700;
+    text-transform: uppercase;
+    text-align: center;
+    overflow: hidden;
+    white-space: nowrap;
+  }
+
+  .process-mirror .mirror-head > [role="columnheader"].process-count-col:hover {
+    opacity: 0.85;
+  }
+
+  .process-mirror .mirror-summary {
+    font-size: 16px;
+  }
+
+  .process-mirror .mirror-summary span.process-count-cell {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    overflow: hidden;
+    white-space: nowrap;
+  }
+
+  .process-mirror .mirror-summary .mirror-folder-name {
+    grid-column: span 2;
+    color: var(--text);
+    text-align: left;
+  }
+
+  .process-mirror .mirror-head::before {
+    content: "";
+  }
+
+  .process-mirror .mirror-summary::before {
+    content: "";
+    width: 9px;
+    height: 9px;
+    border: none;
+    border-right: 2px solid var(--muted);
+    border-bottom: 2px solid var(--muted);
+    border-radius: 0;
+    background: none;
+    transform: rotate(-45deg);
+    transition: transform 160ms ease;
+    justify-self: center;
+  }
+
+  .process-mirror .mirror-folder[open] .mirror-summary::before {
+    content: "";
+    background: none;
+    transform: rotate(45deg);
+  }
+
+  .process-mirror .mirror-head-search {
+    position: relative;
+    display: flex;
+    align-items: center;
+    min-width: 0;
+  }
+
+  .process-mirror .mirror-head-search .mirror-search-input {
+    width: 100%;
+    min-height: 32px;
+    padding: 4px 32px 4px 12px;
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.12);
+    color: #ffffff;
+    font-size: 13px;
+    font-family: inherit;
+    outline: none;
+    transition: background 120ms ease, border-color 120ms ease;
+  }
+
+  .process-mirror .mirror-head-search .mirror-search-input::placeholder {
+    color: rgba(255, 255, 255, 0.6);
+  }
+
+  .process-mirror .mirror-head-search .mirror-search-input:focus {
+    background: rgba(255, 255, 255, 0.25);
+    border-color: rgba(255, 255, 255, 0.5);
+  }
+
+  .process-mirror .mirror-head-search .search-icon {
+    position: absolute;
+    right: 10px;
+    width: 16px;
+    height: 16px;
+    color: rgba(255, 255, 255, 0.5);
+    pointer-events: none;
+    flex-shrink: 0;
+  }
+
+  .process-mirror .mirror-files table thead th {
+    background: #dbeafe;
+    color: #000000;
+  }
+
+  .file-name mark {
+    background: #fef08a;
+    color: inherit;
+    border-radius: 2px;
+    padding: 0 1px;
+  }
 </style>
 
   <section class="topbar">
@@ -80,32 +235,43 @@
     </div>
   </section>
 
-  <section class="panel">
-    <div class="panel-header">
-      <h2 class="panel-title">Parsing Files</h2>
-      <span class="muted">Only files assigned for parser review</span>
-    </div>
+  <section class="panel process-panel">
     <div class="panel-body">
       {% if grouped_assets %}
-        <div class="mirror-table" role="table" aria-label="Parsing files grouped by vendor">
+        <div class="mirror-table process-mirror" role="table" aria-label="Parsing files grouped by vendor">
           <div class="mirror-head" role="row">
-            <div role="columnheader">Vendor</div>
-            <div role="columnheader">Files</div>
-            <div role="columnheader">Ready</div>
-            <div role="columnheader">Status</div>
-            <div role="columnheader">Review</div>
-            <div role="columnheader">Cancel</div>
-            <div role="columnheader"></div>
+            <div class="process-head-wrapper" role="columnheader">
+              <span class="process-head-title">Parsing Files</span>
+              <span class="process-head-subtitle">{{ assets|length }} files in parser queue</span>
+            </div>
+            <div class="mirror-head-search" role="search">
+              <input
+                type="search"
+                class="mirror-search-input"
+                placeholder="Search parsing files by name..."
+                aria-label="Search parsing files by name"
+                data-process-search
+                autocomplete="off"
+              />
+              <svg class="search-icon" viewBox="0 0 24 24" aria-hidden="true">
+                <circle cx="11" cy="11" r="8" fill="none" stroke="currentColor" stroke-width="2"></circle>
+                <path d="M21 21l-4.35-4.35" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path>
+              </svg>
+            </div>
+            <div class="process-count-col" role="columnheader">Files</div>
+            <div class="process-count-col" role="columnheader">Size</div>
+            <div class="process-count-col" role="columnheader">Oldest</div>
+            <div class="process-count-col" role="columnheader"></div>
+            <div class="process-count-col" role="columnheader"></div>
           </div>
           {% for group in grouped_assets %}
             <details class="mirror-folder" open>
               <summary class="mirror-summary" role="row">
                 <span class="mirror-folder-name" role="cell">{{ group.vendor.name|default:"Unassigned" }}</span>
-                <span role="cell">{{ group.assets|length }}</span>
-                <span class="status-orange" role="cell">{{ group.assets|length }}</span>
-                <span role="cell">Parsing</span>
-                <span role="cell">Click file</span>
-                <span role="cell">Per row</span>
+                <span class="process-count-cell" role="cell">{{ group.assets|length }}</span>
+                <span class="process-count-cell" role="cell">{{ group.total_size|filesizeformat }}</span>
+                <span class="process-count-cell" role="cell">{{ group.oldest_age_label }}</span>
+                <span role="cell"></span>
                 <span role="cell"></span>
               </summary>
               <div class="mirror-files">
@@ -768,5 +934,114 @@
         approvalSubmit.disabled = false;
       }
     });
+
+    // Process page file search
+    (function () {
+      const searchInput = document.querySelector("[data-process-search]");
+      if (!searchInput) return;
+
+      let timer = null;
+
+      function getFileNameCell(row) {
+        return row.querySelector(".file-name");
+      }
+
+      function storeOriginalNames() {
+        document.querySelectorAll("[data-parse-row]").forEach((row) => {
+          const cell = getFileNameCell(row);
+          if (cell && !cell.dataset.originalName) {
+            cell.dataset.originalName = cell.textContent;
+          }
+        });
+      }
+
+      function highlightText(cell, query) {
+        const original = cell.dataset.originalName || cell.textContent;
+        if (!query) {
+          cell.innerHTML = "";
+          cell.appendChild(document.createTextNode(original));
+          return;
+        }
+        const lowerQuery = query.toLowerCase();
+        const lowerOriginal = original.toLowerCase();
+        cell.innerHTML = "";
+        let start = 0;
+        let index = lowerOriginal.indexOf(lowerQuery, start);
+        while (index !== -1) {
+          if (index > start) {
+            cell.appendChild(document.createTextNode(original.slice(start, index)));
+          }
+          const mark = document.createElement("mark");
+          mark.textContent = original.slice(index, index + query.length);
+          cell.appendChild(mark);
+          start = index + query.length;
+          index = lowerOriginal.indexOf(lowerQuery, start);
+        }
+        if (start < original.length) {
+          cell.appendChild(document.createTextNode(original.slice(start)));
+        }
+      }
+
+      function performSearch(query) {
+        const folders = document.querySelectorAll(".process-mirror .mirror-folder");
+        folders.forEach((folder) => {
+          const rows = Array.from(folder.querySelectorAll("[data-parse-row]"));
+          let folderMatches = 0;
+
+          rows.forEach((row) => {
+            const nameCell = getFileNameCell(row);
+            const nameText = (nameCell?.dataset.originalName || nameCell?.textContent || "").toLowerCase();
+            const matches = nameText.includes(query);
+
+            if (matches) {
+              row.hidden = false;
+              folderMatches += 1;
+            } else {
+              row.hidden = true;
+            }
+
+            if (nameCell) {
+              highlightText(nameCell, query);
+            }
+          });
+
+          if (folderMatches > 0) {
+            folder.hidden = false;
+            folder.open = true;
+          } else {
+            folder.hidden = true;
+          }
+        });
+      }
+
+      function resetSearch() {
+        const folders = document.querySelectorAll(".process-mirror .mirror-folder");
+        folders.forEach((folder) => {
+          const rows = Array.from(folder.querySelectorAll("[data-parse-row]"));
+          rows.forEach((row) => {
+            row.hidden = false;
+            const nameCell = getFileNameCell(row);
+            if (nameCell) {
+              highlightText(nameCell, "");
+            }
+          });
+          folder.hidden = false;
+        });
+      }
+
+      storeOriginalNames();
+
+      searchInput.addEventListener("input", () => {
+        const query = searchInput.value.trim().toLowerCase();
+        window.clearTimeout(timer);
+        timer = window.setTimeout(() => {
+          if (query) {
+            performSearch(query);
+          } else {
+            resetSearch();
+          }
+        }, 150);
+      });
+    })();
   </script>
 {% endblock %}

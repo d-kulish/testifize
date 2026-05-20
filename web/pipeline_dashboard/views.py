@@ -528,6 +528,23 @@ def _progress_segments(stage: str) -> list[dict[str, str]]:
     return segments
 
 
+def _build_process_group(vendor, assets):
+    total_size = sum((asset.file_size or 0) for asset in assets)
+    oldest_uploaded = None
+    for asset in assets:
+        uploaded_at = _asset_uploaded_at(asset)
+        if uploaded_at:
+            if oldest_uploaded is None or uploaded_at < oldest_uploaded:
+                oldest_uploaded = uploaded_at
+    oldest_age_label = _age_label(_asset_age_days(oldest_uploaded))
+    return {
+        "vendor": vendor,
+        "assets": assets,
+        "total_size": total_size,
+        "oldest_age_label": oldest_age_label,
+    }
+
+
 def process(request):
     processing_assets = list(
         Asset.objects.select_related("vendor", "source_folder")
@@ -539,10 +556,10 @@ def process(request):
     for vendor in active_vendors:
         vendor_assets = [asset for asset in processing_assets if asset.vendor_id == vendor.id]
         if vendor_assets:
-            grouped_assets.append({"vendor": vendor, "assets": vendor_assets})
+            grouped_assets.append(_build_process_group(vendor, vendor_assets))
     unassigned_assets = [asset for asset in processing_assets if not asset.vendor_id]
     if unassigned_assets:
-        grouped_assets.append({"vendor": None, "assets": unassigned_assets})
+        grouped_assets.append(_build_process_group(None, unassigned_assets))
     context = {
         "title": "Parsing",
         "assets": processing_assets,

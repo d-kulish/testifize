@@ -643,6 +643,14 @@ Final/<Reporting_Period>/<Vendor>_<Reporting_Period>.csv
 - **Expand/collapse icon**: replaced `+`/`-` text symbols with a CSS chevron (`>` / `v`) and reduced size by ~15%.
 - **File table header**: the header row inside an expanded folder now uses a light-blue background (`#dbeafe`) with solid black column text, matching the chapter header palette.
 
+### Parsing page (2026-05-20)
+
+- **Chapter header restyle**: replaced the plain `.panel-header` with a blue bar (`#3b6cb4`) matching the SF folders "Loaded Folders" header, containing the chapter title, subtitle with file count, and a real-time search input.
+- **Search by file name**: added a search bar that filters parsing files by name across all vendor groups, with yellow highlight on matching text and auto-expansion of groups containing matches.
+- **Vendor row KPIs**: removed static placeholder text ("Parsing", "Click file", "Per row"). Each vendor row now shows actual **Files** count, **Size** (sum of file sizes in the group), and **Oldest** file age.
+- **Expand/collapse icon**: replaced the default `+`/`-` with the same CSS chevron used on SF folders.
+- **Inner table header**: the file table inside an expanded vendor group uses the same light-blue header (`#dbeafe`) as SF folders.
+
 ## Immediate Next Steps
 
 1. Define the shared target schema location and validation rules for final approved outputs.
