@@ -209,6 +209,7 @@
   .process-mirror .mirror-files td:nth-child(1) {
     width: auto;
     min-width: 140px;
+    padding-left: 18px;
   }
 
   .process-mirror .mirror-files th:nth-child(2),
@@ -650,10 +651,15 @@
     <section class="review-dialog" role="dialog" aria-modal="true" aria-labelledby="parse-title">
       <header class="review-header">
         <div class="review-titlebar">
-          <h2 class="review-title" id="parse-title">Parse file</h2>
-          <button class="button small" type="button" data-parse-close>Close</button>
+          <div>
+            <h2 class="review-title" id="parse-title">Parse file</h2>
+          </div>
+          <button class="button small review-details-toggle" type="button" data-parse-details-toggle aria-label="Show file details" aria-expanded="false">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18l6-6-6-6"></path></svg>
+          </button>
         </div>
-        <div class="review-details" data-parse-details></div>
+        <div class="review-separator collapsed" data-parse-separator aria-hidden="true"></div>
+        <div class="review-details collapsed" data-parse-details></div>
         <div class="review-message" data-parse-validation></div>
       </header>
       <div class="review-body">
@@ -740,6 +746,8 @@
     const parseFooter = document.querySelector("[data-parse-footer]");
     const parseVendorSelect = document.querySelector("[data-parse-vendor-select]");
     const parseVendorSave = document.querySelector("[data-parse-vendor-save]");
+    const parseDetailsToggle = document.querySelector("[data-parse-details-toggle]");
+    const parseSeparator = document.querySelector("[data-parse-separator]");
     const csrfToken = document.querySelector("[name=csrfmiddlewaretoken]")?.value || "";
     let activeParse = null;
 
@@ -766,6 +774,12 @@
       parsePreview.hidden = false;
       approvalSubmit.hidden = true;
       parseSubmit.hidden = false;
+      if (parseDetailsToggle) {
+        parseDetailsToggle.setAttribute("aria-expanded", "false");
+        parseDetailsToggle.setAttribute("aria-label", "Show file details");
+      }
+      parseDetails?.classList.add("collapsed");
+      parseSeparator?.classList.add("collapsed");
     }
 
     document.querySelectorAll("[data-parse-close]").forEach((button) => {
@@ -793,6 +807,37 @@
       parseSubmit.hidden = false;
       parseSubmit.disabled = true;
       if (parseVendorSelect) parseVendorSelect.innerHTML = "";
+      if (parseDetailsToggle) {
+        parseDetailsToggle.setAttribute("aria-expanded", "false");
+        parseDetailsToggle.setAttribute("aria-label", "Show file details");
+      }
+      parseDetails?.classList.add("collapsed");
+      parseSeparator?.classList.add("collapsed");
+    }
+
+    if (parseDetailsToggle) {
+      parseDetailsToggle.addEventListener("click", () => {
+        const expanded = parseDetailsToggle.getAttribute("aria-expanded") === "true";
+        parseDetailsToggle.setAttribute("aria-expanded", String(!expanded));
+        parseDetailsToggle.setAttribute("aria-label", !expanded ? "Hide file details" : "Show file details");
+        parseDetails?.classList.toggle("collapsed", expanded);
+        parseSeparator?.classList.toggle("collapsed", expanded);
+      });
+    }
+
+    const parseDialog = document.querySelector(".review-dialog");
+    if (parseDialog) {
+      parseDialog.addEventListener("click", (event) => {
+        if (parseDetails.classList.contains("collapsed")) return;
+        const isInsideDetails = parseDetails.contains(event.target);
+        const isToggle = parseDetailsToggle && parseDetailsToggle.contains(event.target);
+        if (!isInsideDetails && !isToggle) {
+          parseDetailsToggle.setAttribute("aria-expanded", "false");
+          parseDetailsToggle.setAttribute("aria-label", "Show file details");
+          parseDetails.classList.add("collapsed");
+          parseSeparator?.classList.add("collapsed");
+        }
+      });
     }
 
     function formatBytes(value) {
