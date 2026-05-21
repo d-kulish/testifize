@@ -840,6 +840,8 @@ def update_process_vendor(request, remote_item_id: str):
         metadata={"previous_vendor": previous_vendor, "vendor_id": vendor.id},
     )
     messages.success(request, f"{asset.name}: vendor updated to {vendor.name}.")
+    if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+        return JsonResponse({"ok": True, "vendor": vendor.name, "vendor_id": vendor.id})
     return redirect("pipeline_dashboard:process")
 
 

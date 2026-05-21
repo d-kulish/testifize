@@ -794,6 +794,31 @@ class DashboardViewTests(TestCase):
         self.assertEqual(asset.parser_key, "podcastone")
         self.assertTrue(asset.events.filter(event_type="vendor_changed").exists())
 
+    def test_update_process_vendor_returns_json_for_ajax(self):
+        loop, _ = Vendor.objects.get_or_create(name="Loop", defaults={"parser_key": "loop"})
+        podcastone, _ = Vendor.objects.get_or_create(name="PodcastOne", defaults={"parser_key": "podcastone"})
+        asset = Asset.objects.create(
+            remote_item_id="fi-processing-ajax",
+            vendor=loop,
+            parser_key="loop",
+            status=AssetStatus.PROCESSING,
+            name="Loop report.csv",
+        )
+
+        response = self.client.post(
+            reverse("pipeline_dashboard:update_process_vendor", args=[asset.remote_item_id]),
+            {"vendor_id": podcastone.id},
+            HTTP_X_REQUESTED_WITH="XMLHttpRequest",
+        )
+
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertTrue(data["ok"])
+        self.assertEqual(data["vendor"], "PodcastOne")
+        self.assertEqual(data["vendor_id"], podcastone.id)
+        asset.refresh_from_db()
+        self.assertEqual(asset.vendor, podcastone)
+
     def test_cancel_process_file_clears_vendor_and_returns_to_new(self):
         loop, _ = Vendor.objects.get_or_create(name="Loop", defaults={"parser_key": "loop"})
         asset = Asset.objects.create(

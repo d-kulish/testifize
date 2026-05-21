@@ -193,6 +193,63 @@
     color: #000000;
   }
 
+  .process-mirror .mirror-files table {
+    table-layout: fixed;
+    width: 100%;
+    min-width: 1180px;
+  }
+
+  .process-mirror .mirror-files th,
+  .process-mirror .mirror-files td {
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .process-mirror .mirror-files th:nth-child(1),
+  .process-mirror .mirror-files td:nth-child(1) {
+    width: auto;
+    min-width: 140px;
+  }
+
+  .process-mirror .mirror-files th:nth-child(2),
+  .process-mirror .mirror-files td:nth-child(2) {
+    width: 130px;
+  }
+
+  .process-mirror .mirror-files th:nth-child(3),
+  .process-mirror .mirror-files td:nth-child(3) {
+    width: 120px;
+  }
+
+  .process-mirror .mirror-files th:nth-child(4),
+  .process-mirror .mirror-files td:nth-child(4) {
+    width: 120px;
+  }
+
+  .process-mirror .mirror-files th:nth-child(5),
+  .process-mirror .mirror-files td:nth-child(5) {
+    width: 170px;
+  }
+
+  .process-mirror .mirror-files th:nth-child(6),
+  .process-mirror .mirror-files td:nth-child(6) {
+    width: 180px;
+  }
+
+  .process-mirror .mirror-files th:nth-child(7),
+  .process-mirror .mirror-files td:nth-child(7) {
+    width: 80px;
+  }
+
+  .process-mirror .mirror-files th:nth-child(8),
+  .process-mirror .mirror-files td:nth-child(8) {
+    width: 220px;
+  }
+
+  .process-mirror .mirror-files td:nth-child(8) .actions {
+    flex-wrap: nowrap;
+  }
+
   .file-name mark {
     background: #fef08a;
     color: inherit;
@@ -349,6 +406,32 @@
     padding-top: 4px;
   }
 
+  .process-footer-meta {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex: 1;
+    min-width: 0;
+  }
+
+  .process-footer-meta .review-vendor {
+    display: grid;
+    gap: 4px;
+    width: 220px;
+    min-width: 220px;
+    color: var(--muted);
+    font-size: 12px;
+    font-weight: 700;
+  }
+
+  .process-footer-meta .review-vendor select {
+    width: 100%;
+  }
+
+  .process-footer-meta .review-vendor button {
+    justify-self: start;
+  }
+
   @media (max-width: 760px) {
     .parse-comparison-row {
       grid-template-columns: 1fr;
@@ -456,21 +539,13 @@
                         data-preview-url="{% url 'pipeline_dashboard:parse_file_preview' asset.remote_item_id %}"
                         data-parse-url="{% url 'pipeline_dashboard:parse_process_file' asset.remote_item_id %}"
                         data-approve-url="{% url 'pipeline_dashboard:approve_process_file' asset.remote_item_id %}"
+                        data-update-vendor-url="{% url 'pipeline_dashboard:update_process_vendor' asset.remote_item_id %}"
+                        data-vendor-id="{{ asset.vendor_id|default:'' }}"
                       >
                         <td class="file-name" title="{{ asset.name }}">{{ asset.name }}</td>
-                        <td>
-                          <form class="inline-form" method="post" action="{% url 'pipeline_dashboard:update_process_vendor' asset.remote_item_id %}">
-                            {% csrf_token %}
-                            <select class="table-select" name="vendor_id" aria-label="Vendor for {{ asset.name }}">
-                              {% for vendor in vendors %}
-                                <option value="{{ vendor.id }}" {% if asset.vendor_id == vendor.id %}selected{% endif %}>{{ vendor.name }}</option>
-                              {% endfor %}
-                            </select>
-                            <button class="button small" type="submit">Save</button>
-                          </form>
-                        </td>
-                        <td>{{ asset.remote_created_at|date:"Y-m-d H:i"|default:"-" }}</td>
-                        <td>{{ asset.remote_modified_at|date:"Y-m-d H:i"|default:"-" }}</td>
+                        <td>{{ asset.vendor.name|default:"Unassigned" }}</td>
+                        <td>{{ asset.remote_created_at|date:"d-m-Y"|default:"-" }}</td>
+                        <td>{{ asset.remote_modified_at|date:"d-m-Y"|default:"-" }}</td>
                         <td>{{ asset.created_by_display|default:"-" }}</td>
                         <td>{{ asset.source_folder|default:asset.source_folder_label|default:"-" }}</td>
                         <td>{{ asset.file_size|filesizeformat }}</td>
@@ -591,7 +666,14 @@
         <div class="parse-result" data-chart-preview hidden></div>
       </div>
       <footer class="review-footer">
-        <span class="muted" data-parse-footer>Parser validation runs before CSV creation.</span>
+        <div class="process-footer-meta">
+          <div class="review-vendor" data-parse-vendor-panel>
+            <span>Vendor</span>
+            <select data-parse-vendor-select></select>
+            <button class="button small" type="button" data-parse-vendor-save>Save</button>
+          </div>
+          <span class="muted" data-parse-footer>Parser validation runs before CSV creation.</span>
+        </div>
         <div class="actions">
           <button class="button" type="button" data-parse-close>Cancel</button>
           <button class="button primary" type="button" data-parse-submit>Parse</button>
@@ -601,6 +683,13 @@
     </section>
   </div>
 
+  <script>
+    window.VENDORS = [
+      {% for vendor in vendors %}
+        {id: {{ vendor.id }}, name: "{{ vendor.name|escapejs }}"}{% if not forloop.last %},{% endif %}
+      {% endfor %}
+    ];
+  </script>
   <script>
     document.querySelectorAll("[data-cancel-process-form]").forEach((form) => {
       form.addEventListener("submit", async (event) => {
@@ -649,8 +738,24 @@
     const parseSubmit = document.querySelector("[data-parse-submit]");
     const approvalSubmit = document.querySelector("[data-approval-submit]");
     const parseFooter = document.querySelector("[data-parse-footer]");
+    const parseVendorSelect = document.querySelector("[data-parse-vendor-select]");
+    const parseVendorSave = document.querySelector("[data-parse-vendor-save]");
     const csrfToken = document.querySelector("[name=csrfmiddlewaretoken]")?.value || "";
     let activeParse = null;
+
+    function populateVendorSelect(selectedVendorId) {
+      if (!parseVendorSelect || !window.VENDORS) return;
+      parseVendorSelect.innerHTML = "";
+      window.VENDORS.forEach((vendor) => {
+        const option = document.createElement("option");
+        option.value = vendor.id;
+        option.textContent = vendor.name;
+        if (String(vendor.id) === String(selectedVendorId)) {
+          option.selected = true;
+        }
+        parseVendorSelect.appendChild(option);
+      });
+    }
 
     function closeParseModal() {
       parseModal.hidden = true;
@@ -687,6 +792,7 @@
       approvalSubmit.disabled = true;
       parseSubmit.hidden = false;
       parseSubmit.disabled = true;
+      if (parseVendorSelect) parseVendorSelect.innerHTML = "";
     }
 
     function formatBytes(value) {
@@ -801,8 +907,13 @@
       button.addEventListener("click", async () => {
         const row = button.closest("[data-parse-row]");
         if (!row) return;
-        activeParse = {parseUrl: row.dataset.parseUrl};
-        activeParse.approveUrl = row.dataset.approveUrl;
+        activeParse = {
+          parseUrl: row.dataset.parseUrl,
+          previewUrl: row.dataset.previewUrl,
+          approveUrl: row.dataset.approveUrl,
+          updateVendorUrl: row.dataset.updateVendorUrl,
+          vendorId: row.dataset.vendorId || "",
+        };
         resetParseModal();
         parseModal.hidden = false;
         parseTitle.textContent = "Loading...";
@@ -815,6 +926,7 @@
           if (!response.ok) throw new Error(payload.error || "Preview failed.");
           setParseDetails(payload.file, payload.validation);
           setValidation(payload.validation);
+          populateVendorSelect(payload.validation.vendor_id || activeParse.vendorId);
           renderSheets(payload.file);
         } catch (error) {
           parseTitle.textContent = "Parse file";
@@ -853,6 +965,48 @@
         parseSubmit.disabled = false;
       }
     });
+
+    if (parseVendorSave) {
+      parseVendorSave.addEventListener("click", async () => {
+        if (!activeParse) return;
+        const vendorId = parseVendorSelect.value;
+        parseVendorSave.disabled = true;
+        parseFooter.textContent = "Saving vendor...";
+        try {
+          const response = await fetch(activeParse.updateVendorUrl, {
+            method: "POST",
+            headers: {
+              "X-CSRFToken": csrfToken,
+              "X-Requested-With": "XMLHttpRequest",
+            },
+            body: new URLSearchParams({vendor_id: vendorId}),
+          });
+          const payload = await response.json();
+          if (!response.ok) throw new Error(payload.error || "Save failed.");
+          activeParse.vendorId = vendorId;
+          const row = document.querySelector(`[data-update-vendor-url="${activeParse.updateVendorUrl}"]`);
+          if (row) {
+            row.dataset.vendorId = vendorId;
+            const vendorName = window.VENDORS.find((v) => String(v.id) === String(vendorId))?.name || "";
+            const vendorCell = row.querySelector("td:nth-child(2)");
+            if (vendorCell) vendorCell.textContent = vendorName || "Unassigned";
+          }
+          parseFooter.textContent = `Vendor updated to ${payload.vendor}. Reloading preview...`;
+          const previewResponse = await fetch(activeParse.previewUrl);
+          const previewPayload = await previewResponse.json();
+          if (!previewResponse.ok) throw new Error(previewPayload.error || "Preview reload failed.");
+          setParseDetails(previewPayload.file, previewPayload.validation);
+          setValidation(previewPayload.validation);
+          populateVendorSelect(previewPayload.validation.vendor_id || vendorId);
+          renderSheets(previewPayload.file);
+          parseFooter.textContent = "Ready to create a parsed CSV.";
+        } catch (error) {
+          parseFooter.textContent = error.message;
+        } finally {
+          parseVendorSave.disabled = false;
+        }
+      });
+    }
 
     function renderParsedResult(payload) {
       chartPreview.replaceChildren();

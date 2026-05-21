@@ -672,6 +672,7 @@ def validation_payload(
         "errors": errors,
         "warnings": warnings,
         "vendor": asset.vendor.name if asset.vendor else "",
+        "vendor_id": asset.vendor_id if asset.vendor else None,
         "parser_key": paths.vendor_key if paths else "",
         "schema_path": display_path(paths.schema_path) if paths else "",
         "parser_path": display_path(paths.parser_path) if paths else "",
