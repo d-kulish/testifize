@@ -48,7 +48,7 @@
 
   .process-mirror .mirror-head,
   .process-mirror .mirror-summary {
-    grid-template-columns: 16px minmax(200px, 1fr) minmax(200px, 1fr) 120px 120px 120px 120px 120px;
+    grid-template-columns: 16px minmax(200px, 1fr) minmax(200px, 1fr) 120px 120px 120px 120px 120px 120px;
     align-items: center;
     gap: 16px;
   }
@@ -69,6 +69,7 @@
     min-width: 0;
     height: 100%;
     justify-content: center;
+    grid-column: span 2;
   }
 
   .process-mirror .process-head-title {
@@ -148,6 +149,10 @@
     display: flex;
     align-items: center;
     min-width: 0;
+  }
+
+  .process-mirror .mirror-head .mirror-head-search {
+    grid-column: 4 / span 3;
   }
 
   .process-mirror .mirror-head-search .mirror-search-input {
@@ -416,19 +421,18 @@
             </div>
             <div class="process-count-col" role="columnheader">Files</div>
             <div class="process-count-col" role="columnheader">Size</div>
-            <div class="process-count-col" role="columnheader">Oldest</div>
-            <div class="process-count-col" role="columnheader"></div>
-            <div class="process-count-col" role="columnheader"></div>
+            <div class="process-count-col" role="columnheader">Queue Age</div>
           </div>
           {% for group in grouped_assets %}
-            <details class="mirror-folder" open>
+            <details class="mirror-folder">
               <summary class="mirror-summary" role="row">
                 <span class="mirror-folder-name" role="cell">{{ group.vendor.name|default:"Unassigned" }}</span>
+                <span role="cell"></span>
+                <span role="cell"></span>
+                <span role="cell"></span>
                 <span class="process-count-cell" role="cell">{{ group.assets|length }}</span>
                 <span class="process-count-cell" role="cell">{{ group.total_size|filesizeformat }}</span>
                 <span class="process-count-cell" role="cell">{{ group.oldest_age_label }}</span>
-                <span role="cell"></span>
-                <span role="cell"></span>
               </summary>
               <div class="mirror-files">
                 <table>
