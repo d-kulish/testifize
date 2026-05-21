@@ -659,6 +659,17 @@ def load_approved_rows(path: Path, period_start: date | None, period_end: date |
     return rows
 
 
+def _schema_sheet_names(schema: dict[str, Any]) -> list[str]:
+    names: list[str] = []
+    if schema.get("sheet_name"):
+        names.append(schema["sheet_name"])
+    for ws in schema.get("worksheets") or []:
+        n = ws.get("name")
+        if n:
+            names.append(n)
+    return names
+
+
 def validation_payload(
     asset: Asset,
     paths: ParserPaths | None,
@@ -678,6 +689,7 @@ def validation_payload(
         "parser_path": display_path(paths.parser_path) if paths else "",
         "approved_path": display_path(approved_path) if approved_path else "",
         "sheet_name": schema.get("sheet_name", ""),
+        "schema_sheet_names": _schema_sheet_names(schema),
         "header_row": (schema.get("header") or {}).get("row", ""),
         "output_defaults": schema.get("output_defaults") or {},
     }

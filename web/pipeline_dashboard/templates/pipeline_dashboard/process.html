@@ -305,6 +305,36 @@
     cursor: not-allowed;
   }
 
+  .review-message:empty {
+    display: none;
+  }
+
+  [hidden] {
+    display: none !important;
+  }
+
+  .review-preview[data-parse-preview] {
+    grid-row: 2;
+    padding-top: 4px;
+  }
+
+  .review-preview[data-parse-preview] .review-preview-scroll {
+    height: 100%;
+  }
+
+  .parse-error-message {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 10;
+    color: #fca5a5;
+    font-size: 44px;
+    font-weight: 760;
+    text-align: center;
+    line-height: 1.4;
+  }
+
   .parse-comparison-panel {
     margin-bottom: 14px;
     border: 1px solid var(--border-soft);
@@ -409,27 +439,13 @@
 
   .process-footer-meta {
     display: flex;
-    align-items: center;
+    align-items: end;
     gap: 16px;
     flex: 1;
     min-width: 0;
   }
 
-  .process-footer-meta .review-vendor {
-    display: grid;
-    gap: 4px;
-    width: 220px;
-    min-width: 220px;
-    color: var(--muted);
-    font-size: 12px;
-    font-weight: 700;
-  }
-
-  .process-footer-meta .review-vendor select {
-    width: 100%;
-  }
-
-  .process-footer-meta .review-vendor button {
+  .review-vendor button {
     justify-self: start;
   }
 
@@ -663,7 +679,15 @@
         <div class="review-message" data-parse-validation></div>
       </header>
       <div class="review-body">
-        <div class="review-sheet-tabs" data-parse-tabs></div>
+        <div class="review-tabs-row" data-parse-tabs-row>
+          <button class="tab-edge-btn" type="button" data-parse-tab-prev aria-label="Previous tabs">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="15 18 9 12 15 6"></polyline></svg>
+          </button>
+          <div class="review-sheet-tabs" data-parse-tabs></div>
+          <button class="tab-edge-btn" type="button" data-parse-tab-next aria-label="Next tabs">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="9 18 15 12 9 6"></polyline></svg>
+          </button>
+        </div>
         <div class="review-preview" data-parse-preview>
           <div class="review-preview-scroll" data-parse-scroll>
             <div class="review-message">Choose a parsing file to preview.</div>
@@ -681,9 +705,9 @@
           <span class="muted" data-parse-footer>Parser validation runs before CSV creation.</span>
         </div>
         <div class="actions">
-          <button class="button" type="button" data-parse-close>Cancel</button>
-          <button class="button primary" type="button" data-parse-submit>Parse</button>
-          <button class="button primary" type="button" data-approval-submit hidden>Approval</button>
+          <button class="button review-action-parsing" type="button" data-parse-submit>Parse</button>
+          <button class="button review-action-parsing" type="button" data-approval-submit hidden>Approval</button>
+          <button class="button review-action-cancel" type="button" data-parse-close>Cancel</button>
         </div>
       </footer>
     </section>
@@ -748,6 +772,9 @@
     const parseVendorSave = document.querySelector("[data-parse-vendor-save]");
     const parseDetailsToggle = document.querySelector("[data-parse-details-toggle]");
     const parseSeparator = document.querySelector("[data-parse-separator]");
+    const parseTabsRow = document.querySelector("[data-parse-tabs-row]");
+    const tabNavPrev = document.querySelector("[data-parse-tab-prev]");
+    const tabNavNext = document.querySelector("[data-parse-tab-next]");
     const csrfToken = document.querySelector("[name=csrfmiddlewaretoken]")?.value || "";
     let activeParse = null;
 
@@ -770,6 +797,7 @@
       activeParse = null;
       chartPreview.hidden = true;
       chartPreview.replaceChildren();
+      if (parseTabsRow) parseTabsRow.hidden = false;
       parseTabs.hidden = false;
       parsePreview.hidden = false;
       approvalSubmit.hidden = true;
@@ -788,6 +816,7 @@
 
     function showParseMessage(message, keepTabs = false) {
       if (!keepTabs) {
+        if (parseTabsRow) parseTabsRow.hidden = true;
         parseTabs.replaceChildren();
       }
       parsePreviewScroll.replaceChildren();
@@ -798,6 +827,7 @@
     }
 
     function resetParseModal() {
+      if (parseTabsRow) parseTabsRow.hidden = false;
       parseTabs.hidden = false;
       chartPreview.hidden = true;
       chartPreview.replaceChildren();
@@ -815,6 +845,15 @@
       parseSeparator?.classList.add("collapsed");
     }
 
+    function updateTabNav() {
+      if (!tabNavPrev || !tabNavNext) return;
+      const maxScroll = parseTabs.scrollWidth - parseTabs.clientWidth;
+      const canScrollLeft = parseTabs.scrollLeft > 2;
+      const canScrollRight = maxScroll > 2 && parseTabs.scrollLeft < maxScroll - 2;
+      tabNavPrev.classList.toggle("at-edge", !canScrollLeft);
+      tabNavNext.classList.toggle("at-edge", !canScrollRight);
+    }
+
     if (parseDetailsToggle) {
       parseDetailsToggle.addEventListener("click", () => {
         const expanded = parseDetailsToggle.getAttribute("aria-expanded") === "true";
@@ -822,6 +861,19 @@
         parseDetailsToggle.setAttribute("aria-label", !expanded ? "Hide file details" : "Show file details");
         parseDetails?.classList.toggle("collapsed", expanded);
         parseSeparator?.classList.toggle("collapsed", expanded);
+      });
+    }
+
+    if (tabNavPrev) {
+      tabNavPrev.addEventListener("click", () => {
+        parseTabs.scrollBy({ left: -200, behavior: "smooth" });
+        window.setTimeout(updateTabNav, 350);
+      });
+    }
+    if (tabNavNext) {
+      tabNavNext.addEventListener("click", () => {
+        parseTabs.scrollBy({ left: 200, behavior: "smooth" });
+        window.setTimeout(updateTabNav, 350);
       });
     }
 
@@ -878,15 +930,7 @@
 
     function setValidation(validation) {
       parseValidation.textContent = "";
-      parseValidation.classList.toggle("status-red", !validation.ok);
-      parseValidation.classList.toggle("status-green", validation.ok);
-      const lines = [];
-      if (validation.ok) {
-        lines.push("Parser and input schema are valid for this file.");
-      }
-      validation.errors?.forEach((error) => lines.push(`Error: ${error}`));
-      validation.warnings?.forEach((warning) => lines.push(`Warning: ${warning}`));
-      parseValidation.textContent = lines.join(" ");
+      parseValidation.classList.remove("status-red", "status-green");
       parseSubmit.disabled = !validation.ok;
       parseFooter.textContent = validation.ok ? "Ready to create a parsed CSV." : "Resolve validation errors before parsing.";
     }
@@ -921,8 +965,20 @@
       parsePreviewScroll.appendChild(table);
     }
 
-    function renderSheets(file) {
+    function renderSheets(file, validation) {
       parseTabs.replaceChildren();
+      parseTabs.scrollLeft = 0;
+
+      if (validation && !validation.ok) {
+        if (parseTabsRow) parseTabsRow.hidden = true;
+        parsePreviewScroll.replaceChildren();
+        const errorEl = document.createElement("div");
+        errorEl.className = "parse-error-message";
+        errorEl.textContent = "parser is incorrect";
+        parsePreviewScroll.appendChild(errorEl);
+        return;
+      }
+
       if (file.warning) {
         showParseMessage(file.warning);
         return;
@@ -931,21 +987,26 @@
         showParseMessage("No preview is available for this file.");
         return;
       }
-      file.sheets.forEach((sheet, index) => {
-        const button = document.createElement("button");
-        button.type = "button";
-        button.textContent = `${sheet.name} (${sheet.row_count || 0} x ${sheet.column_count || 0})`;
-        button.addEventListener("click", () => {
-          parseTabs.querySelectorAll("button").forEach((tab) => tab.classList.remove("active"));
-          button.classList.add("active");
-          renderSheet(sheet);
-        });
-        parseTabs.appendChild(button);
-        if (index === 0) {
-          button.classList.add("active");
-          renderSheet(sheet);
-        }
-      });
+
+      if (parseTabsRow) parseTabsRow.hidden = true;
+
+      const schemaNames = (validation && validation.schema_sheet_names) || [];
+      const legacyName = (validation && validation.sheet_name) || "";
+      const targetNames = schemaNames.length ? schemaNames : legacyName ? [legacyName] : [];
+
+      if (!targetNames.length) {
+        showParseMessage("Schema does not define a sheet name.", true);
+        return;
+      }
+
+      const targetSheet = file.sheets.find((sheet) => targetNames.includes(sheet.name));
+      if (!targetSheet) {
+        const missing = targetNames.join(", ");
+        showParseMessage(`Sheet ${missing} was not found in this file.`, true);
+        return;
+      }
+
+      renderSheet(targetSheet);
     }
 
     document.querySelectorAll("[data-parse-button]").forEach((button) => {
@@ -972,7 +1033,7 @@
           setParseDetails(payload.file, payload.validation);
           setValidation(payload.validation);
           populateVendorSelect(payload.validation.vendor_id || activeParse.vendorId);
-          renderSheets(payload.file);
+          renderSheets(payload.file, payload.validation);
         } catch (error) {
           parseTitle.textContent = "Parse file";
           showParseMessage(error.message);
@@ -993,6 +1054,7 @@
         const payload = await response.json();
         if (!response.ok) throw new Error(payload.error || "Parse failed.");
         activeParse.resultPayload = payload;
+        if (parseTabsRow) parseTabsRow.hidden = true;
         parseTabs.hidden = true;
         parsePreview.hidden = true;
         chartPreview.hidden = false;
@@ -1002,6 +1064,7 @@
         renderParsedResult(payload);
         parseFooter.textContent = "Review the charts and final CSV preview, then approve or cancel.";
       } catch (error) {
+        if (parseTabsRow) parseTabsRow.hidden = false;
         parseTabs.hidden = false;
         parsePreview.hidden = false;
         chartPreview.hidden = true;
@@ -1043,7 +1106,7 @@
           setParseDetails(previewPayload.file, previewPayload.validation);
           setValidation(previewPayload.validation);
           populateVendorSelect(previewPayload.validation.vendor_id || vendorId);
-          renderSheets(previewPayload.file);
+          renderSheets(previewPayload.file, previewPayload.validation);
           parseFooter.textContent = "Ready to create a parsed CSV.";
         } catch (error) {
           parseFooter.textContent = error.message;
