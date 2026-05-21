@@ -195,6 +195,53 @@
     padding: 0 1px;
   }
 
+  .button.small.review-button,
+  .button.small.cancel-button,
+  .button.small.approval-action {
+    min-height: 36px;
+    padding: 7px 16px;
+    font-size: 14px;
+    min-width: 100px;
+  }
+
+  .review-button {
+    background: #16a34a;
+    border-color: transparent;
+    color: #ffffff;
+  }
+
+  .review-button:hover:not(:disabled) {
+    background: #15803d;
+    border-color: transparent;
+    color: #ffffff;
+  }
+
+  .review-button:disabled {
+    background: #d1d5db;
+    border-color: transparent;
+    color: #6b7280;
+    cursor: not-allowed;
+  }
+
+  .cancel-button {
+    background: #ef4444;
+    border-color: transparent;
+    color: #ffffff;
+  }
+
+  .cancel-button:hover:not(:disabled) {
+    background: #dc2626;
+    border-color: transparent;
+    color: #ffffff;
+  }
+
+  .cancel-button:disabled {
+    background: #d1d5db;
+    border-color: transparent;
+    color: #6b7280;
+    cursor: not-allowed;
+  }
+
   .parse-comparison-panel {
     margin-bottom: 14px;
     border: 1px solid var(--border-soft);
@@ -424,15 +471,22 @@
                         <td>{{ asset.source_folder|default:asset.source_folder_label|default:"-" }}</td>
                         <td>{{ asset.file_size|filesizeformat }}</td>
                         <td>
-                          <form
-                            class="inline-form"
-                            method="post"
-                            action="{% url 'pipeline_dashboard:cancel_process_file' asset.remote_item_id %}"
-                            data-cancel-process-form
-                          >
-                            {% csrf_token %}
-                            <button class="button small" type="submit">Cancel</button>
-                          </form>
+                          <div class="actions">
+                            <button
+                              class="button small review-button"
+                              type="button"
+                              data-parse-button
+                            >Parse</button>
+                            <form
+                              class="inline-form"
+                              method="post"
+                              action="{% url 'pipeline_dashboard:cancel_process_file' asset.remote_item_id %}"
+                              data-cancel-process-form
+                            >
+                              {% csrf_token %}
+                              <button class="button small cancel-button" type="submit">Cancel</button>
+                            </form>
+                          </div>
                         </td>
                       </tr>
                     {% endfor %}
@@ -489,7 +543,7 @@
                       data-approve-final-form
                     >
                       {% csrf_token %}
-                      <button class="button small success" type="submit">Approved</button>
+                      <button class="button small review-button approval-action" type="submit">Approved</button>
                     </form>
                     <form
                       class="inline-form"
@@ -498,7 +552,7 @@
                       data-cancel-approval-form
                     >
                       {% csrf_token %}
-                      <button class="button small" type="submit">Cancel</button>
+                      <button class="button small cancel-button approval-action" type="submit">Cancel</button>
                     </form>
                   </div>
                 </td>
@@ -739,11 +793,10 @@
       });
     }
 
-    document.querySelectorAll("[data-parse-row]").forEach((row) => {
-      row.addEventListener("click", async (event) => {
-        if (event.target.closest("form, button, select, a")) {
-          return;
-        }
+    document.querySelectorAll("[data-parse-button]").forEach((button) => {
+      button.addEventListener("click", async () => {
+        const row = button.closest("[data-parse-row]");
+        if (!row) return;
         activeParse = {parseUrl: row.dataset.parseUrl};
         activeParse.approveUrl = row.dataset.approveUrl;
         resetParseModal();
