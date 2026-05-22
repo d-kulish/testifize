@@ -546,14 +546,26 @@ def _build_process_group(vendor, assets):
     }
 
 
+def _allowed_vendor_ids_for_asset(asset: Asset, vendors_by_name: dict[str, Vendor]) -> str:
+    folder_path = asset.source_folder_label or (asset.source_folder.label if asset.source_folder else "")
+    names = _allowed_vendor_names_for_folder(folder_path)
+    if not names:
+        return ""
+    ids = [str(vendors_by_name[name.casefold()].id) for name in names if name.casefold() in vendors_by_name]
+    return ",".join(ids)
+
+
 def process(request):
     processing_assets = list(
         Asset.objects.select_related("vendor", "source_folder")
         .filter(status=AssetStatus.PROCESSING)
         .order_by("-remote_modified_at", "-last_seen_at", "name")
     )
-    grouped_assets = []
     active_vendors = list(Vendor.objects.filter(is_active=True).order_by("name"))
+    vendors_by_name = {vendor.name.casefold(): vendor for vendor in active_vendors}
+    for asset in processing_assets:
+        asset.allowed_vendor_ids = _allowed_vendor_ids_for_asset(asset, vendors_by_name)
+    grouped_assets = []
     for vendor in active_vendors:
         vendor_assets = [asset for asset in processing_assets if asset.vendor_id == vendor.id]
         if vendor_assets:
@@ -878,6 +890,14 @@ def parse_file_preview(request, remote_item_id: str):
         remote_item_id=remote_item_id,
         status=AssetStatus.PROCESSING,
     )
+    vendor_id = request.GET.get("vendor_id", "")
+    if vendor_id:
+        try:
+            preview_vendor = Vendor.objects.get(pk=vendor_id, is_active=True)
+        except (Vendor.DoesNotExist, ValueError):
+            preview_vendor = None
+        if preview_vendor:
+            asset.vendor = preview_vendor
     try:
         payload = build_parse_preview(asset)
     except (ParserWorkflowError, ReviewPreviewError) as exc:

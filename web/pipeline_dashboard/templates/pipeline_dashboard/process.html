@@ -439,14 +439,53 @@
 
   .process-footer-meta {
     display: flex;
-    align-items: end;
+    align-items: center;
     gap: 16px;
     flex: 1;
     min-width: 0;
   }
 
-  .review-vendor button {
-    justify-self: start;
+  [data-parse-vendor-panel] {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: auto;
+    min-width: auto;
+  }
+
+  [data-parse-vendor-panel] select {
+    width: auto;
+    min-width: 255px;
+  }
+
+  .button.review-action-save {
+    min-height: 36px;
+    padding: 7px 16px;
+    font-size: 14px;
+    min-width: 100px;
+    border-color: transparent;
+    background: #93c5fd;
+    color: #ffffff;
+    cursor: not-allowed;
+  }
+
+  .button.review-action-save:not(:disabled) {
+    background: #2563eb;
+    cursor: pointer;
+  }
+
+  .button.review-action-save:not(:disabled):hover,
+  .button.review-action-save:not(:disabled):active {
+    background: #1d4ed8;
+    border-color: transparent;
+    color: #ffffff;
+  }
+
+  .button.review-action-parsing:disabled {
+    background: #bbf7d0;
+    color: #14532d;
+    cursor: not-allowed;
+    opacity: 1;
   }
 
   @media (max-width: 760px) {
@@ -558,6 +597,7 @@
                         data-approve-url="{% url 'pipeline_dashboard:approve_process_file' asset.remote_item_id %}"
                         data-update-vendor-url="{% url 'pipeline_dashboard:update_process_vendor' asset.remote_item_id %}"
                         data-vendor-id="{{ asset.vendor_id|default:'' }}"
+                        data-allowed-vendors="{{ asset.allowed_vendor_ids|default:'' }}"
                       >
                         <td class="file-name" title="{{ asset.name }}">{{ asset.name }}</td>
                         <td>{{ asset.vendor.name|default:"Unassigned" }}</td>
@@ -698,11 +738,9 @@
       <footer class="review-footer">
         <div class="process-footer-meta">
           <div class="review-vendor" data-parse-vendor-panel>
-            <span>Vendor</span>
             <select data-parse-vendor-select></select>
-            <button class="button small" type="button" data-parse-vendor-save>Save</button>
+            <button class="button review-action-save" type="button" data-parse-vendor-save>Save</button>
           </div>
-          <span class="muted" data-parse-footer>Parser validation runs before CSV creation.</span>
         </div>
         <div class="actions">
           <button class="button review-action-parsing" type="button" data-parse-submit>Parse</button>
@@ -767,7 +805,6 @@
     const chartPreview = document.querySelector("[data-chart-preview]");
     const parseSubmit = document.querySelector("[data-parse-submit]");
     const approvalSubmit = document.querySelector("[data-approval-submit]");
-    const parseFooter = document.querySelector("[data-parse-footer]");
     const parseVendorSelect = document.querySelector("[data-parse-vendor-select]");
     const parseVendorSave = document.querySelector("[data-parse-vendor-save]");
     const parseDetailsToggle = document.querySelector("[data-parse-details-toggle]");
@@ -777,11 +814,20 @@
     const tabNavNext = document.querySelector("[data-parse-tab-next]");
     const csrfToken = document.querySelector("[name=csrfmiddlewaretoken]")?.value || "";
     let activeParse = null;
+    let savedVendorId = null;
 
-    function populateVendorSelect(selectedVendorId) {
+    function updateSaveButtonState() {
+      if (!parseVendorSave || !parseVendorSelect) return;
+      const changed = String(parseVendorSelect.value) !== String(savedVendorId);
+      parseVendorSave.disabled = !changed;
+    }
+
+    function populateVendorSelect(selectedVendorId, allowedVendorIds) {
       if (!parseVendorSelect || !window.VENDORS) return;
       parseVendorSelect.innerHTML = "";
+      const allowedSet = allowedVendorIds ? new Set(allowedVendorIds.split(",").filter(Boolean)) : null;
       window.VENDORS.forEach((vendor) => {
+        if (allowedSet && !allowedSet.has(String(vendor.id))) return;
         const option = document.createElement("option");
         option.value = vendor.id;
         option.textContent = vendor.name;
@@ -790,9 +836,12 @@
         }
         parseVendorSelect.appendChild(option);
       });
+      savedVendorId = selectedVendorId;
+      updateSaveButtonState();
     }
 
     function closeParseModal() {
+      if (vendorChangeDebounce) window.clearTimeout(vendorChangeDebounce);
       parseModal.hidden = true;
       activeParse = null;
       chartPreview.hidden = true;
@@ -827,6 +876,7 @@
     }
 
     function resetParseModal() {
+      if (vendorChangeDebounce) window.clearTimeout(vendorChangeDebounce);
       if (parseTabsRow) parseTabsRow.hidden = false;
       parseTabs.hidden = false;
       chartPreview.hidden = true;
@@ -874,6 +924,30 @@
       tabNavNext.addEventListener("click", () => {
         parseTabs.scrollBy({ left: 200, behavior: "smooth" });
         window.setTimeout(updateTabNav, 350);
+      });
+    }
+
+    let vendorChangeDebounce = null;
+    if (parseVendorSelect) {
+      parseVendorSelect.addEventListener("change", () => {
+        updateSaveButtonState();
+        if (!activeParse || !activeParse.previewUrl) return;
+        if (vendorChangeDebounce) window.clearTimeout(vendorChangeDebounce);
+        vendorChangeDebounce = window.setTimeout(async () => {
+          try {
+            const url = new URL(activeParse.previewUrl, window.location.href);
+            url.searchParams.set("vendor_id", parseVendorSelect.value);
+            const response = await fetch(url.toString());
+            const payload = await response.json();
+            if (!response.ok) throw new Error(payload.error || "Preview failed.");
+            setParseDetails(payload.file, payload.validation);
+            setValidation(payload.validation);
+            renderSheets(payload.file, payload.validation);
+          } catch (error) {
+            parseValidation.textContent = error.message;
+            parseValidation.className = "review-message status-red";
+          }
+        }, 300);
       });
     }
 
@@ -959,7 +1033,10 @@
       parseValidation.textContent = "";
       parseValidation.classList.remove("status-red", "status-green");
       parseSubmit.disabled = !validation.ok;
-      parseFooter.textContent = validation.ok ? "Ready to create a parsed CSV." : "Resolve validation errors before parsing.";
+      if (validation.warnings && validation.warnings.length) {
+        parseValidation.textContent = validation.warnings.join("; ");
+        parseValidation.classList.add("status-green");
+      }
     }
 
     function renderSheet(sheet) {
@@ -999,10 +1076,39 @@
       if (validation && !validation.ok) {
         if (parseTabsRow) parseTabsRow.hidden = true;
         parsePreviewScroll.replaceChildren();
-        const errorEl = document.createElement("div");
-        errorEl.className = "parse-error-message";
-        errorEl.textContent = "parser is incorrect";
-        parsePreviewScroll.appendChild(errorEl);
+        const container = document.createElement("div");
+        container.style.display = "flex";
+        container.style.flexDirection = "column";
+        container.style.alignItems = "center";
+        container.style.justifyContent = "center";
+        container.style.gap = "6px";
+        container.style.position = "absolute";
+        container.style.top = "50%";
+        container.style.left = "50%";
+        container.style.transform = "translate(-50%, -50%)";
+        container.style.zIndex = "10";
+        container.style.color = "#fca5a5";
+        container.style.textAlign = "center";
+        container.style.maxWidth = "80%";
+
+        const titleEl = document.createElement("div");
+        titleEl.style.fontSize = "44px";
+        titleEl.style.fontWeight = "760";
+        titleEl.style.whiteSpace = "nowrap";
+        titleEl.textContent = "Incorrect parser";
+        container.appendChild(titleEl);
+
+        if (validation.errors && validation.errors.length) {
+          validation.errors.forEach((msg) => {
+            const detailsEl = document.createElement("div");
+            detailsEl.style.fontSize = "13px";
+            detailsEl.style.fontWeight = "600";
+            detailsEl.textContent = msg;
+            container.appendChild(detailsEl);
+          });
+        }
+
+        parsePreviewScroll.appendChild(container);
         return;
       }
 
@@ -1046,6 +1152,7 @@
           approveUrl: row.dataset.approveUrl,
           updateVendorUrl: row.dataset.updateVendorUrl,
           vendorId: row.dataset.vendorId || "",
+          allowedVendors: row.dataset.allowedVendors || "",
         };
         resetParseModal();
         parseModal.hidden = false;
@@ -1059,7 +1166,7 @@
           if (!response.ok) throw new Error(payload.error || "Preview failed.");
           setParseDetails(payload.file, payload.validation);
           setValidation(payload.validation);
-          populateVendorSelect(payload.validation.vendor_id || activeParse.vendorId);
+          populateVendorSelect(payload.validation.vendor_id || activeParse.vendorId, activeParse.allowedVendors);
           renderSheets(payload.file, payload.validation);
         } catch (error) {
           parseTitle.textContent = "Parse file";
@@ -1072,7 +1179,6 @@
     parseSubmit.addEventListener("click", async () => {
       if (!activeParse) return;
       parseSubmit.disabled = true;
-      parseFooter.textContent = "Parsing...";
       try {
         const response = await fetch(activeParse.parseUrl, {
           method: "POST",
@@ -1089,14 +1195,12 @@
         approvalSubmit.hidden = false;
         approvalSubmit.disabled = false;
         renderParsedResult(payload);
-        parseFooter.textContent = "Review the charts and final CSV preview, then approve or cancel.";
       } catch (error) {
         if (parseTabsRow) parseTabsRow.hidden = false;
         parseTabs.hidden = false;
         parsePreview.hidden = false;
         chartPreview.hidden = true;
         showParseMessage(error.message, true);
-        parseFooter.textContent = "Parse failed.";
         parseSubmit.disabled = false;
       }
     });
@@ -1106,7 +1210,6 @@
         if (!activeParse) return;
         const vendorId = parseVendorSelect.value;
         parseVendorSave.disabled = true;
-        parseFooter.textContent = "Saving vendor...";
         try {
           const response = await fetch(activeParse.updateVendorUrl, {
             method: "POST",
@@ -1126,19 +1229,18 @@
             const vendorCell = row.querySelector("td:nth-child(2)");
             if (vendorCell) vendorCell.textContent = vendorName || "Unassigned";
           }
-          parseFooter.textContent = `Vendor updated to ${payload.vendor}. Reloading preview...`;
           const previewResponse = await fetch(activeParse.previewUrl);
           const previewPayload = await previewResponse.json();
           if (!previewResponse.ok) throw new Error(previewPayload.error || "Preview reload failed.");
           setParseDetails(previewPayload.file, previewPayload.validation);
           setValidation(previewPayload.validation);
-          populateVendorSelect(previewPayload.validation.vendor_id || vendorId);
+          populateVendorSelect(previewPayload.validation.vendor_id || vendorId, activeParse.allowedVendors);
           renderSheets(previewPayload.file, previewPayload.validation);
-          parseFooter.textContent = "Ready to create a parsed CSV.";
         } catch (error) {
-          parseFooter.textContent = error.message;
+          parseValidation.textContent = error.message;
+          parseValidation.className = "review-message status-red";
         } finally {
-          parseVendorSave.disabled = false;
+          updateSaveButtonState();
         }
       });
     }
@@ -1471,7 +1573,6 @@
     approvalSubmit.addEventListener("click", async () => {
       if (!activeParse) return;
       approvalSubmit.disabled = true;
-      parseFooter.textContent = "Uploading parsed CSV to ShareFile Approval...";
       try {
         const response = await fetch(activeParse.approveUrl, {
           method: "POST",
@@ -1481,7 +1582,8 @@
         if (!response.ok) throw new Error(payload.error || "Approval failed.");
         window.location.reload();
       } catch (error) {
-        parseFooter.textContent = error.message;
+        parseValidation.textContent = error.message;
+        parseValidation.className = "review-message status-red";
         approvalSubmit.disabled = false;
       }
     });
