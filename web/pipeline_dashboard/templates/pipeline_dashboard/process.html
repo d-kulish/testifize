@@ -905,27 +905,54 @@
       return `${size.toFixed(unit === 0 ? 0 : 1)} ${units[unit]}`;
     }
 
+    function formatDate(isoString) {
+      if (!isoString || isoString === "-") return "-";
+      const date = new Date(isoString);
+      if (isNaN(date.getTime())) return isoString;
+      return date.getDate() + "/" + (date.getMonth() + 1) + "/" + date.getFullYear();
+    }
+
     function setParseDetails(file, validation) {
       parseTitle.textContent = file.name || "Parse file";
-      const details = [
-        ["Vendor", validation.vendor || "-"],
-        ["Size", formatBytes(file.size)],
-        ["Type", file.kind || file.extension || "-"],
-        ["Pages", file.sheet_count || "-"],
-        ["Modified", file.modified_at || "-"],
-        ["Uploader", file.uploaded_by || "-"],
-        ["Schema", validation.schema_path || "-"],
-        ["Approved", validation.approved_path || "-"],
-      ];
       parseDetails.replaceChildren();
-      details.forEach(([label, value]) => {
-        const item = document.createElement("div");
-        const strong = document.createElement("strong");
-        strong.textContent = value;
-        item.appendChild(strong);
-        item.append(label);
-        parseDetails.appendChild(item);
-      });
+
+      function makeItem(label, value) {
+        const row = document.createElement("div");
+        row.className = "detail-row";
+        const labelSpan = document.createElement("span");
+        labelSpan.className = "detail-label";
+        labelSpan.textContent = label + ":";
+        const valueSpan = document.createElement("span");
+        valueSpan.className = "detail-value";
+        valueSpan.textContent = value;
+        row.appendChild(labelSpan);
+        row.appendChild(valueSpan);
+        return row;
+      }
+
+      const cell1 = document.createElement("div");
+      cell1.appendChild(makeItem("Vendor", validation.vendor || "-"));
+      parseDetails.appendChild(cell1);
+
+      const cell2 = document.createElement("div");
+      cell2.appendChild(makeItem("Uploaded", formatDate(file.created_at)));
+      parseDetails.appendChild(cell2);
+
+      const cell3 = document.createElement("div");
+      cell3.appendChild(makeItem("Uploader", file.uploaded_by || "-"));
+      parseDetails.appendChild(cell3);
+
+      const cell4 = document.createElement("div");
+      cell4.appendChild(makeItem("Schema", validation.schema_path || "-"));
+      parseDetails.appendChild(cell4);
+
+      const cell5 = document.createElement("div");
+      cell5.appendChild(makeItem("Modified", formatDate(file.modified_at)));
+      parseDetails.appendChild(cell5);
+
+      const cell6 = document.createElement("div");
+      cell6.appendChild(makeItem("Pages", file.sheet_count || "-"));
+      parseDetails.appendChild(cell6);
     }
 
     function setValidation(validation) {
