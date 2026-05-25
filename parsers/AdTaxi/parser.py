@@ -13,11 +13,11 @@ MONEY_SCALE = Decimal("0.000001")
 IMPRESSION_SCALE = Decimal("0.000001")
 
 
-def parse_file(source_path: Path, input_schema: dict[str, Any], output_columns: list[str]) -> list[dict[str, Any]]:
+def parse_file(source_path: Path, input_schema: dict[str, Any], output_columns: list[str], sheet_name: str | None = None) -> list[dict[str, Any]]:
     defaults = input_schema["output_defaults"]
     workbook = load_workbook(source_path, read_only=True, data_only=True)
     try:
-        sheet = workbook[input_schema["sheet_name"]]
+        sheet = workbook[sheet_name or input_schema["sheet_name"]]
         start_date, end_date = parse_date_range(sheet[input_schema["metadata"]["date_range_cell"]].value)
         dates = date_range(start_date, end_date)
         if not dates:

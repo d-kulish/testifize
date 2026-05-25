@@ -48,8 +48,8 @@ def build_parse_preview(asset: Asset) -> dict[str, Any]:
     return {"file": file_preview, "validation": validation}
 
 
-def build_parse_result_preview(asset: Asset) -> dict[str, Any]:
-    parsed = parse_asset_rows(asset)
+def build_parse_result_preview(asset: Asset, sheet_name: str | None = None) -> dict[str, Any]:
+    parsed = parse_asset_rows(asset, sheet_name=sheet_name)
     comparison = compare_to_approved(parsed.rows, parsed.approved_path)
     output_label = approval_filename_label(parsed.summary)
     return {
@@ -128,25 +128,94 @@ def validate_asset_parser(asset: Asset) -> dict[str, Any]:
     return validation_payload(asset, paths, schema, errors, warnings, approved_path)
 
 
-def parse_asset_rows(asset: Asset) -> ParsedRows:
-    validation = validate_asset_parser(asset)
-    if not validation["ok"]:
-        raise ParserWorkflowError("; ".join(validation["errors"]))
+def probe_sheet_validation(asset: Asset, sheet_name: str) -> dict[str, Any]:
+    errors: list[str] = []
+    warnings: list[str] = []
+    schema: dict[str, Any] = {}
+    paths = parser_paths_for_vendor(asset.vendor)
+
+    if not asset.vendor:
+        errors.append("No vendor is assigned.")
+    if not paths:
+        errors.append("No parser folder is configured for this vendor.")
+        return validation_payload(asset, None, schema, errors, warnings)
+
+    if not paths.schema_path.exists():
+        errors.append(f"Missing input schema: {display_path(paths.schema_path)}")
+    else:
+        try:
+            schema = json.loads(paths.schema_path.read_text(encoding="utf-8"))
+        except json.JSONDecodeError as exc:
+            errors.append(f"Input schema is not valid JSON: {exc}")
+
+    if not paths.parser_path.exists():
+        errors.append(f"Missing parser file: {display_path(paths.parser_path)}")
+
+    if not asset.local_path:
+        errors.append("Asset has no local file path.")
+    else:
+        try:
+            source_path = inbox_file_path(asset.local_path)
+        except ReviewPreviewError as exc:
+            errors.append(str(exc))
+        else:
+            if schema:
+                file_type = schema.get("file_type", "").lower()
+                extension = source_path.suffix.lower().lstrip(".")
+                if file_type and file_type != extension:
+                    if not (file_type == "xlsx" and extension == "xlsm"):
+                        errors.append(f"Schema expects {file_type}; selected file is {extension or 'unknown'}.")
+                if file_type in {"xlsx", "xlsm"} or extension in {"xlsx", "xlsm"}:
+                    errors.extend(validate_excel_schema_probe(source_path, schema, sheet_name))
+                else:
+                    errors.append("Sheet probing is only supported for Excel files.")
+
+    approved_path = approved_csv_path(asset.vendor)
+    if not approved_path:
+        warnings.append("No approved historical CSV exists for comparison.")
+
+    return validation_payload(asset, paths, schema, errors, warnings, approved_path)
+
+
+def parse_asset_rows(asset: Asset, sheet_name: str | None = None) -> ParsedRows:
     if not asset.vendor:
         raise ParserWorkflowError("No vendor is assigned.")
-
     paths = parser_paths_for_vendor(asset.vendor)
     if not paths:
         raise ParserWorkflowError("No parser folder is configured for this vendor.")
+    if not paths.schema_path.exists():
+        raise ParserWorkflowError(f"Missing input schema: {display_path(paths.schema_path)}")
+    if not paths.parser_path.exists():
+        raise ParserWorkflowError(f"Missing parser file: {display_path(paths.parser_path)}")
+
     source_path = inbox_file_path(asset.local_path)
     schema = load_json(paths.schema_path)
+
+    if sheet_name:
+        errors: list[str] = []
+        file_type = schema.get("file_type", "").lower()
+        extension = source_path.suffix.lower().lstrip(".")
+        if file_type and file_type != extension:
+            if not (file_type == "xlsx" and extension == "xlsm"):
+                errors.append(f"Schema expects {file_type}; selected file is {extension or 'unknown'}.")
+        if file_type in {"xlsx", "xlsm"} or extension in {"xlsx", "xlsm"}:
+            errors.extend(validate_excel_schema_probe(source_path, schema, sheet_name))
+        else:
+            errors.append("Sheet probing is only supported for Excel files.")
+        if errors:
+            raise ParserWorkflowError("; ".join(errors))
+    else:
+        validation = validate_asset_parser(asset)
+        if not validation["ok"]:
+            raise ParserWorkflowError("; ".join(validation["errors"]))
+
     approved_path = approved_csv_path(asset.vendor)
     output_columns = load_output_columns(approved_path, schema)
     module = load_parser_module(paths.parser_path)
     if not hasattr(module, "parse_file"):
         raise ParserWorkflowError(f"{display_path(paths.parser_path)} does not expose parse_file().")
 
-    rows = module.parse_file(source_path, schema, output_columns)
+    rows = module.parse_file(source_path, schema, output_columns, sheet_name=sheet_name)
     if not rows:
         raise ParserWorkflowError("Parser returned no rows.")
     normalized_rows = [{column: row.get(column, "") for column in output_columns} for row in rows]
@@ -302,6 +371,38 @@ def validate_schema_against_file(source_path: Path, schema: dict[str, Any]) -> l
         errors.extend(validate_csv_schema(source_path, schema))
     else:
         errors.append("This file type is not supported by parser validation yet.")
+    return errors
+
+
+def validate_excel_schema_probe(source_path: Path, schema: dict[str, Any], probe_sheet_name: str) -> list[str]:
+    from openpyxl import load_workbook
+
+    errors: list[str] = []
+    workbook = load_workbook(source_path, read_only=True, data_only=True)
+    try:
+        if probe_sheet_name not in workbook.sheetnames:
+            return [f"Sheet {probe_sheet_name!r} was not found."]
+
+        worksheets = schema.get("worksheets") or []
+        if worksheets:
+            return ["Multi-worksheet schema probing is not supported yet."]
+
+        header = schema.get("header") or {}
+        header_row = header.get("row")
+        if not header_row:
+            return ["Input schema is missing header.row."]
+
+        sheet = workbook[probe_sheet_name]
+        for column in header.get("columns", []):
+            column_index = column_letter_to_index(column.get("letter", ""))
+            expected = column.get("name")
+            actual = sheet.cell(header_row, column_index).value
+            if actual != expected:
+                errors.append(
+                    f"Header mismatch at {column.get('letter')}{header_row}: expected {expected!r}, found {actual!r}."
+                )
+    finally:
+        workbook.close()
     return errors
 
 

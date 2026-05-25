@@ -744,6 +744,7 @@
         </div>
         <div class="actions">
           <button class="button review-action-parsing" type="button" data-parse-submit>Parse</button>
+          <button class="button review-action-parsing" type="button" data-parse-validate hidden>Validate</button>
           <button class="button review-action-parsing" type="button" data-approval-submit hidden>Approval</button>
           <button class="button review-action-cancel" type="button" data-parse-close>Cancel</button>
         </div>
@@ -804,6 +805,7 @@
     const parsePreviewScroll = parsePreview.querySelector("[data-parse-scroll]");
     const chartPreview = document.querySelector("[data-chart-preview]");
     const parseSubmit = document.querySelector("[data-parse-submit]");
+    const parseValidate = document.querySelector("[data-parse-validate]");
     const approvalSubmit = document.querySelector("[data-approval-submit]");
     const parseVendorSelect = document.querySelector("[data-parse-vendor-select]");
     const parseVendorSave = document.querySelector("[data-parse-vendor-save]");
@@ -851,6 +853,7 @@
       parsePreview.hidden = false;
       approvalSubmit.hidden = true;
       parseSubmit.hidden = false;
+      if (parseValidate) parseValidate.hidden = true;
       if (parseDetailsToggle) {
         parseDetailsToggle.setAttribute("aria-expanded", "false");
         parseDetailsToggle.setAttribute("aria-label", "Show file details");
@@ -886,6 +889,7 @@
       approvalSubmit.disabled = true;
       parseSubmit.hidden = false;
       parseSubmit.disabled = true;
+      if (parseValidate) parseValidate.hidden = true;
       if (parseVendorSelect) parseVendorSelect.innerHTML = "";
       if (parseDetailsToggle) {
         parseDetailsToggle.setAttribute("aria-expanded", "false");
@@ -986,6 +990,11 @@
       return date.getDate() + "/" + (date.getMonth() + 1) + "/" + date.getFullYear();
     }
 
+    function truncateSheetName(name) {
+      if (!name || name === "-") return "-";
+      return name.length > 15 ? name.slice(0, 15) + "..." : name;
+    }
+
     function setParseDetails(file, validation) {
       parseTitle.textContent = file.name || "Parse file";
       parseDetails.replaceChildren();
@@ -1033,6 +1042,7 @@
       parseValidation.textContent = "";
       parseValidation.classList.remove("status-red", "status-green");
       parseSubmit.disabled = !validation.ok;
+      if (parseValidate) parseValidate.hidden = validation.ok;
       if (validation.warnings && validation.warnings.length) {
         parseValidation.textContent = validation.warnings.join("; ");
         parseValidation.classList.add("status-green");
@@ -1069,48 +1079,73 @@
       parsePreviewScroll.appendChild(table);
     }
 
+    function showIncorrectParser(errors) {
+      parsePreviewScroll.replaceChildren();
+      const container = document.createElement("div");
+      container.style.display = "flex";
+      container.style.flexDirection = "column";
+      container.style.alignItems = "center";
+      container.style.justifyContent = "center";
+      container.style.gap = "6px";
+      container.style.position = "absolute";
+      container.style.top = "50%";
+      container.style.left = "50%";
+      container.style.transform = "translate(-50%, -50%)";
+      container.style.zIndex = "10";
+      container.style.color = "#fca5a5";
+      container.style.textAlign = "center";
+      container.style.maxWidth = "80%";
+
+      const titleEl = document.createElement("div");
+      titleEl.style.fontSize = "44px";
+      titleEl.style.fontWeight = "760";
+      titleEl.style.whiteSpace = "nowrap";
+      titleEl.textContent = "Incorrect parser";
+      container.appendChild(titleEl);
+
+      if (errors && errors.length) {
+        errors.forEach((msg) => {
+          const detailsEl = document.createElement("div");
+          detailsEl.style.fontSize = "13px";
+          detailsEl.style.fontWeight = "600";
+          detailsEl.textContent = msg;
+          container.appendChild(detailsEl);
+        });
+      }
+
+      parsePreviewScroll.appendChild(container);
+    }
+
+    function showParserCorrect() {
+      parsePreviewScroll.replaceChildren();
+      const container = document.createElement("div");
+      container.style.display = "flex";
+      container.style.flexDirection = "column";
+      container.style.alignItems = "center";
+      container.style.justifyContent = "center";
+      container.style.gap = "6px";
+      container.style.position = "absolute";
+      container.style.top = "50%";
+      container.style.left = "50%";
+      container.style.transform = "translate(-50%, -50%)";
+      container.style.zIndex = "10";
+      container.style.color = "#86efac";
+      container.style.textAlign = "center";
+      container.style.maxWidth = "80%";
+
+      const titleEl = document.createElement("div");
+      titleEl.style.fontSize = "44px";
+      titleEl.style.fontWeight = "760";
+      titleEl.style.whiteSpace = "nowrap";
+      titleEl.textContent = "Parser is correct";
+      container.appendChild(titleEl);
+
+      parsePreviewScroll.appendChild(container);
+    }
+
     function renderSheets(file, validation) {
       parseTabs.replaceChildren();
       parseTabs.scrollLeft = 0;
-
-      if (validation && !validation.ok) {
-        if (parseTabsRow) parseTabsRow.hidden = true;
-        parsePreviewScroll.replaceChildren();
-        const container = document.createElement("div");
-        container.style.display = "flex";
-        container.style.flexDirection = "column";
-        container.style.alignItems = "center";
-        container.style.justifyContent = "center";
-        container.style.gap = "6px";
-        container.style.position = "absolute";
-        container.style.top = "50%";
-        container.style.left = "50%";
-        container.style.transform = "translate(-50%, -50%)";
-        container.style.zIndex = "10";
-        container.style.color = "#fca5a5";
-        container.style.textAlign = "center";
-        container.style.maxWidth = "80%";
-
-        const titleEl = document.createElement("div");
-        titleEl.style.fontSize = "44px";
-        titleEl.style.fontWeight = "760";
-        titleEl.style.whiteSpace = "nowrap";
-        titleEl.textContent = "Incorrect parser";
-        container.appendChild(titleEl);
-
-        if (validation.errors && validation.errors.length) {
-          validation.errors.forEach((msg) => {
-            const detailsEl = document.createElement("div");
-            detailsEl.style.fontSize = "13px";
-            detailsEl.style.fontWeight = "600";
-            detailsEl.textContent = msg;
-            container.appendChild(detailsEl);
-          });
-        }
-
-        parsePreviewScroll.appendChild(container);
-        return;
-      }
 
       if (file.warning) {
         showParseMessage(file.warning);
@@ -1121,25 +1156,54 @@
         return;
       }
 
-      if (parseTabsRow) parseTabsRow.hidden = true;
+      if (parseTabsRow) parseTabsRow.hidden = false;
 
       const schemaNames = (validation && validation.schema_sheet_names) || [];
       const legacyName = (validation && validation.sheet_name) || "";
       const targetNames = schemaNames.length ? schemaNames : legacyName ? [legacyName] : [];
 
-      if (!targetNames.length) {
-        showParseMessage("Schema does not define a sheet name.", true);
-        return;
+      const defaultSheet = file.sheets.find((sheet) => targetNames.includes(sheet.name));
+
+      file.sheets.forEach((sheet, index) => {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.textContent = truncateSheetName(sheet.name);
+        button.addEventListener("click", () => {
+          parseTabs.querySelectorAll("button").forEach((tab) => tab.classList.remove("active"));
+          button.classList.add("active");
+          activeParse.selectedSheet = sheet.name;
+          renderSheet(sheet);
+          parseValidation.textContent = "";
+          parseValidation.classList.remove("status-red", "status-green");
+          if (validation && !validation.ok) {
+            parseSubmit.disabled = true;
+          }
+        });
+        parseTabs.appendChild(button);
+        if (index === 0) {
+          button.classList.add("active");
+          activeParse.selectedSheet = sheet.name;
+          renderSheet(sheet);
+        }
+      });
+
+      if (validation && !validation.ok) {
+        showIncorrectParser(validation.errors);
+      } else if (defaultSheet) {
+        const defaultTab = Array.from(parseTabs.children).find((btn) => btn.textContent === truncateSheetName(defaultSheet.name));
+        if (defaultTab) {
+          parseTabs.querySelectorAll("button").forEach((tab) => tab.classList.remove("active"));
+          defaultTab.classList.add("active");
+          activeParse.selectedSheet = defaultSheet.name;
+          renderSheet(defaultSheet);
+        }
       }
 
-      const targetSheet = file.sheets.find((sheet) => targetNames.includes(sheet.name));
-      if (!targetSheet) {
-        const missing = targetNames.join(", ");
-        showParseMessage(`Sheet ${missing} was not found in this file.`, true);
-        return;
-      }
-
-      renderSheet(targetSheet);
+      window.requestAnimationFrame(() => {
+        updateTabNav();
+        window.setTimeout(updateTabNav, 100);
+        window.setTimeout(updateTabNav, 400);
+      });
     }
 
     document.querySelectorAll("[data-parse-button]").forEach((button) => {
@@ -1180,9 +1244,12 @@
       if (!activeParse) return;
       parseSubmit.disabled = true;
       try {
+        const body = new URLSearchParams();
+        if (activeParse.selectedSheet) body.append("sheet_name", activeParse.selectedSheet);
         const response = await fetch(activeParse.parseUrl, {
           method: "POST",
           headers: {"X-CSRFToken": csrfToken},
+          body: body.has("sheet_name") ? body : undefined,
         });
         const payload = await response.json();
         if (!response.ok) throw new Error(payload.error || "Parse failed.");
@@ -1192,6 +1259,7 @@
         parsePreview.hidden = true;
         chartPreview.hidden = false;
         parseSubmit.hidden = true;
+        if (parseValidate) parseValidate.hidden = true;
         approvalSubmit.hidden = false;
         approvalSubmit.disabled = false;
         renderParsedResult(payload);
@@ -1204,6 +1272,40 @@
         parseSubmit.disabled = false;
       }
     });
+
+    if (parseValidate) {
+      parseValidate.addEventListener("click", async () => {
+        if (!activeParse || !activeParse.selectedSheet) return;
+        parseValidate.disabled = true;
+        try {
+          const url = new URL(activeParse.parseUrl + "probe/", window.location.href);
+          url.searchParams.set("sheet_name", activeParse.selectedSheet);
+          if (parseVendorSelect && parseVendorSelect.value) {
+            url.searchParams.set("vendor_id", parseVendorSelect.value);
+          }
+          const response = await fetch(url.toString());
+          const payload = await response.json();
+          if (!response.ok) throw new Error(payload.error || "Validation failed.");
+          const validation = payload.validation;
+          if (validation.ok) {
+            showParserCorrect();
+            parseSubmit.disabled = false;
+            parseValidation.textContent = "";
+            parseValidation.classList.remove("status-red");
+          } else {
+            showIncorrectParser(validation.errors);
+            parseSubmit.disabled = true;
+            parseValidation.textContent = validation.errors.join("; ");
+            parseValidation.classList.add("status-red");
+          }
+        } catch (error) {
+          showIncorrectParser([error.message]);
+          parseSubmit.disabled = true;
+        } finally {
+          parseValidate.disabled = false;
+        }
+      });
+    }
 
     if (parseVendorSave) {
       parseVendorSave.addEventListener("click", async () => {
