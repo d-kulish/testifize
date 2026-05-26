@@ -1343,18 +1343,24 @@
       header.className = "parse-result-summary";
       const pills = document.createElement("div");
       pills.className = "parse-result-pills";
-      [
-        ["Rows", summary.row_count || 0],
-        ["Spend", formatMetric(summary.total_spend, "spend")],
-        ["Impressions", formatMetric(summary.total_impressions, "impressions")],
-      ].forEach(([label, value]) => {
+      const metrics = [
+        ["Rows", summary.row_count || 0, "Total parsed rows"],
+        ["Spend", formatMetric(summary.total_spend, "spend"), "Total spend"],
+        ["Impressions", formatMetric(summary.total_impressions, "impressions"), "Total impressions"],
+      ];
+      metrics.forEach(([label, value, note]) => {
         const pill = document.createElement("div");
         pill.className = "parse-result-pill";
-        const strong = document.createElement("strong");
-        strong.textContent = value;
-        const span = document.createElement("span");
-        span.textContent = label;
-        pill.append(strong, span);
+        const lbl = document.createElement("span");
+        lbl.className = "parse-result-label";
+        lbl.textContent = label;
+        const val = document.createElement("strong");
+        val.className = "parse-result-value";
+        val.textContent = value;
+        const nte = document.createElement("span");
+        nte.className = "parse-result-note";
+        nte.textContent = note;
+        pill.append(lbl, val, nte);
         pills.appendChild(pill);
       });
       header.appendChild(pills);
