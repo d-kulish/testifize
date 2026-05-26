@@ -1350,7 +1350,22 @@
       ];
       metrics.forEach(([label, value, note, colorKey]) => {
         const pill = document.createElement("div");
-        pill.className = "parse-result-pill parse-result-pill-" + colorKey;
+        pill.className = "parse-result-pill " + colorKey;
+        const iconContainer = document.createElement("div");
+        iconContainer.className = "parse-result-icon";
+        iconContainer.setAttribute("aria-hidden", "true");
+        const iconSvg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+        iconSvg.setAttribute("viewBox", "0 0 24 24");
+        let iconPath;
+        if (colorKey === "rows") {
+          iconPath = '<path d="M4 7h16"></path><path d="M4 12h10"></path><path d="M4 17h7"></path><path d="m16 16 2 2 4-5"></path>';
+        } else if (colorKey === "spend") {
+          iconPath = '<circle cx="12" cy="12" r="9"></circle><path d="m8 12 3 3 5-6"></path>';
+        } else {
+          iconPath = '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M22 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path>';
+        }
+        iconSvg.innerHTML = iconPath;
+        iconContainer.appendChild(iconSvg);
         const lbl = document.createElement("span");
         lbl.className = "parse-result-label";
         lbl.textContent = label;
@@ -1360,7 +1375,7 @@
         const nte = document.createElement("span");
         nte.className = "parse-result-note";
         nte.textContent = note;
-        pill.append(lbl, val, nte);
+        pill.append(iconContainer, lbl, val, nte);
         pills.appendChild(pill);
       });
       header.appendChild(pills);
