@@ -1410,7 +1410,7 @@
       }
 
       const datasets = series.map((item, index) => {
-        const color = index === 0 ? "#2563eb" : index === 1 ? "#b54708" : "#13795b";
+        const color = index === 0 ? "#16a34a" : index === 1 ? "#b54708" : "#13795b";
         const data = item.points
           ? item.points.map((point) => Number(point[config.mode] || 0))
           : [];
@@ -1420,8 +1420,8 @@
             cvs.width = 1; cvs.height = 300;
             const ctx = cvs.getContext("2d");
             const g = ctx.createLinearGradient(0, 0, 0, 300);
-            g.addColorStop(0, "rgba(37, 99, 235, 0.55)");
-            g.addColorStop(1, "rgba(37, 99, 235, 0.12)");
+            g.addColorStop(0, "rgba(22, 163, 74, 0.55)");
+            g.addColorStop(1, "rgba(22, 163, 74, 0.12)");
             return g;
           })();
           return {
