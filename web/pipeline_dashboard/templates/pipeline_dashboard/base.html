@@ -1099,7 +1099,7 @@
 
     .parse-result-pills {
       display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
+      grid-template-columns: repeat(4, minmax(0, 1fr));
       gap: 12px;
       margin-bottom: 14px;
     }
@@ -1204,9 +1204,22 @@
       color: #6d28d9;
     }
 
+    .parse-result-pill.impressions .parse-result-icon {
+      color: #1d4ed8;
+    }
+
+    .parse-result-pill.vendor .parse-result-icon {
+      color: #d97706;
+    }
+
     .parse-result-pill.impressions .parse-result-label,
     .parse-result-pill.impressions .parse-result-note {
       color: #1d4ed8;
+    }
+
+    .parse-result-pill.vendor .parse-result-label,
+    .parse-result-pill.vendor .parse-result-note {
+      color: #d97706;
     }
 
     .parse-result-view {

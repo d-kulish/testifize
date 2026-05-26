@@ -1344,6 +1344,7 @@
       const pills = document.createElement("div");
       pills.className = "parse-result-pills";
       const metrics = [
+        ["Vendor", summary.vendor_name || "-", "Vendor name", "vendor"],
         ["Rows", summary.row_count || 0, "Total parsed rows", "rows"],
         ["Spend", formatMetric(summary.total_spend || 0, "spend").replace(/^[^\d+-]+/, ""), "Total spend", "spend"],
         ["Impressions", formatMetric(summary.total_impressions || 0, "impressions"), "Total impressions", "impressions"],
@@ -1357,7 +1358,9 @@
         const iconSvg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
         iconSvg.setAttribute("viewBox", "0 0 24 24");
         let iconPath;
-        if (colorKey === "rows") {
+        if (colorKey === "vendor") {
+          iconPath = '<path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline>';
+        } else if (colorKey === "rows") {
           iconPath = '<path d="M4 7h16"></path><path d="M4 12h10"></path><path d="M4 17h7"></path><path d="m16 16 2 2 4-5"></path>';
         } else if (colorKey === "spend") {
           iconPath = '<circle cx="12" cy="12" r="9"></circle><path d="m8 12 3 3 5-6"></path>';

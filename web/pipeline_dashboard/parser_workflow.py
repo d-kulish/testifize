@@ -54,7 +54,7 @@ def build_parse_result_preview(asset: Asset, sheet_name: str | None = None) -> d
     output_label = approval_filename_label(parsed.summary)
     return {
         "candidate": {
-            "summary": serializable_summary(parsed.summary),
+            "summary": {**serializable_summary(parsed.summary), "vendor_name": asset.vendor.name if asset.vendor else ""},
             "output_filename": next_output_path(asset.vendor, output_label)[0].name if asset.vendor else "",
         },
         "comparison": comparison,
