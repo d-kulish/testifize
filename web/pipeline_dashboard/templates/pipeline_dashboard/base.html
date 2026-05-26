@@ -1099,7 +1099,7 @@
 
     .parse-result-pills {
       display: grid;
-      grid-template-columns: repeat(4, minmax(0, 1fr));
+      grid-template-columns: repeat(5, minmax(0, 1fr));
       gap: 12px;
       margin-bottom: 14px;
     }
@@ -1112,7 +1112,7 @@
       row-gap: 4px;
       align-items: center;
       padding: 14px 16px;
-      min-height: 97px;
+      min-height: 68px;
       overflow: hidden;
       background: #ffffff;
       border: 1px solid #111827;
@@ -1139,23 +1139,10 @@
       display: block;
       min-width: 0;
       color: var(--text);
-      font-size: 32px;
+      font-size: 30px;
       line-height: 0.95;
       font-weight: 650;
       letter-spacing: 0;
-    }
-
-    .parse-result-pill .parse-result-note {
-      grid-column: 1 / -1;
-      grid-row: 3;
-      display: block;
-      min-width: 0;
-      color: var(--muted);
-      font-size: 12px;
-      font-weight: 600;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
     }
 
     .parse-result-pill:hover {
@@ -1194,13 +1181,15 @@
       color: #6d28d9;
     }
 
-    .parse-result-pill.rows .parse-result-label,
-    .parse-result-pill.rows .parse-result-note {
+    .parse-result-pill.period .parse-result-icon {
+      color: #6d28d9;
+    }
+
+    .parse-result-pill.rows .parse-result-label {
       color: #d97706;
     }
 
-    .parse-result-pill.spend .parse-result-label,
-    .parse-result-pill.spend .parse-result-note {
+    .parse-result-pill.spend .parse-result-label {
       color: #6d28d9;
     }
 
@@ -1212,13 +1201,15 @@
       color: #d97706;
     }
 
-    .parse-result-pill.impressions .parse-result-label,
-    .parse-result-pill.impressions .parse-result-note {
+    .parse-result-pill.period .parse-result-label {
+      color: #6d28d9;
+    }
+
+    .parse-result-pill.impressions .parse-result-label {
       color: #1d4ed8;
     }
 
-    .parse-result-pill.vendor .parse-result-label,
-    .parse-result-pill.vendor .parse-result-note {
+    .parse-result-pill.vendor .parse-result-label {
       color: #d97706;
     }
 
