@@ -1395,6 +1395,16 @@
       return header;
     }
 
+    function compactMonthLabel(raw) {
+      if (!raw) return raw;
+      const label = raw.replace(/^Parsed\s+/, "");
+      const parts = label.split("_");
+      if (parts.length === 2) {
+        return parts[0].slice(0, 3) + " " + parts[1].slice(-2);
+      }
+      return label;
+    }
+
     function renderSingleChart(payload, config) {
       const card = document.createElement("section");
       card.className = "parse-chart-card";
@@ -1637,20 +1647,10 @@
     if (parseBack) {
       parseBack.addEventListener("click", () => {
         // Switch from review result (2nd sub-window) back to preview (1st sub-window)
-      function compactMonthLabel(raw) {
-        if (!raw) return raw;
-        const label = raw.replace(/^Parsed\s+/, "");
-        const parts = label.split("_");
-        if (parts.length === 2) {
-          return parts[0].slice(0, 3) + " " + parts[1].slice(-2);
+        if (activeChart) {
+          activeChart.destroy();
+          activeChart = null;
         }
-        return label;
-      }
-
-      if (activeChart) {
-        activeChart.destroy();
-        activeChart = null;
-      }
         chartPreview.hidden = true;
         chartPreview.replaceChildren();
         parsePreview.hidden = false;
