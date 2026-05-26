@@ -1420,8 +1420,8 @@
             cvs.width = 1; cvs.height = 300;
             const ctx = cvs.getContext("2d");
             const g = ctx.createLinearGradient(0, 0, 0, 300);
-            g.addColorStop(0, "rgba(37, 99, 235, 0.40)");
-            g.addColorStop(1, "rgba(37, 99, 235, 0.06)");
+            g.addColorStop(0, "rgba(37, 99, 235, 0.55)");
+            g.addColorStop(1, "rgba(37, 99, 235, 0.12)");
             return g;
           })();
           return {
@@ -1431,11 +1431,11 @@
             backgroundColor: backgroundColor,
             fill: true,
             tension: 0.35,
-            pointRadius: 3.5,
+            pointRadius: 7,
             pointBackgroundColor: "#ffffff",
             pointBorderColor: color,
-            pointBorderWidth: 2,
-            borderWidth: 3,
+            pointBorderWidth: 4,
+            borderWidth: 6,
           };
         }
         return {
@@ -1445,11 +1445,11 @@
           backgroundColor: "transparent",
           fill: false,
           tension: 0.35,
-          pointRadius: 2.5,
+          pointRadius: 5,
           pointBackgroundColor: "#ffffff",
           pointBorderColor: color,
-          pointBorderWidth: 1.5,
-          borderWidth: 2,
+          pointBorderWidth: 3,
+          borderWidth: 4,
         };
       });
 
@@ -1523,6 +1523,7 @@
               ticks: {
                 color: "#647184",
                 font: { size: 11, weight: "600" },
+                padding: 6,
                 callback: (value) => {
                   const num = Number(value || 0);
                   if (!Number.isFinite(num)) return "-";
