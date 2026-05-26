@@ -48,7 +48,6 @@
 
   .process-mirror .mirror-head,
   .process-mirror .mirror-summary {
-    grid-template-columns: 16px minmax(200px, 1fr) minmax(200px, 1fr) 120px 120px 120px 120px 120px 120px;
     align-items: center;
     gap: 16px;
   }
@@ -97,6 +96,12 @@
     white-space: nowrap;
   }
 
+  .process-mirror .mirror-head > [role="columnheader"].process-count-col.right-aligned {
+    justify-content: flex-end;
+    text-align: right;
+    padding-right: 14px;
+  }
+
   .process-mirror .mirror-head > [role="columnheader"].process-count-col:hover {
     opacity: 0.85;
   }
@@ -112,6 +117,12 @@
     text-align: center;
     overflow: hidden;
     white-space: nowrap;
+  }
+
+  .process-mirror .mirror-summary span.process-count-cell.right-aligned {
+    justify-content: flex-end;
+    text-align: right;
+    padding-right: 14px;
   }
 
   .process-mirror .mirror-summary .mirror-folder-name {
@@ -151,10 +162,6 @@
     min-width: 0;
   }
 
-  .process-mirror .mirror-head .mirror-head-search {
-    grid-column: 4 / span 3;
-  }
-
   .process-mirror .mirror-head-search .mirror-search-input {
     width: 100%;
     min-height: 32px;
@@ -188,67 +195,134 @@
     flex-shrink: 0;
   }
 
-  .process-mirror .mirror-files table thead th {
+  .process-mirror.parsing-files .mirror-files table thead th {
     background: #dbeafe;
     color: #000000;
   }
 
-  .process-mirror .mirror-files table {
+  .process-mirror.parsing-files .mirror-files table {
     table-layout: fixed;
     width: 100%;
     min-width: 1180px;
   }
 
-  .process-mirror .mirror-files th,
-  .process-mirror .mirror-files td {
+  .process-mirror.parsing-files .mirror-files th,
+  .process-mirror.parsing-files .mirror-files td {
     overflow: hidden;
     text-overflow: ellipsis;
   }
 
-  .process-mirror .mirror-files th:nth-child(1),
-  .process-mirror .mirror-files td:nth-child(1) {
+  .process-mirror.parsing-files .mirror-files th:nth-child(1),
+  .process-mirror.parsing-files .mirror-files td:nth-child(1) {
     width: auto;
     min-width: 140px;
     padding-left: 18px;
   }
 
-  .process-mirror .mirror-files th:nth-child(2),
-  .process-mirror .mirror-files td:nth-child(2) {
+  .process-mirror.parsing-files .mirror-files th:nth-child(2),
+  .process-mirror.parsing-files .mirror-files td:nth-child(2) {
     width: 130px;
   }
 
-  .process-mirror .mirror-files th:nth-child(3),
-  .process-mirror .mirror-files td:nth-child(3) {
+  .process-mirror.parsing-files .mirror-files th:nth-child(3),
+  .process-mirror.parsing-files .mirror-files td:nth-child(3) {
     width: 120px;
   }
 
-  .process-mirror .mirror-files th:nth-child(4),
-  .process-mirror .mirror-files td:nth-child(4) {
+  .process-mirror.parsing-files .mirror-files th:nth-child(4),
+  .process-mirror.parsing-files .mirror-files td:nth-child(4) {
     width: 120px;
   }
 
-  .process-mirror .mirror-files th:nth-child(5),
-  .process-mirror .mirror-files td:nth-child(5) {
+  .process-mirror.parsing-files .mirror-files th:nth-child(5),
+  .process-mirror.parsing-files .mirror-files td:nth-child(5) {
     width: 170px;
   }
 
-  .process-mirror .mirror-files th:nth-child(6),
-  .process-mirror .mirror-files td:nth-child(6) {
+  .process-mirror.parsing-files .mirror-files th:nth-child(6),
+  .process-mirror.parsing-files .mirror-files td:nth-child(6) {
     width: 180px;
   }
 
-  .process-mirror .mirror-files th:nth-child(7),
-  .process-mirror .mirror-files td:nth-child(7) {
+  .process-mirror.parsing-files .mirror-files th:nth-child(7),
+  .process-mirror.parsing-files .mirror-files td:nth-child(7) {
     width: 80px;
   }
 
-  .process-mirror .mirror-files th:nth-child(8),
-  .process-mirror .mirror-files td:nth-child(8) {
+  .process-mirror.parsing-files .mirror-files th:nth-child(8),
+  .process-mirror.parsing-files .mirror-files td:nth-child(8) {
     width: 220px;
   }
 
-  .process-mirror .mirror-files td:nth-child(8) .actions {
+  .process-mirror.parsing-files .mirror-files td:nth-child(8) .actions {
     flex-wrap: nowrap;
+  }
+
+  /* Parsing files specific search positioning and columns */
+  .process-mirror.parsing-files .mirror-head .mirror-head-search {
+    grid-column: 4 / span 3;
+  }
+  .process-mirror.parsing-files .mirror-head,
+  .process-mirror.parsing-files .mirror-summary {
+    grid-template-columns: 16px minmax(200px, 1fr) minmax(200px, 1fr) 120px 120px 120px 120px 120px 120px;
+  }
+
+  /* Approval panel column widths and table colors */
+  .process-mirror.approval-panel .mirror-head,
+  .process-mirror.approval-panel .mirror-summary {
+    grid-template-columns: 16px minmax(200px, 1fr) minmax(200px, 1fr) 120px 120px 120px 120px 120px 120px;
+  }
+  .process-mirror.approval-panel .mirror-head .mirror-head-search {
+    grid-column: 4 / span 3;
+  }
+  .process-mirror.approval-panel .mirror-head .process-count-col,
+  .process-mirror.approval-panel .mirror-summary .process-count-cell {
+    grid-column: 9;
+  }
+  .process-mirror.approval-panel .mirror-files table thead th {
+    background: #dbeafe;
+    color: #000000;
+  }
+  .process-mirror.approval-panel .mirror-files table {
+    table-layout: fixed;
+    width: 100%;
+    min-width: 1470px;
+  }
+  .process-mirror.approval-panel .mirror-files th,
+  .process-mirror.approval-panel .mirror-files td {
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .process-mirror.approval-panel .mirror-files th:nth-child(1),
+  .process-mirror.approval-panel .mirror-files td:nth-child(1) { width: auto; min-width: 220px; padding-left: 18px; }
+  .process-mirror.approval-panel .mirror-files th:nth-child(2),
+  .process-mirror.approval-panel .mirror-files td:nth-child(2) { width: 90px; }
+  .process-mirror.approval-panel .mirror-files th:nth-child(3),
+  .process-mirror.approval-panel .mirror-files td:nth-child(3) { width: 110px; }
+  .process-mirror.approval-panel .mirror-files th:nth-child(4),
+  .process-mirror.approval-panel .mirror-files td:nth-child(4) { width: auto; min-width: 220px; }
+  .process-mirror.approval-panel .mirror-files th:nth-child(5),
+  .process-mirror.approval-panel .mirror-files td:nth-child(5) { width: 80px; }
+  .process-mirror.approval-panel .mirror-files th:nth-child(6),
+  .process-mirror.approval-panel .mirror-files td:nth-child(6) { width: 120px; }
+  .process-mirror.approval-panel .mirror-files th:nth-child(7),
+  .process-mirror.approval-panel .mirror-files td:nth-child(7) { width: 120px; }
+  .process-mirror.approval-panel .mirror-files th:nth-child(8),
+  .process-mirror.approval-panel .mirror-files td:nth-child(8) { width: 110px; }
+  .process-mirror.approval-panel .mirror-files th:nth-child(9),
+  .process-mirror.approval-panel .mirror-files td:nth-child(9) { width: 75px; }
+  .process-mirror.approval-panel .mirror-files th:nth-child(10),
+  .process-mirror.approval-panel .mirror-files td:nth-child(10) { width: 240px; }
+  .process-mirror.approval-panel .mirror-files td:nth-child(10) .actions {
+    flex-wrap: nowrap;
+    justify-content: flex-end;
+  }
+  .process-mirror.approval-panel .mirror-files th:nth-child(10) {
+    text-align: right;
+    padding-right: 12px;
+  }
+  .process-mirror.approval-panel .mirror-files td:nth-child(10) {
+    text-align: right;
   }
 
   .file-name mark {
@@ -471,7 +545,7 @@
   <section class="panel process-panel">
     <div class="panel-body">
       {% if grouped_assets %}
-        <div class="mirror-table process-mirror" role="table" aria-label="Parsing files grouped by vendor">
+        <div class="mirror-table process-mirror parsing-files" role="table" aria-label="Parsing files grouped by vendor">
           <div class="mirror-head" role="row">
             <div class="process-head-wrapper" role="columnheader">
               <span class="process-head-title">Parsing Files</span>
@@ -571,64 +645,103 @@
     </div>
   </section>
 
-  <section class="panel" style="margin-top: 16px;">
-    <div class="panel-header">
-      <h2 class="panel-title">Approval</h2>
-      <span class="muted">Parsed CSV outputs sent to ShareFile for external review</span>
-    </div>
+  <section class="panel process-panel" style="margin-top: 16px;">
     <div class="panel-body">
       {% if parsed_outputs %}
-        <table>
-          <thead>
-            <tr>
-              <th>Vendor</th>
-              <th>Period</th>
-              <th>Parsed CSV</th>
-              <th>Source File</th>
-              <th>Rows</th>
-              <th>Spend</th>
-              <th>Impressions</th>
-              <th>Comparison</th>
-              <th>Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for parsed in parsed_outputs %}
-              <tr>
-                <td>{{ parsed.vendor|default:"-" }}</td>
-                <td>{{ parsed.reporting_period|default:"-" }}</td>
-                <td class="file-name" title="{{ parsed.output_path }}">{{ parsed.output_path }}</td>
-                <td class="file-name" title="{{ parsed.asset.name }}">{{ parsed.asset.name }}</td>
-                <td>{{ parsed.row_count }}</td>
-                <td>{{ parsed.total_spend|space_int }}</td>
-                <td>{{ parsed.total_impressions|space_int }}</td>
-                <td><span class="badge {{ parsed.comparison_status }}">{{ parsed.comparison_status }}</span></td>
-                <td>
-                  <div class="actions">
-                    <form
-                      class="inline-form"
-                      method="post"
-                      action="{% url 'pipeline_dashboard:approve_parsed_output' parsed.id %}"
-                      data-approve-final-form
-                    >
-                      {% csrf_token %}
-                      <button class="button small review-button approval-action" type="submit">Approved</button>
-                    </form>
-                    <form
-                      class="inline-form"
-                      method="post"
-                      action="{% url 'pipeline_dashboard:cancel_parsed_output' parsed.id %}"
-                      data-cancel-approval-form
-                    >
-                      {% csrf_token %}
-                      <button class="button small cancel-button approval-action" type="submit">Cancel</button>
-                    </form>
-                  </div>
-                </td>
-              </tr>
-            {% endfor %}
-          </tbody>
-        </table>
+        {% regroup parsed_outputs by vendor as grouped_parsed_outputs %}
+        <div class="mirror-table process-mirror approval-panel" role="table" aria-label="Parsed outputs grouped by vendor">
+          <div class="mirror-head" role="row">
+            <div class="process-head-wrapper" role="columnheader">
+              <span class="process-head-title">Approval</span>
+              <span class="process-head-subtitle">{{ parsed_outputs|length }} files in approval queue</span>
+            </div>
+            <div class="mirror-head-search" role="search">
+              <input
+                type="search"
+                class="mirror-search-input"
+                placeholder="Search approval files by name..."
+                aria-label="Search approval files by name"
+                data-approval-search
+                autocomplete="off"
+              />
+              <svg class="search-icon" viewBox="0 0 24 24" aria-hidden="true">
+                <circle cx="11" cy="11" r="8" fill="none" stroke="currentColor" stroke-width="2"></circle>
+                <path d="M21 21l-4.35-4.35" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path>
+              </svg>
+            </div>
+            <div class="process-count-col right-aligned" role="columnheader">Files</div>
+          </div>
+          {% for group in grouped_parsed_outputs %}
+            <details class="mirror-folder">
+              <summary class="mirror-summary" role="row">
+                <span class="mirror-folder-name" role="cell">{{ group.grouper.name|default:"Unassigned" }}</span>
+                <span role="cell"></span>
+                <span role="cell"></span>
+                <span role="cell"></span>
+                <span class="process-count-cell right-aligned" role="cell">{{ group.list|length }}</span>
+              </summary>
+              <div class="mirror-files">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>File</th>
+                      <th>Period</th>
+                      <th>Version</th>
+                      <th>Source File</th>
+                      <th>Rows</th>
+                      <th>Spend</th>
+                      <th>Impressions</th>
+                      <th>Comparison</th>
+                      <th>Age</th>
+                      <th>Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for parsed in group.list %}
+                      <tr
+                        class="mirror-file-row active"
+                        data-approval-row
+                        data-approval-output="{{ parsed.output_path }}"
+                      >
+                        <td class="file-name" title="{{ parsed.output_path }}">{{ parsed.output_path }}</td>
+                        <td>{{ parsed.reporting_period|default:"-"|short_period }}</td>
+                        <td>{{ parsed.version }}</td>
+                        <td class="file-name" title="{{ parsed.asset.name }}">{{ parsed.asset.name }}</td>
+                        <td>{{ parsed.row_count }}</td>
+                        <td>{{ parsed.total_spend|space_int }}</td>
+                        <td>{{ parsed.total_impressions|space_int }}</td>
+                        <td><span class="badge {{ parsed.comparison_status }}">{{ parsed.comparison_status }}</span></td>
+                        <td>{{ parsed.created_at|days_since }}</td>
+                        <td>
+                          <div class="actions">
+                            <form
+                              class="inline-form"
+                              method="post"
+                              action="{% url 'pipeline_dashboard:approve_parsed_output' parsed.id %}"
+                              data-approve-final-form
+                            >
+                              {% csrf_token %}
+                              <button class="button small review-button approval-action" type="submit">Approved</button>
+                            </form>
+                            <form
+                              class="inline-form"
+                              method="post"
+                              action="{% url 'pipeline_dashboard:cancel_parsed_output' parsed.id %}"
+                              data-cancel-approval-form
+                            >
+                              {% csrf_token %}
+                              <button class="button small cancel-button approval-action" type="submit">Cancel</button>
+                            </form>
+                          </div>
+                        </td>
+                      </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            </details>
+          {% endfor %}
+        </div>
       {% else %}
         <div class="empty">No parsed CSV outputs are waiting for approval.</div>
       {% endif %}
@@ -1713,7 +1826,7 @@
       }
 
       function performSearch(query) {
-        const folders = document.querySelectorAll(".process-mirror .mirror-folder");
+        const folders = document.querySelectorAll(".process-mirror.parsing-files .mirror-folder");
         folders.forEach((folder) => {
           const rows = Array.from(folder.querySelectorAll("[data-parse-row]"));
           let folderMatches = 0;
@@ -1745,7 +1858,7 @@
       }
 
       function resetSearch() {
-        const folders = document.querySelectorAll(".process-mirror .mirror-folder");
+        const folders = document.querySelectorAll(".process-mirror.parsing-files .mirror-folder");
         folders.forEach((folder) => {
           const rows = Array.from(folder.querySelectorAll("[data-parse-row]"));
           rows.forEach((row) => {
@@ -1769,6 +1882,115 @@
             performSearch(query);
           } else {
             resetSearch();
+          }
+        }, 150);
+      });
+    })();
+
+    // Approval file search
+    (function () {
+      const approvalSearchInput = document.querySelector("[data-approval-search]");
+      if (!approvalSearchInput) return;
+
+      let approvalTimer = null;
+
+      function getApprovalFileNameCell(row) {
+        return row.querySelector(".file-name");
+      }
+
+      function storeApprovalOriginalNames() {
+        document.querySelectorAll("[data-approval-row]").forEach((row) => {
+          const cell = getApprovalFileNameCell(row);
+          if (cell && !cell.dataset.originalName) {
+            cell.dataset.originalName = cell.textContent;
+          }
+        });
+      }
+
+      function highlightApprovalText(cell, query) {
+        const original = cell.dataset.originalName || cell.textContent;
+        if (!query) {
+          cell.innerHTML = "";
+          cell.appendChild(document.createTextNode(original));
+          return;
+        }
+        const lowerQuery = query.toLowerCase();
+        const lowerOriginal = original.toLowerCase();
+        cell.innerHTML = "";
+        let start = 0;
+        let index = lowerOriginal.indexOf(lowerQuery, start);
+        while (index !== -1) {
+          if (index > start) {
+            cell.appendChild(document.createTextNode(original.slice(start, index)));
+          }
+          const mark = document.createElement("mark");
+          mark.textContent = original.slice(index, index + query.length);
+          cell.appendChild(mark);
+          start = index + query.length;
+          index = lowerOriginal.indexOf(lowerQuery, start);
+        }
+        if (start < original.length) {
+          cell.appendChild(document.createTextNode(original.slice(start)));
+        }
+      }
+
+      function performApprovalSearch(query) {
+        const folders = document.querySelectorAll(".process-mirror.approval-panel .mirror-folder");
+        folders.forEach((folder) => {
+          const rows = Array.from(folder.querySelectorAll("[data-approval-row]"));
+          let folderMatches = 0;
+
+          rows.forEach((row) => {
+            const nameCell = getApprovalFileNameCell(row);
+            const nameText = (nameCell?.dataset.originalName || nameCell?.textContent || "").toLowerCase();
+            const matches = nameText.includes(query);
+
+            if (matches) {
+              row.hidden = false;
+              folderMatches += 1;
+            } else {
+              row.hidden = true;
+            }
+
+            if (nameCell) {
+              highlightApprovalText(nameCell, query);
+            }
+          });
+
+          if (folderMatches > 0) {
+            folder.hidden = false;
+            folder.open = true;
+          } else {
+            folder.hidden = true;
+          }
+        });
+      }
+
+      function resetApprovalSearch() {
+        const folders = document.querySelectorAll(".process-mirror.approval-panel .mirror-folder");
+        folders.forEach((folder) => {
+          const rows = Array.from(folder.querySelectorAll("[data-approval-row]"));
+          rows.forEach((row) => {
+            row.hidden = false;
+            const nameCell = getApprovalFileNameCell(row);
+            if (nameCell) {
+              highlightApprovalText(nameCell, "");
+            }
+          });
+          folder.hidden = false;
+        });
+      }
+
+      storeApprovalOriginalNames();
+
+      approvalSearchInput.addEventListener("input", () => {
+        const query = approvalSearchInput.value.trim().toLowerCase();
+        window.clearTimeout(approvalTimer);
+        approvalTimer = window.setTimeout(() => {
+          if (query) {
+            performApprovalSearch(query);
+          } else {
+            resetApprovalSearch();
           }
         }, 150);
       });
