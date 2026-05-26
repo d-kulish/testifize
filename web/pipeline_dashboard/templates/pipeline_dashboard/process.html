@@ -488,6 +488,41 @@
     opacity: 1;
   }
 
+  .button.review-mode-navigate {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border: 1px solid #111827;
+    border-radius: 8px;
+    background: #ffffff;
+    color: #111827;
+    cursor: pointer;
+    box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04);
+    padding: 0;
+  }
+
+  .button.review-mode-navigate:hover {
+    border-color: #111827;
+    color: #000000;
+    background: #f8fbff;
+  }
+
+  .button.review-mode-navigate svg {
+    width: 20px;
+    height: 20px;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    fill: none;
+  }
+
+  .button.review-mode-navigate[hidden] {
+    display: none !important;
+  }
+
   @media (max-width: 760px) {
     .parse-comparison-row {
       grid-template-columns: 1fr;
@@ -737,6 +772,9 @@
       </div>
       <footer class="review-footer">
         <div class="process-footer-meta">
+          <button class="button review-mode-navigate" type="button" data-parse-back hidden aria-label="Back to preview">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="15 18 9 12 15 6"></polyline></svg>
+          </button>
           <div class="review-vendor" data-parse-vendor-panel>
             <select data-parse-vendor-select></select>
             <button class="button review-action-save" type="button" data-parse-vendor-save>Save</button>
@@ -810,6 +848,7 @@
     const parseVendorSelect = document.querySelector("[data-parse-vendor-select]");
     const parseVendorSave = document.querySelector("[data-parse-vendor-save]");
     const parseVendorPanel = document.querySelector("[data-parse-vendor-panel]");
+    const parseBack = document.querySelector("[data-parse-back]");
     const parseDetailsToggle = document.querySelector("[data-parse-details-toggle]");
     const parseSeparator = document.querySelector("[data-parse-separator]");
     const parseTabsRow = document.querySelector("[data-parse-tabs-row]");
@@ -862,6 +901,7 @@
       parseDetails?.classList.add("collapsed");
       parseSeparator?.classList.add("collapsed");
       if (parseVendorPanel) parseVendorPanel.hidden = false;
+      if (parseBack) parseBack.hidden = true;
     }
 
     document.querySelectorAll("[data-parse-close]").forEach((button) => {
@@ -900,6 +940,7 @@
       parseDetails?.classList.add("collapsed");
       parseSeparator?.classList.add("collapsed");
       if (parseVendorPanel) parseVendorPanel.hidden = false;
+      if (parseBack) parseBack.hidden = true;
     }
 
     function updateTabNav() {
@@ -1266,6 +1307,7 @@
         if (parseValidate) parseValidate.hidden = true;
         approvalSubmit.hidden = false;
         approvalSubmit.disabled = false;
+        if (parseBack) parseBack.hidden = false;
         renderParsedResult(payload);
       } catch (error) {
         if (parseTabsRow) parseTabsRow.hidden = false;
@@ -1693,6 +1735,23 @@
         approvalSubmit.disabled = false;
       }
     });
+
+    if (parseBack) {
+      parseBack.addEventListener("click", () => {
+        // Switch from review result (2nd sub-window) back to preview (1st sub-window)
+        chartPreview.hidden = true;
+        chartPreview.replaceChildren();
+        parsePreview.hidden = false;
+        parseTabs.hidden = false;
+        if (parseTabsRow) parseTabsRow.hidden = false;
+        approvalSubmit.hidden = true;
+        parseSubmit.hidden = false;
+        parseSubmit.disabled = false;
+        if (parseValidate) parseValidate.hidden = true;
+        if (parseVendorPanel) parseVendorPanel.hidden = false;
+        parseBack.hidden = true;
+      });
+    }
 
     // Process page file search
     (function () {
