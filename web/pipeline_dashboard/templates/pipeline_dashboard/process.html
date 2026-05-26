@@ -1344,13 +1344,13 @@
       const pills = document.createElement("div");
       pills.className = "parse-result-pills";
       const metrics = [
-        ["Rows", summary.row_count || 0, "Total parsed rows"],
-        ["Spend", formatMetric(summary.total_spend, "spend"), "Total spend"],
-        ["Impressions", formatMetric(summary.total_impressions, "impressions"), "Total impressions"],
+        ["Rows", summary.row_count || 0, "Total parsed rows", "rows"],
+        ["Spend", formatMetric(summary.total_spend || 0, "spend").replace(/^[^\d+-]+/, ""), "Total spend", "spend"],
+        ["Impressions", formatMetric(summary.total_impressions || 0, "impressions"), "Total impressions", "impressions"],
       ];
-      metrics.forEach(([label, value, note]) => {
+      metrics.forEach(([label, value, note, colorKey]) => {
         const pill = document.createElement("div");
-        pill.className = "parse-result-pill";
+        pill.className = "parse-result-pill parse-result-pill-" + colorKey;
         const lbl = document.createElement("span");
         lbl.className = "parse-result-label";
         lbl.textContent = label;
