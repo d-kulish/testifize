@@ -1364,18 +1364,11 @@
     function renderSingleChart(payload, config) {
       const card = document.createElement("section");
       card.className = "parse-chart-card";
-      const cardHeader = document.createElement("div");
-      cardHeader.className = "parse-chart-head";
-      const h4 = document.createElement("h4");
-      h4.textContent = config.title;
-      const small = document.createElement("span");
-      small.textContent = config.note;
-      cardHeader.append(h4, small);
       const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
       svg.setAttribute("viewBox", "0 0 920 320");
       svg.setAttribute("role", "img");
       svg.setAttribute("aria-label", `${config.title} comparison chart`);
-      card.append(cardHeader, svg);
+      card.append(svg);
       renderMetricChart(svg, payload.charts || {}, config.mode);
       return card;
     }
