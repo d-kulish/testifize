@@ -1425,7 +1425,7 @@
             return g;
           })();
           return {
-            label: item.label || "",
+            label: compactMonthLabel(item.label),
             data,
             borderColor: color,
             backgroundColor: backgroundColor,
@@ -1439,7 +1439,7 @@
           };
         }
         return {
-          label: item.label || "",
+          label: compactMonthLabel(item.label),
           data,
           borderColor: color,
           backgroundColor: "transparent",
@@ -1486,7 +1486,16 @@
                 label: (context) => {
                   let label = context.dataset.label || "";
                   if (label) label += ": ";
-                  label += formatMetric(context.parsed.y, config.mode);
+                  const num = Number(context.parsed.y || 0);
+                  if (!Number.isFinite(num)) {
+                    label += "-";
+                  } else if (config.mode === "spend") {
+                    label += new Intl.NumberFormat(undefined, {maximumFractionDigits: 0}).format(num);
+                  } else if (config.mode === "impressions") {
+                    label += new Intl.NumberFormat(undefined, {maximumFractionDigits: 0}).format(num);
+                  } else {
+                    label += new Intl.NumberFormat(undefined, {minimumFractionDigits: 4, maximumFractionDigits: 6}).format(num);
+                  }
                   return label;
                 },
               },
@@ -1628,10 +1637,20 @@
     if (parseBack) {
       parseBack.addEventListener("click", () => {
         // Switch from review result (2nd sub-window) back to preview (1st sub-window)
-        if (activeChart) {
-          activeChart.destroy();
-          activeChart = null;
+      function compactMonthLabel(raw) {
+        if (!raw) return raw;
+        const label = raw.replace(/^Parsed\s+/, "");
+        const parts = label.split("_");
+        if (parts.length === 2) {
+          return parts[0].slice(0, 3) + " " + parts[1].slice(-2);
         }
+        return label;
+      }
+
+      if (activeChart) {
+        activeChart.destroy();
+        activeChart = null;
+      }
         chartPreview.hidden = true;
         chartPreview.replaceChildren();
         parsePreview.hidden = false;
