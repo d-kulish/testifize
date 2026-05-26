@@ -1343,9 +1343,14 @@
       header.className = "parse-result-summary";
       const pills = document.createElement("div");
       pills.className = "parse-result-pills";
+      const periodLabel = summary.period_label || "-";
+      const periodParts = periodLabel === "-" ? null : periodLabel.split("_");
+      const periodValue = periodParts && periodParts.length === 2
+        ? periodParts[0].slice(0, 3) + " " + periodParts[1].slice(-2)
+        : periodLabel;
       const metrics = [
         ["Vendor", summary.vendor_name || "-", "vendor"],
-        ["Period", summary.period_label || "-", "period"],
+        ["Period", periodValue, "period"],
         ["Rows", summary.row_count || 0, "rows"],
         ["Spend", formatMetric(summary.total_spend || 0, "spend").replace(/^[^\d+-]+/, ""), "spend"],
         ["Impressions", formatMetric(summary.total_impressions || 0, "impressions"), "impressions"],
