@@ -809,6 +809,7 @@
     const approvalSubmit = document.querySelector("[data-approval-submit]");
     const parseVendorSelect = document.querySelector("[data-parse-vendor-select]");
     const parseVendorSave = document.querySelector("[data-parse-vendor-save]");
+    const parseVendorPanel = document.querySelector("[data-parse-vendor-panel]");
     const parseDetailsToggle = document.querySelector("[data-parse-details-toggle]");
     const parseSeparator = document.querySelector("[data-parse-separator]");
     const parseTabsRow = document.querySelector("[data-parse-tabs-row]");
@@ -860,6 +861,7 @@
       }
       parseDetails?.classList.add("collapsed");
       parseSeparator?.classList.add("collapsed");
+      if (parseVendorPanel) parseVendorPanel.hidden = false;
     }
 
     document.querySelectorAll("[data-parse-close]").forEach((button) => {
@@ -897,6 +899,7 @@
       }
       parseDetails?.classList.add("collapsed");
       parseSeparator?.classList.add("collapsed");
+      if (parseVendorPanel) parseVendorPanel.hidden = false;
     }
 
     function updateTabNav() {
@@ -1258,6 +1261,7 @@
         parseTabs.hidden = true;
         parsePreview.hidden = true;
         chartPreview.hidden = false;
+        if (parseVendorPanel) parseVendorPanel.hidden = true;
         parseSubmit.hidden = true;
         if (parseValidate) parseValidate.hidden = true;
         approvalSubmit.hidden = false;
