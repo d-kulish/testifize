@@ -614,7 +614,7 @@ The modal `Approval` action writes the versioned parsed CSV under `data/output/<
 
 `data/processed/<Vendor>/` is reserved for files that have actually been approved. The ShareFile Approval upload is only an external review request, so it does not create or update `data/processed/<Vendor>/`.
 
-The Approval table tracks sent review files. `Cancel` cancels that parsed output and returns the source asset to Processing Files. `Approved` copies the parsed CSV into `data/processed/<Vendor>/<Vendor>_<Reporting_Period>.csv`, uploads that final-named CSV to ShareFile `Final/<Reporting_Period>/`, stores the final ShareFile item ID, and moves the source asset from Review to Processed.
+The Approval table tracks sent review files. Each entry now includes a **blue, centered Review button** in its own column to reopen the parsed CSV review without re-running the original parser. `Cancel` cancels that parsed output and returns the source asset to Processing Files. `Approved` copies the parsed CSV into `data/processed/<Vendor>/<Vendor>_<Reporting_Period>.csv`, uploads that final-named CSV to ShareFile `Final/<Reporting_Period>/`, stores the final ShareFile item ID, and moves the source asset from Review to Processed.
 
 ShareFile approval upload defaults to the ShareFile `allshared` root, so approved CSVs are uploaded under Shared Folders unless overridden. To use a different root folder, set:
 
@@ -676,6 +676,15 @@ Final/<Reporting_Period>/<Vendor>_<Reporting_Period>.csv
 - **Circle markers on chart lines**: each data point now renders a small circle marker, making individual days visible.
 - **Tab button cursor**: added `cursor: pointer` to chart tab buttons for clearer interactivity.
 - **Grid layout fix**: `.review-body > .parse-result:not([hidden])` now spans `grid-row: 1 / -1`, so the chart area fills the available modal height.
+
+### Approval Review button (2026-05-26)
+
+- **Review parsed output without re-running the parser**: each row in the Approval queue now has a **Review** button (blue, in its own column between *Version* and *Source File*).
+- **Identical result view**: clicking it opens the same modal used after parsing — header, 4 navigation tabs (Spend / Impressions / Cost per impression / Final CSV), Chart.js charts compared against approved baselines, up to 200 preview rows, and the 5 summary KPI tablets.
+- **Reconstructs from saved CSV**: the backend reads the already-generated parsed CSV (`ParsedOutput.output_path` / `Asset.output_path`) and rebuilds the full review payload without touching the original parser, Excel/CSV source, or vendor parser code.
+- **Read-only**: only the **Cancel** button is shown in the footer when reviewing from Approval — Parse, Validate, and Approval actions are hidden.
+- **Backend**: added `build_review_payload()` in `parser_workflow.py` and `review_parsed_output` GET view at `process/approval/<id>/review/`.
+- **Frontend**: updated approval table layout (centered values for Period, Version, Review, Rows, Spend, Impressions, Comparison, Age, and Action) and added `[data-review-button]` event handler in `process.html`.
 
 ### Sheet probe and parser validation (2026-05-25)
 

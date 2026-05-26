@@ -63,6 +63,59 @@ def build_parse_result_preview(asset: Asset, sheet_name: str | None = None) -> d
     }
 
 
+def build_review_payload(parsed: ParsedOutput) -> dict[str, Any]:
+    """Reconstruct the parse-review payload from a saved ParsedOutput CSV."""
+    candidates = []
+    if parsed.output_path:
+        candidates.append(settings.REPO_ROOT / parsed.output_path)
+    if parsed.asset and parsed.asset.output_path:
+        candidates.append(settings.REPO_ROOT / parsed.asset.output_path)
+
+    source_path = None
+    for candidate in candidates:
+        if candidate.exists():
+            source_path = candidate
+            break
+
+    if source_path is None:
+        raise ParserWorkflowError("Parsed CSV file not found.")
+
+    with source_path.open(newline="", encoding="utf-8") as file:
+        reader = csv.DictReader(file)
+        columns = list(reader.fieldnames or [])
+        rows = list(reader)
+
+    if not columns:
+        raise ParserWorkflowError("Parsed CSV has no columns.")
+
+    summary = summarize_rows(rows)
+    approved_path = None
+    if parsed.approved_path:
+        approved_path = settings.REPO_ROOT / parsed.approved_path
+        if not approved_path.exists():
+            approved_path = None
+
+    preview_rows = rows[:200]
+    return {
+        "candidate": {
+            "summary": {**serializable_summary(summary), "vendor_name": parsed.vendor.name if parsed.vendor else ""},
+            "output_filename": source_path.name,
+        },
+        "comparison": compare_to_approved(rows, approved_path),
+        "charts": build_chart_payload(rows, parsed.vendor, summary),
+        "parsed_table": {
+            "columns": columns,
+            "rows": [
+                [csv_preview_value(row.get(column, "")) for column in columns]
+                for row in preview_rows
+            ],
+            "row_count": len(rows),
+            "preview_count": len(preview_rows),
+            "truncated": len(rows) > 200,
+        },
+    }
+
+
 def parsed_table_payload(parsed: ParsedRows, limit: int = 200) -> dict[str, Any]:
     preview_rows = parsed.rows[:limit]
     return {

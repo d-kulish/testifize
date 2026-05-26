@@ -286,7 +286,7 @@
   .process-mirror.approval-panel .mirror-files table {
     table-layout: fixed;
     width: 100%;
-    min-width: 1470px;
+    min-width: 1600px;
   }
   .process-mirror.approval-panel .mirror-files th,
   .process-mirror.approval-panel .mirror-files td {
@@ -300,29 +300,48 @@
   .process-mirror.approval-panel .mirror-files th:nth-child(3),
   .process-mirror.approval-panel .mirror-files td:nth-child(3) { width: 110px; }
   .process-mirror.approval-panel .mirror-files th:nth-child(4),
-  .process-mirror.approval-panel .mirror-files td:nth-child(4) { width: auto; min-width: 220px; }
+  .process-mirror.approval-panel .mirror-files td:nth-child(4) { width: 140px; }
   .process-mirror.approval-panel .mirror-files th:nth-child(5),
-  .process-mirror.approval-panel .mirror-files td:nth-child(5) { width: 80px; }
+  .process-mirror.approval-panel .mirror-files td:nth-child(5) { width: auto; min-width: 220px; }
   .process-mirror.approval-panel .mirror-files th:nth-child(6),
-  .process-mirror.approval-panel .mirror-files td:nth-child(6) { width: 120px; }
+  .process-mirror.approval-panel .mirror-files td:nth-child(6) { width: 80px; }
   .process-mirror.approval-panel .mirror-files th:nth-child(7),
   .process-mirror.approval-panel .mirror-files td:nth-child(7) { width: 120px; }
   .process-mirror.approval-panel .mirror-files th:nth-child(8),
-  .process-mirror.approval-panel .mirror-files td:nth-child(8) { width: 110px; }
+  .process-mirror.approval-panel .mirror-files td:nth-child(8) { width: 120px; }
   .process-mirror.approval-panel .mirror-files th:nth-child(9),
-  .process-mirror.approval-panel .mirror-files td:nth-child(9) { width: 75px; }
+  .process-mirror.approval-panel .mirror-files td:nth-child(9) { width: 110px; }
   .process-mirror.approval-panel .mirror-files th:nth-child(10),
-  .process-mirror.approval-panel .mirror-files td:nth-child(10) { width: 240px; }
-  .process-mirror.approval-panel .mirror-files td:nth-child(10) .actions {
+  .process-mirror.approval-panel .mirror-files td:nth-child(10) { width: 75px; }
+  .process-mirror.approval-panel .mirror-files th:nth-child(11),
+  .process-mirror.approval-panel .mirror-files td:nth-child(11) { width: 240px; }
+  .process-mirror.approval-panel .mirror-files td:nth-child(11) .actions {
     flex-wrap: nowrap;
-    justify-content: flex-end;
+    justify-content: center;
   }
-  .process-mirror.approval-panel .mirror-files th:nth-child(10) {
-    text-align: right;
-    padding-right: 12px;
+  .process-mirror.approval-panel .mirror-files th:nth-child(11) {
+    text-align: center;
   }
+  .process-mirror.approval-panel .mirror-files td:nth-child(11) {
+    text-align: center;
+  }
+  .process-mirror.approval-panel .mirror-files th:nth-child(2),
+  .process-mirror.approval-panel .mirror-files td:nth-child(2),
+  .process-mirror.approval-panel .mirror-files th:nth-child(3),
+  .process-mirror.approval-panel .mirror-files td:nth-child(3),
+  .process-mirror.approval-panel .mirror-files th:nth-child(4),
+  .process-mirror.approval-panel .mirror-files td:nth-child(4),
+  .process-mirror.approval-panel .mirror-files th:nth-child(6),
+  .process-mirror.approval-panel .mirror-files td:nth-child(6),
+  .process-mirror.approval-panel .mirror-files th:nth-child(7),
+  .process-mirror.approval-panel .mirror-files td:nth-child(7),
+  .process-mirror.approval-panel .mirror-files th:nth-child(8),
+  .process-mirror.approval-panel .mirror-files td:nth-child(8),
+  .process-mirror.approval-panel .mirror-files th:nth-child(9),
+  .process-mirror.approval-panel .mirror-files td:nth-child(9),
+  .process-mirror.approval-panel .mirror-files th:nth-child(10),
   .process-mirror.approval-panel .mirror-files td:nth-child(10) {
-    text-align: right;
+    text-align: center;
   }
 
   .file-name mark {
@@ -334,7 +353,8 @@
 
   .button.small.review-button,
   .button.small.cancel-button,
-  .button.small.approval-action {
+  .button.small.approval-action,
+  .button.small.review-view-button {
     min-height: 36px;
     padding: 7px 16px;
     font-size: 14px;
@@ -373,6 +393,25 @@
   }
 
   .cancel-button:disabled {
+    background: #d1d5db;
+    border-color: transparent;
+    color: #6b7280;
+    cursor: not-allowed;
+  }
+
+  .review-view-button {
+    background: #3b82f6;
+    border-color: transparent;
+    color: #ffffff;
+  }
+
+  .review-view-button:hover:not(:disabled) {
+    background: #2563eb;
+    border-color: transparent;
+    color: #ffffff;
+  }
+
+  .review-view-button:disabled {
     background: #d1d5db;
     border-color: transparent;
     color: #6b7280;
@@ -687,6 +726,7 @@
                       <th>File</th>
                       <th>Period</th>
                       <th>Version</th>
+                      <th>Review</th>
                       <th>Source File</th>
                       <th>Rows</th>
                       <th>Spend</th>
@@ -702,10 +742,18 @@
                         class="mirror-file-row active"
                         data-approval-row
                         data-approval-output="{{ parsed.output_path }}"
+                        data-review-url="{% url 'pipeline_dashboard:review_parsed_output' parsed.id %}"
                       >
                         <td class="file-name" title="{{ parsed.output_path }}">{{ parsed.output_path }}</td>
                         <td>{{ parsed.reporting_period|default:"-"|short_period }}</td>
                         <td>{{ parsed.version }}</td>
+                        <td>
+                          <button
+                            class="button small review-view-button"
+                            type="button"
+                            data-review-button
+                          >Review</button>
+                        </td>
                         <td class="file-name" title="{{ parsed.asset.name }}">{{ parsed.asset.name }}</td>
                         <td>{{ parsed.row_count }}</td>
                         <td>{{ parsed.total_spend|space_int }}</td>
@@ -1296,6 +1344,40 @@
           parseTitle.textContent = "Parse file";
           showParseMessage(error.message);
           parseSubmit.disabled = true;
+        }
+      });
+    });
+
+    document.querySelectorAll("[data-review-button]").forEach((button) => {
+      button.addEventListener("click", async () => {
+        const row = button.closest("[data-approval-row]");
+        if (!row) return;
+        resetParseModal();
+        parseModal.hidden = false;
+        parseTitle.textContent = "Loading...";
+        parseDetails.replaceChildren();
+        parseDetails?.classList.add("collapsed");
+        parseSeparator?.classList.add("collapsed");
+        parseValidation.textContent = "";
+        showParseMessage("Loading review...");
+        try {
+          const response = await fetch(row.dataset.reviewUrl);
+          const payload = await response.json();
+          if (!response.ok) throw new Error(payload.error || "Review failed.");
+          if (parseTabsRow) parseTabsRow.hidden = true;
+          parseTabs.hidden = true;
+          parsePreview.hidden = true;
+          chartPreview.hidden = false;
+          if (parseVendorPanel) parseVendorPanel.hidden = true;
+          parseSubmit.hidden = true;
+          if (parseValidate) parseValidate.hidden = true;
+          approvalSubmit.hidden = true;
+          if (parseBack) parseBack.hidden = true;
+          parseTitle.textContent = row.dataset.approvalOutput || "Parsed output";
+          renderParsedResult(payload);
+        } catch (error) {
+          parseTitle.textContent = "Review parsed output";
+          showParseMessage(error.message);
         }
       });
     });

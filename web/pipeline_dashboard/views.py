@@ -26,6 +26,7 @@ from .parser_workflow import (
     ParserWorkflowError,
     build_parse_preview,
     build_parse_result_preview,
+    build_review_payload,
     final_period_label,
     final_processed_output_path,
     finalize_approved_output,
@@ -1096,6 +1097,19 @@ def approve_parsed_output(request, parsed_output_id: int):
     )
     messages.success(request, f"{asset.name}: approved and stored in ShareFile Final.")
     return redirect("pipeline_dashboard:process")
+
+
+@require_GET
+def review_parsed_output(request, parsed_output_id: int):
+    parsed = get_object_or_404(
+        ParsedOutput.objects.select_related("asset", "vendor"),
+        pk=parsed_output_id,
+    )
+    try:
+        payload = build_review_payload(parsed)
+    except ParserWorkflowError as exc:
+        return JsonResponse({"error": str(exc)}, status=400)
+    return JsonResponse(payload)
 
 
 def _remove_staged_output(parsed: ParsedOutput | None) -> None:
