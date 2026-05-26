@@ -754,6 +754,7 @@
     const tabNavNext = document.querySelector("[data-parse-tab-next]");
     const csrfToken = document.querySelector("[name=csrfmiddlewaretoken]")?.value || "";
     let activeParse = null;
+    let activeChart = null;
     let savedVendorId = null;
 
     function updateSaveButtonState() {
@@ -784,6 +785,10 @@
       if (vendorChangeDebounce) window.clearTimeout(vendorChangeDebounce);
       parseModal.hidden = true;
       activeParse = null;
+      if (activeChart) {
+        activeChart.destroy();
+        activeChart = null;
+      }
       chartPreview.hidden = true;
       chartPreview.replaceChildren();
       if (parseTabsRow) parseTabsRow.hidden = false;
@@ -1393,92 +1398,146 @@
     function renderSingleChart(payload, config) {
       const card = document.createElement("section");
       card.className = "parse-chart-card";
-      const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-      svg.setAttribute("viewBox", "0 0 920 320");
-      svg.setAttribute("role", "img");
-      svg.setAttribute("aria-label", `${config.title} comparison chart`);
-      card.append(svg);
-      renderMetricChart(svg, payload.charts || {}, config.mode);
-      return card;
-    }
+      const canvas = document.createElement("canvas");
+      card.append(canvas);
 
-    function renderMetricChart(svg, chartPayload, mode) {
+      const chartPayload = payload.charts || {};
       const series = chartPayload.series || [];
-      const values = series.flatMap((item) => (item.points || []).map((point) => Number(point[mode] || 0)));
-      const maxValue = Math.max(...values, 1);
+      const labels = [];
       const maxDay = Math.max(chartPayload.max_day || 0, ...series.map((item) => (item.points || []).length), 1);
-      const width = 920;
-      const height = 320;
-      const left = 52;
-      const right = 24;
-      const top = 30;
-      const bottom = 44;
-      const plotWidth = width - left - right;
-      const plotHeight = height - top - bottom;
-      const colors = ["#2563eb", "#b54708", "#13795b"];
-      svg.replaceChildren();
+      for (let d = 1; d <= maxDay; d += 1) {
+        labels.push(String(d));
+      }
 
-      const axis = document.createElementNS("http://www.w3.org/2000/svg", "path");
-      axis.setAttribute("d", `M${left},${top} V${top + plotHeight} H${left + plotWidth}`);
-      axis.setAttribute("fill", "none");
-      axis.setAttribute("stroke", "#98a2b3");
-      svg.appendChild(axis);
-
-      series.forEach((item, index) => {
-        const points = (item.points || []).map((point) => {
-          const x = left + ((Number(point.day) - 1) / Math.max(maxDay - 1, 1)) * plotWidth;
-          const y = top + plotHeight - (Number(point[mode] || 0) / maxValue) * plotHeight;
-          return `${x.toFixed(2)},${y.toFixed(2)}`;
-        });
-        const pointCoords = (item.points || []).map((point) => {
-          const x = left + ((Number(point.day) - 1) / Math.max(maxDay - 1, 1)) * plotWidth;
-          const y = top + plotHeight - (Number(point[mode] || 0) / maxValue) * plotHeight;
-          return {x, y};
-        });
-        if (!points.length) return;
-        const line = document.createElementNS("http://www.w3.org/2000/svg", "polyline");
-        line.setAttribute("points", points.join(" "));
-        line.setAttribute("fill", "none");
-        line.setAttribute("stroke", colors[index % colors.length]);
-        line.setAttribute("stroke-width", index === 0 ? "3" : "2");
-        svg.appendChild(line);
-
-        pointCoords.forEach((coord) => {
-          const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-          circle.setAttribute("cx", coord.x.toFixed(2));
-          circle.setAttribute("cy", coord.y.toFixed(2));
-          circle.setAttribute("r", index === 0 ? "3.5" : "2.5");
-          circle.setAttribute("fill", colors[index % colors.length]);
-          circle.setAttribute("stroke", "#ffffff");
-          circle.setAttribute("stroke-width", "1.5");
-          svg.appendChild(circle);
-        });
-
-        const label = document.createElementNS("http://www.w3.org/2000/svg", "text");
-        label.setAttribute("x", String(left + 12));
-        label.setAttribute("y", String(top + 18 + index * 18));
-        label.setAttribute("fill", colors[index % colors.length]);
-        label.setAttribute("font-size", "13");
-        label.textContent = item.label;
-        svg.appendChild(label);
+      const datasets = series.map((item, index) => {
+        const color = index === 0 ? "#2563eb" : index === 1 ? "#b54708" : "#13795b";
+        const data = item.points
+          ? item.points.map((point) => Number(point[config.mode] || 0))
+          : [];
+        if (index === 0) {
+          const gradient = document.createElement("canvas").getContext("2d").createLinearGradient(0, 0, 0, 300);
+          // Off-DOM canvas fallback not ideal; use static rgba for gradients via parsed colour
+          const borderColor = color;
+          const backgroundColor = (() => {
+            const cvs = document.createElement("canvas");
+            cvs.width = 1; cvs.height = 300;
+            const ctx = cvs.getContext("2d");
+            const g = ctx.createLinearGradient(0, 0, 0, 300);
+            g.addColorStop(0, "rgba(37, 99, 235, 0.28)");
+            g.addColorStop(1, "rgba(37, 99, 235, 0.02)");
+            return g;
+          })();
+          return {
+            label: item.label || "",
+            data,
+            borderColor: color,
+            backgroundColor: backgroundColor,
+            fill: true,
+            tension: 0.35,
+            pointRadius: 3.5,
+            pointBackgroundColor: "#ffffff",
+            pointBorderColor: color,
+            pointBorderWidth: 2,
+            borderWidth: 3,
+          };
+        }
+        return {
+          label: item.label || "",
+          data,
+          borderColor: color,
+          backgroundColor: "transparent",
+          fill: false,
+          tension: 0.35,
+          pointRadius: 2.5,
+          pointBackgroundColor: "#ffffff",
+          pointBorderColor: color,
+          pointBorderWidth: 1.5,
+          borderWidth: 2,
+        };
       });
 
-      const xLabel = document.createElementNS("http://www.w3.org/2000/svg", "text");
-      xLabel.setAttribute("x", String(left + plotWidth / 2));
-      xLabel.setAttribute("y", String(height - 10));
-      xLabel.setAttribute("text-anchor", "middle");
-      xLabel.setAttribute("fill", "#647184");
-      xLabel.setAttribute("font-size", "12");
-      xLabel.textContent = "Overlapping period day";
-      svg.appendChild(xLabel);
+      if (activeChart) {
+        activeChart.destroy();
+        activeChart = null;
+      }
 
-      const maxLabel = document.createElementNS("http://www.w3.org/2000/svg", "text");
-      maxLabel.setAttribute("x", String(left));
-      maxLabel.setAttribute("y", String(top - 10));
-      maxLabel.setAttribute("fill", "#647184");
-      maxLabel.setAttribute("font-size", "12");
-      maxLabel.textContent = formatMetric(maxValue, mode);
-      svg.appendChild(maxLabel);
+      const ctx = canvas.getContext("2d");
+      activeChart = new window.Chart(ctx, {
+        type: "line",
+        data: {
+          labels,
+          datasets,
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          interaction: { mode: "index", intersect: false },
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              backgroundColor: "rgba(16, 24, 40, 0.92)",
+              titleColor: "#f1f5f9",
+              bodyColor: "#e2e8f0",
+              borderColor: "#334155",
+              borderWidth: 1,
+              padding: 10,
+              titleFont: { size: 12, weight: "700" },
+              bodyFont: { size: 12, weight: "600" },
+              displayColors: true,
+              usePointStyle: true,
+              callbacks: {
+                label: (context) => {
+                  let label = context.dataset.label || "";
+                  if (label) label += ": ";
+                  label += formatMetric(context.parsed.y, config.mode);
+                  return label;
+                },
+              },
+            },
+          },
+          scales: {
+            x: {
+              grid: {
+                color: (ctx) => {
+                  const idx = ctx.index;
+                  return idx % 5 === 0 ? "rgba(16,24,40,0.08)" : "rgba(16,24,40,0.04)";
+                },
+                drawTicks: false,
+              },
+              ticks: {
+                color: "#647184",
+                font: { size: 11, weight: "600" },
+                maxRotation: 0,
+              },
+              border: { display: false },
+              title: {
+                display: true,
+                text: "Overlapping period day",
+                color: "#647184",
+                font: { size: 11, weight: "600" },
+                padding: { top: 8 },
+              },
+            },
+            y: {
+              grid: {
+                color: "rgba(16,24,40,0.06)",
+                drawTicks: false,
+              },
+              ticks: {
+                color: "#647184",
+                font: { size: 11, weight: "600" },
+                callback: (value) => formatMetric(value, config.mode),
+              },
+              border: { display: false },
+              beginAtZero: true,
+            },
+          },
+          layout: { padding: { top: 10, right: 10, bottom: 0, left: 4 } },
+          animation: { duration: 450, easing: "easeOutQuart" },
+        },
+      });
+
+      return card;
     }
 
     function renderParsedTable(tablePayload) {
@@ -1561,6 +1620,10 @@
     if (parseBack) {
       parseBack.addEventListener("click", () => {
         // Switch from review result (2nd sub-window) back to preview (1st sub-window)
+        if (activeChart) {
+          activeChart.destroy();
+          activeChart = null;
+        }
         chartPreview.hidden = true;
         chartPreview.replaceChildren();
         parsePreview.hidden = false;
@@ -1684,4 +1747,7 @@
       });
     })();
   </script>
+{% endblock %}
+{% block extra_scripts %}
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js" crossorigin="anonymous"></script>
 {% endblock %}
