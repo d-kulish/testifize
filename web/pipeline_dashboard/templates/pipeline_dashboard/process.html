@@ -1445,12 +1445,10 @@
       const panel = document.createElement("div");
       panel.className = "parse-comparison-panel";
       const status = comp.status || "no_approved_history";
-      if (status === "no_approved_history" || status === "no_matching_history") {
+      if (status === "no_approved_history") {
         const empty = document.createElement("div");
         empty.className = "parse-comparison-empty";
-        empty.textContent = status === "no_approved_history"
-          ? "No approved historical CSV exists for comparison."
-          : "No matching dates found in approved history for this period.";
+        empty.textContent = "No approved historical CSV exists for comparison.";
         panel.appendChild(empty);
         return panel;
       }
@@ -1521,24 +1519,14 @@
 
     function renderResultSummary(payload) {
       const summary = payload.candidate?.summary || {};
-      const series = payload.charts?.series || [];
-      const baselineCount = Math.max(series.length - 1, 0);
       const header = document.createElement("div");
       header.className = "parse-result-summary";
-      const title = document.createElement("div");
-      title.className = "parse-result-title";
-      const heading = document.createElement("h3");
-      heading.textContent = "Parsed CSV review";
-      const meta = document.createElement("span");
-      meta.textContent = `${summary.period_start || "-"} to ${summary.period_end || "-"} · ${payload.candidate?.output_filename || "CSV output"}`;
-      title.append(heading, meta);
       const pills = document.createElement("div");
       pills.className = "parse-result-pills";
       [
         ["Rows", summary.row_count || 0],
         ["Spend", formatMetric(summary.total_spend, "spend")],
         ["Impressions", formatMetric(summary.total_impressions, "impressions")],
-        ["Compared", `${baselineCount} previous month${baselineCount === 1 ? "" : "s"}`],
       ].forEach(([label, value]) => {
         const pill = document.createElement("div");
         pill.className = "parse-result-pill";
@@ -1549,7 +1537,7 @@
         pill.append(strong, span);
         pills.appendChild(pill);
       });
-      header.append(title, pills);
+      header.appendChild(pills);
       return header;
     }
 
