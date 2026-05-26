@@ -1457,14 +1457,6 @@
       const rows = tablePayload.rows || [];
       const panel = document.createElement("section");
       panel.className = "parse-csv-panel";
-      const header = document.createElement("div");
-      header.className = "parse-csv-head";
-      const h3 = document.createElement("h3");
-      h3.textContent = "Final CSV preview";
-      const meta = document.createElement("span");
-      meta.textContent = `${tablePayload.preview_count || rows.length} of ${tablePayload.row_count || rows.length} rows`;
-      header.append(h3, meta);
-      panel.appendChild(header);
 
       if (!columns.length) {
         const empty = document.createElement("div");
