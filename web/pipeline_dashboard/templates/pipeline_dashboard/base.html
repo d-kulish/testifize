@@ -1011,8 +1011,8 @@
     }
 
     .parse-result {
-      display: flex;
-      flex-direction: column;
+      display: grid;
+      grid-template-rows: auto 1fr auto;
       min-height: 0;
       overflow: hidden;
       padding: 8px 16px 6px;
@@ -1020,7 +1020,7 @@
     }
 
     .review-body > .parse-result:not([hidden]) {
-      grid-row: 1 / -1;
+      grid-row: 2;
     }
 
     .parse-result-tabs {
@@ -1281,8 +1281,9 @@
       margin-top: 0;
       flex: 1 1 auto;
       min-height: 0;
-      display: flex;
-      flex-direction: column;
+      display: grid;
+      grid-template-rows: 1fr auto;
+      overflow: hidden;
     }
 
     .parse-csv-head {
@@ -1291,7 +1292,6 @@
     }
 
     .parse-csv-table-wrap {
-      flex: 1 1 auto;
       min-height: 0;
       overflow: auto;
     }

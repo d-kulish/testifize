@@ -677,6 +677,16 @@ Final/<Reporting_Period>/<Vendor>_<Reporting_Period>.csv
 - **Tab button cursor**: added `cursor: pointer` to chart tab buttons for clearer interactivity.
 - **Grid layout fix**: `.review-body > .parse-result:not([hidden])` now spans `grid-row: 1 / -1`, so the chart area fills the available modal height.
 
+### CSV table overflow fix (2026-05-27)
+
+- **Problem**: clicking the "File CSV" tab in the parse-review modal caused the CSV table to overflow upward and visually cover the 4 navigation buttons (Spend / Impressions / Cost / impression / File CSV).
+- **Root cause**: `.parse-result` used `display: flex; flex-direction: column`. In nested flex contexts, a child with large intrinsic content (a tall table) can expand beyond its allocated space and spill over siblings. Charts worked because `<canvas height="100%">` has no intrinsic height to fight against.
+- **Fix**: changed `.parse-result` to `display: grid; grid-template-rows: auto 1fr auto;`. This creates three isolated, rigid rows:
+  - Row 1 (`auto`): the navigation buttons
+  - Row 2 (`1fr`): the chart / table view — strictly clamped to remaining space, forced to scroll internally
+  - Row 3 (`auto`): the KPI summary pills
+- **File**: `web/pipeline_dashboard/templates/pipeline_dashboard/base.html`
+
 ### Approval Review button (2026-05-26)
 
 - **Review parsed output without re-running the parser**: each row in the Approval queue now has a **Review** button (blue, in its own column between *Version* and *Source File*).
