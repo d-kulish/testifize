@@ -497,7 +497,7 @@ App pages:
 ```text
 /          dashboard
 /folders/  ShareFile folder catalogue, file search, status sorting, and review entrypoint
-/process/  Parsing page, parser preview, generated CSV review, approval queue
+/process/  Parsing page with three chapters: Parsing Files queue, Approval review queue, and approved-file History
 /admin/    Django Admin back office
 ```
 

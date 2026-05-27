@@ -13,7 +13,7 @@ from django.conf import settings
 from django.contrib import messages
 from django.db import IntegrityError, transaction
 from django.db.models import Count, Q
-from django.http import JsonResponse
+from django.http import FileResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
@@ -575,6 +575,11 @@ def process(request):
     unassigned_assets = [asset for asset in processing_assets if not asset.vendor_id]
     if unassigned_assets:
         grouped_assets.append(_build_process_group(None, unassigned_assets))
+    approved_outputs = list(
+        ParsedOutput.objects.select_related("asset", "vendor")
+        .filter(comparison_status="approved")
+        .order_by("-created_at")[:25]
+    )
     context = {
         "title": "Parsing",
         "assets": processing_assets,
@@ -583,6 +588,7 @@ def process(request):
         "parsed_outputs": ParsedOutput.objects.select_related("asset", "vendor")
         .filter(comparison_status="sent_for_approval")
         .order_by("-created_at")[:50],
+        "approved_outputs": approved_outputs,
         "active_nav": "process",
     }
     return render(request, "pipeline_dashboard/process.html", context)
@@ -1110,6 +1116,24 @@ def review_parsed_output(request, parsed_output_id: int):
     except ParserWorkflowError as exc:
         return JsonResponse({"error": str(exc)}, status=400)
     return JsonResponse(payload)
+
+
+@require_GET
+def download_approved_output(request, parsed_output_id: int):
+    parsed = get_object_or_404(
+        ParsedOutput.objects.select_related("asset", "vendor"),
+        pk=parsed_output_id,
+        comparison_status="approved",
+    )
+    output_path = settings.REPO_ROOT / parsed.output_path
+    if not output_path.exists():
+        return JsonResponse({"error": "Approved file not found."}, status=404)
+    return FileResponse(
+        output_path.open("rb"),
+        as_attachment=True,
+        filename=output_path.name,
+        content_type="text/csv",
+    )
 
 
 def _remove_staged_output(parsed: ParsedOutput | None) -> None:

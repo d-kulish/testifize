@@ -1274,7 +1274,7 @@ class DashboardViewTests(TestCase):
         self.assertEqual(fake_client.folder_parts, ["Final", "May_2026"])
         self.assertEqual(fake_client.uploaded_name, "Loop_May_2026.csv")
         self.assertTrue(asset.events.filter(event_type="final_approved").exists())
-        self.assertNotContains(process_response, "Loop_May_2026_v1.csv")
+        self.assertContains(process_response, "Loop_May_2026_v1.csv")
 
     def test_approval_root_defaults_to_allshared(self):
         with tempfile.TemporaryDirectory() as tmpdir:
