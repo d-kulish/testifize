@@ -436,20 +436,28 @@
   /* History month coverage matrix */
   .process-mirror.history-panel .mirror-head,
   .process-mirror.history-panel .mirror-summary {
-    grid-template-columns: 16px minmax(280px, 2fr) repeat(12, 58px) 90px minmax(280px, 1fr);
+    grid-template-columns: 16px minmax(200px, 1fr) minmax(200px, 1fr) 140px 140px 140px 120px 120px 120px;
   }
 
   .process-mirror.history-panel .mirror-head .process-head-wrapper {
     grid-column: span 1;
   }
 
-  .process-mirror.history-panel .mirror-head .history-month-col {
+  .process-mirror.history-panel .mirror-head .history-month-block {
+    grid-column: 3 / span 3;
     display: flex;
     align-items: center;
-    justify-content: center;
+    justify-content: space-between;
+    gap: 4px;
+    padding: 0 5px;
+    overflow: hidden;
+  }
+
+  .process-mirror.history-panel .mirror-head .history-month-col {
+    flex: 1 1 0;
+    min-width: 0;
     text-align: center;
-    padding: 0 2px;
-    color: #475467;
+    color: #ffffff;
     font-size: 11px;
     font-weight: 760;
     text-transform: uppercase;
@@ -459,35 +467,46 @@
 
   .process-mirror.history-panel .mirror-head .process-count-col,
   .process-mirror.history-panel .mirror-summary .process-count-cell {
-    grid-column: 15;
+    grid-column: 6;
   }
 
   .process-mirror.history-panel .mirror-head .mirror-head-search {
-    grid-column: 16;
+    grid-column: 7 / span 3;
   }
 
   .process-mirror.history-panel .mirror-summary .mirror-folder-name {
     grid-column: span 1;
   }
 
+  .process-mirror.history-panel .mirror-summary .history-month-block {
+    grid-column: 3 / span 3;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 4px;
+    padding: 0 5px;
+    overflow: hidden;
+  }
+
   .process-mirror.history-panel .mirror-summary .history-month-cell {
+    flex: 1 1 0;
+    min-width: 0;
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 0 5px;
   }
 
   .history-month-cell .month-box {
     display: block;
     width: 100%;
-    height: 26px;
-    border-radius: 5px;
+    height: 28px;
+    border-radius: 4px;
     border: 1px solid #e1e7ef;
     background: #ffffff;
   }
 
   .history-month-cell .month-box.current {
-    border: 2px solid #111827;
+    border: 1px solid #111827;
     background: #dbeafe;
   }
 
@@ -970,9 +989,11 @@
               <span class="process-head-title">History</span>
               <span class="process-head-subtitle">{{ approved_outputs|length }} approved files</span>
             </div>
-            {% for label in history_months %}
-              <div class="history-month-col" role="columnheader">{{ label }}</div>
-            {% endfor %}
+            <div class="history-month-block" role="columnheader">
+              {% for label in history_months %}
+                <span class="history-month-col">{{ label }}</span>
+              {% endfor %}
+            </div>
             <div class="process-count-col right-aligned" role="columnheader">Files</div>
             <div class="mirror-head-search" role="search">
               <input
@@ -993,11 +1014,13 @@
             <details class="mirror-folder">
               <summary class="mirror-summary" role="row">
                 <span class="mirror-folder-name" role="cell">{{ group.grouper.name|default:"Unassigned" }}</span>
-                {% for month_class in history_coverage|vendor_coverage:group.grouper %}
-                  <span class="history-month-cell" role="cell">
-                    <span class="month-box {{ month_class }}"></span>
-                  </span>
-                {% endfor %}
+                <span class="history-month-block" role="cell">
+                  {% for month_class in history_coverage|vendor_coverage:group.grouper %}
+                    <span class="history-month-cell">
+                      <span class="month-box {{ month_class }}"></span>
+                    </span>
+                  {% endfor %}
+                </span>
                 <span class="process-count-cell right-aligned" role="cell">{{ group.list|length }}</span>
                 <span role="cell"></span>
               </summary>
