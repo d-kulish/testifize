@@ -1114,6 +1114,7 @@ def approve_parsed_output(request, parsed_output_id: int):
     final_path = final_processed_output_path(parsed)
     period_label = final_period_label(parsed)
     parsed.comparison_status = "approved"
+    parsed.output_path = _relative_path(final_path)
     parsed.comparison_summary = {
         **(parsed.comparison_summary or {}),
         "final_sharefile_item_id": upload_item.id,
@@ -1122,7 +1123,7 @@ def approve_parsed_output(request, parsed_output_id: int):
         "final_local_path": _relative_path(final_path),
         "approved_at": timezone.now().isoformat(),
     }
-    parsed.save(update_fields=["comparison_status", "comparison_summary"])
+    parsed.save(update_fields=["comparison_status", "comparison_summary", "output_path"])
 
     asset.output_path = _relative_path(final_path)
     asset.uploaded_item_id = upload_item.id
