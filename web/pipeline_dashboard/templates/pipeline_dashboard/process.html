@@ -394,7 +394,7 @@
   .process-mirror.history-panel .mirror-files table {
     table-layout: fixed;
     width: 100%;
-    min-width: 1400px;
+    min-width: 1520px;
   }
   .process-mirror.history-panel .mirror-files th,
   .process-mirror.history-panel .mirror-files td {
@@ -404,43 +404,46 @@
   .process-mirror.history-panel .mirror-files th:nth-child(1),
   .process-mirror.history-panel .mirror-files td:nth-child(1) { width: auto; min-width: 220px; padding-left: 18px; }
   .process-mirror.history-panel .mirror-files th:nth-child(2),
-  .process-mirror.history-panel .mirror-files td:nth-child(2) { width: 100px; }
+  .process-mirror.history-panel .mirror-files td:nth-child(2) { width: 120px; }
   .process-mirror.history-panel .mirror-files th:nth-child(3),
-  .process-mirror.history-panel .mirror-files td:nth-child(3) { width: 80px; }
+  .process-mirror.history-panel .mirror-files td:nth-child(3) { width: 100px; }
   .process-mirror.history-panel .mirror-files th:nth-child(4),
-  .process-mirror.history-panel .mirror-files td:nth-child(4) { width: auto; min-width: 220px; }
+  .process-mirror.history-panel .mirror-files td:nth-child(4) { width: 80px; }
   .process-mirror.history-panel .mirror-files th:nth-child(5),
-  .process-mirror.history-panel .mirror-files td:nth-child(5) { width: 80px; }
+  .process-mirror.history-panel .mirror-files td:nth-child(5) { width: auto; min-width: 220px; }
   .process-mirror.history-panel .mirror-files th:nth-child(6),
-  .process-mirror.history-panel .mirror-files td:nth-child(6) { width: 120px; }
+  .process-mirror.history-panel .mirror-files td:nth-child(6) { width: 80px; }
   .process-mirror.history-panel .mirror-files th:nth-child(7),
   .process-mirror.history-panel .mirror-files td:nth-child(7) { width: 120px; }
   .process-mirror.history-panel .mirror-files th:nth-child(8),
-  .process-mirror.history-panel .mirror-files td:nth-child(8) { width: 100px; }
+  .process-mirror.history-panel .mirror-files td:nth-child(8) { width: 120px; }
   .process-mirror.history-panel .mirror-files th:nth-child(9),
-  .process-mirror.history-panel .mirror-files td:nth-child(9) { width: 220px; }
-  .process-mirror.history-panel .mirror-files td:nth-child(9) .actions {
+  .process-mirror.history-panel .mirror-files td:nth-child(9) { width: 100px; }
+  .process-mirror.history-panel .mirror-files th:nth-child(10),
+  .process-mirror.history-panel .mirror-files td:nth-child(10) { width: 220px; }
+  .process-mirror.history-panel .mirror-files td:nth-child(2) .actions,
+  .process-mirror.history-panel .mirror-files td:nth-child(10) .actions {
     flex-wrap: nowrap;
     justify-content: center;
   }
-  .process-mirror.history-panel .mirror-files th:nth-child(9) {
-    text-align: center;
-  }
-  .process-mirror.history-panel .mirror-files td:nth-child(9) {
-    text-align: center;
-  }
   .process-mirror.history-panel .mirror-files th:nth-child(2),
   .process-mirror.history-panel .mirror-files td:nth-child(2),
+  .process-mirror.history-panel .mirror-files th:nth-child(10),
+  .process-mirror.history-panel .mirror-files td:nth-child(10) {
+    text-align: center;
+  }
   .process-mirror.history-panel .mirror-files th:nth-child(3),
   .process-mirror.history-panel .mirror-files td:nth-child(3),
-  .process-mirror.history-panel .mirror-files th:nth-child(5),
-  .process-mirror.history-panel .mirror-files td:nth-child(5),
+  .process-mirror.history-panel .mirror-files th:nth-child(4),
+  .process-mirror.history-panel .mirror-files td:nth-child(4),
   .process-mirror.history-panel .mirror-files th:nth-child(6),
   .process-mirror.history-panel .mirror-files td:nth-child(6),
   .process-mirror.history-panel .mirror-files th:nth-child(7),
   .process-mirror.history-panel .mirror-files td:nth-child(7),
   .process-mirror.history-panel .mirror-files th:nth-child(8),
-  .process-mirror.history-panel .mirror-files td:nth-child(8) {
+  .process-mirror.history-panel .mirror-files td:nth-child(8),
+  .process-mirror.history-panel .mirror-files th:nth-child(9),
+  .process-mirror.history-panel .mirror-files td:nth-child(9) {
     text-align: center;
   }
 
@@ -536,7 +539,8 @@
   .button.small.review-button,
   .button.small.cancel-button,
   .button.small.approval-action,
-  .button.small.review-view-button {
+  .button.small.review-view-button,
+  .button.small.download-button {
     min-height: 36px;
     padding: 7px 16px;
     font-size: 14px;
@@ -594,6 +598,25 @@
   }
 
   .review-view-button:disabled {
+    background: #d1d5db;
+    border-color: transparent;
+    color: #6b7280;
+    cursor: not-allowed;
+  }
+
+  .download-button {
+    background: #d97706;
+    border-color: transparent;
+    color: #ffffff;
+  }
+
+  .download-button:hover:not(:disabled) {
+    background: #b45309;
+    border-color: transparent;
+    color: #ffffff;
+  }
+
+  .download-button:disabled {
     background: #d1d5db;
     border-color: transparent;
     color: #6b7280;
@@ -1111,6 +1134,7 @@
                   <thead>
                     <tr>
                       <th>File</th>
+                      <th>Review</th>
                       <th>Period</th>
                       <th>Version</th>
                       <th>Source File</th>
@@ -1130,6 +1154,15 @@
                         data-review-url="{% url 'pipeline_dashboard:review_parsed_output' parsed.id %}"
                       >
                         <td class="file-name" title="{{ parsed.output_path }}">{{ parsed.output_path }}</td>
+                        <td>
+                          <div class="actions">
+                            <button
+                              class="button small review-view-button"
+                              type="button"
+                              data-review-button
+                            >Review</button>
+                          </div>
+                        </td>
                         <td>{{ parsed.reporting_period|default:"-"|short_period }}</td>
                         <td>{{ parsed.version }}</td>
                         <td class="file-name" title="{{ parsed.asset.name }}">{{ parsed.asset.name }}</td>
@@ -1139,13 +1172,8 @@
                         <td>{{ parsed.created_at|days_since }}</td>
                         <td>
                           <div class="actions">
-                            <button
-                              class="button small review-view-button"
-                              type="button"
-                              data-review-button
-                            >Review</button>
                             <a
-                              class="button small review-view-button"
+                              class="button small download-button"
                               href="{% url 'pipeline_dashboard:download_approved_output' parsed.id %}"
                               download
                             >Download</a>
