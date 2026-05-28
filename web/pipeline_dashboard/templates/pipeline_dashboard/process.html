@@ -601,17 +601,20 @@
     display: none !important;
   }
 
-  .review-details.review-mode {
+  .review-details.review-mode,
+  .review-details.parse-mode {
     grid-template-columns: 1fr 1fr;
     gap: 4px 20px;
     padding: 0px 18px 8px 24px;
   }
 
-  .review-details.review-mode > div:nth-child(2) {
+  .review-details.review-mode > div:nth-child(2),
+  .review-details.parse-mode > div:nth-child(2) {
     padding-left: 40px;
   }
 
-  .review-details.review-mode .detail-value {
+  .review-details.review-mode .detail-value,
+  .review-details.parse-mode .detail-value {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -1322,7 +1325,7 @@
         parseDetailsToggle.setAttribute("aria-label", "Show file details");
       }
       parseDetails?.classList.add("collapsed");
-      parseDetails?.classList.remove("review-mode");
+      parseDetails?.classList.remove("review-mode", "parse-mode");
       parseSeparator?.classList.add("collapsed");
       if (parseVendorPanel) parseVendorPanel.hidden = false;
       if (parseBack) parseBack.hidden = true;
@@ -1362,7 +1365,7 @@
         parseDetailsToggle.setAttribute("aria-label", "Show file details");
       }
       parseDetails?.classList.add("collapsed");
-      parseDetails?.classList.remove("review-mode");
+      parseDetails?.classList.remove("review-mode", "parse-mode");
       parseSeparator?.classList.add("collapsed");
       if (parseVendorPanel) parseVendorPanel.hidden = false;
       if (parseBack) parseBack.hidden = true;
@@ -1468,6 +1471,7 @@
       parseTitle.textContent = file.name || "Parse file";
       parseDetails.replaceChildren();
       parseDetails.classList.remove("review-mode");
+      parseDetails.classList.add("parse-mode");
 
       function makeItem(label, value) {
         const row = document.createElement("div");
@@ -1483,29 +1487,15 @@
         return row;
       }
 
-      const cell1 = document.createElement("div");
-      cell1.appendChild(makeItem("Vendor", validation.vendor || "-"));
-      parseDetails.appendChild(cell1);
+      const col1 = document.createElement("div");
+      col1.appendChild(makeItem("Uploader", file.uploaded_by || "-"));
+      col1.appendChild(makeItem("Uploaded", formatDate(file.created_at)));
+      parseDetails.appendChild(col1);
 
-      const cell2 = document.createElement("div");
-      cell2.appendChild(makeItem("Uploaded", formatDate(file.created_at)));
-      parseDetails.appendChild(cell2);
-
-      const cell3 = document.createElement("div");
-      cell3.appendChild(makeItem("Uploader", file.uploaded_by || "-"));
-      parseDetails.appendChild(cell3);
-
-      const cell4 = document.createElement("div");
-      cell4.appendChild(makeItem("Schema", validation.schema_path || "-"));
-      parseDetails.appendChild(cell4);
-
-      const cell5 = document.createElement("div");
-      cell5.appendChild(makeItem("Modified", formatDate(file.modified_at)));
-      parseDetails.appendChild(cell5);
-
-      const cell6 = document.createElement("div");
-      cell6.appendChild(makeItem("Pages", file.sheet_count || "-"));
-      parseDetails.appendChild(cell6);
+      const col2 = document.createElement("div");
+      col2.appendChild(makeItem("Schema", validation.schema_path || "-"));
+      col2.appendChild(makeItem("Parser", validation.parser_path || "-"));
+      parseDetails.appendChild(col2);
     }
 
     function setReviewDetails(file, validation) {
