@@ -709,6 +709,58 @@
     display: none !important;
   }
 
+  .chart-canvas-wrapper {
+    position: relative;
+    width: 100%;
+    height: 100%;
+  }
+
+  .chart-legend-overlay {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: #ffffff;
+    border: 1px solid #e1e7ef;
+    border-radius: 6px;
+    padding: 8px 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    color: #475467;
+    z-index: 2;
+    cursor: default;
+    user-select: none;
+    pointer-events: none;
+  }
+
+  .chart-legend-overlay .chart-legend-title {
+    font-weight: 700;
+    margin-bottom: 2px;
+  }
+
+  .chart-legend-overlay .chart-legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+    cursor: pointer;
+    pointer-events: auto;
+  }
+
+  .chart-legend-overlay .chart-legend-item .chart-legend-line {
+    display: inline-block;
+    width: 14px;
+    height: 3px;
+    border-radius: 2px;
+    flex-shrink: 0;
+  }
+
+  .chart-legend-overlay .chart-legend-item.hidden {
+    opacity: 0.4;
+  }
+
   @media (max-width: 760px) {
     .parse-comparison-row {
       grid-template-columns: 1fr;
@@ -1894,8 +1946,13 @@
     function renderSingleChart(payload, config) {
       const card = document.createElement("section");
       card.className = "parse-chart-card";
+
+      const wrapper = document.createElement("div");
+      wrapper.className = "chart-canvas-wrapper";
+
       const canvas = document.createElement("canvas");
-      card.append(canvas);
+      wrapper.appendChild(canvas);
+      card.appendChild(wrapper);
 
       const chartPayload = payload.charts || {};
       const series = chartPayload.series || [];
@@ -1948,6 +2005,38 @@
           borderWidth: 2,
         };
       });
+
+      const legendOverlay = document.createElement("div");
+      legendOverlay.className = "chart-legend-overlay";
+
+      const legendTitle = document.createElement("div");
+      legendTitle.className = "chart-legend-title";
+      legendTitle.textContent = "Periods";
+      legendOverlay.appendChild(legendTitle);
+
+      datasets.forEach((ds, idx) => {
+        const item = document.createElement("div");
+        item.className = "chart-legend-item";
+        const line = document.createElement("span");
+        line.className = "chart-legend-line";
+        line.style.backgroundColor = ds.borderColor;
+        const label = document.createElement("span");
+        label.textContent = ds.label;
+        item.appendChild(line);
+        item.appendChild(label);
+
+        item.addEventListener("click", () => {
+          if (!activeChart) return;
+          const visible = activeChart.isDatasetVisible(idx);
+          activeChart.setDatasetVisibility(idx, !visible);
+          item.classList.toggle("hidden", visible);
+          activeChart.update("none");
+        });
+
+        legendOverlay.appendChild(item);
+      });
+
+      wrapper.appendChild(legendOverlay);
 
       if (activeChart) {
         activeChart.destroy();
