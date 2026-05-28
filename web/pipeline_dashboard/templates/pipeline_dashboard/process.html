@@ -260,7 +260,7 @@
 
   /* Parsing files specific search positioning and columns */
   .process-mirror.parsing-files .mirror-head .mirror-head-search {
-    grid-column: 4 / span 3;
+    grid-column: 7 / span 3;
   }
   .process-mirror.parsing-files .mirror-head,
   .process-mirror.parsing-files .mirror-summary {
@@ -273,11 +273,22 @@
     grid-template-columns: 16px minmax(200px, 1fr) minmax(200px, 1fr) 120px 120px 120px 120px 120px 120px;
   }
   .process-mirror.approval-panel .mirror-head .mirror-head-search {
-    grid-column: 4 / span 3;
+    grid-column: 7 / span 3;
   }
   .process-mirror.approval-panel .mirror-head .process-count-col,
   .process-mirror.approval-panel .mirror-summary .process-count-cell {
-    grid-column: 9;
+    grid-column: 6;
+    transform: translateX(-28px);
+  }
+  .process-mirror.approval-panel .mirror-head > [role="columnheader"].process-count-col.right-aligned {
+    justify-content: center;
+    text-align: center;
+    padding-right: 0;
+  }
+  .process-mirror.approval-panel .mirror-summary .process-count-cell.right-aligned {
+    justify-content: center;
+    text-align: center;
+    padding-right: 0;
   }
   .process-mirror.approval-panel .mirror-files table thead th {
     background: #dbeafe;
@@ -350,11 +361,22 @@
     grid-template-columns: 16px minmax(200px, 1fr) minmax(200px, 1fr) 120px 120px 120px 120px 120px 120px;
   }
   .process-mirror.history-panel .mirror-head .mirror-head-search {
-    grid-column: 4 / span 3;
+    grid-column: 7 / span 3;
   }
   .process-mirror.history-panel .mirror-head .process-count-col,
   .process-mirror.history-panel .mirror-summary .process-count-cell {
-    grid-column: 9;
+    grid-column: 6;
+    transform: translateX(-28px);
+  }
+  .process-mirror.history-panel .mirror-head > [role="columnheader"].process-count-col.right-aligned {
+    justify-content: center;
+    text-align: center;
+    padding-right: 0;
+  }
+  .process-mirror.history-panel .mirror-summary .process-count-cell.right-aligned {
+    justify-content: center;
+    text-align: center;
+    padding-right: 0;
   }
   .process-mirror.history-panel .mirror-files table thead th {
     background: #dbeafe;
@@ -669,6 +691,9 @@
               <span class="process-head-title">Parsing Files</span>
               <span class="process-head-subtitle">{{ assets|length }} files in parser queue</span>
             </div>
+            <div class="process-count-col" role="columnheader">Files</div>
+            <div class="process-count-col" role="columnheader">Size</div>
+            <div class="process-count-col" role="columnheader">Queue Age</div>
             <div class="mirror-head-search" role="search">
               <input
                 type="search"
@@ -683,20 +708,17 @@
                 <path d="M21 21l-4.35-4.35" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path>
               </svg>
             </div>
-            <div class="process-count-col" role="columnheader">Files</div>
-            <div class="process-count-col" role="columnheader">Size</div>
-            <div class="process-count-col" role="columnheader">Queue Age</div>
           </div>
           {% for group in grouped_assets %}
             <details class="mirror-folder">
               <summary class="mirror-summary" role="row">
                 <span class="mirror-folder-name" role="cell">{{ group.vendor.name|default:"Unassigned" }}</span>
-                <span role="cell"></span>
-                <span role="cell"></span>
-                <span role="cell"></span>
                 <span class="process-count-cell" role="cell">{{ group.assets|length }}</span>
                 <span class="process-count-cell" role="cell">{{ group.total_size|filesizeformat }}</span>
                 <span class="process-count-cell" role="cell">{{ group.oldest_age_label }}</span>
+                <span role="cell"></span>
+                <span role="cell"></span>
+                <span role="cell"></span>
               </summary>
               <div class="mirror-files">
                 <table>
@@ -773,6 +795,7 @@
               <span class="process-head-title">Approval</span>
               <span class="process-head-subtitle">{{ parsed_outputs|length }} files in approval queue</span>
             </div>
+            <div class="process-count-col right-aligned" role="columnheader">Files</div>
             <div class="mirror-head-search" role="search">
               <input
                 type="search"
@@ -787,7 +810,6 @@
                 <path d="M21 21l-4.35-4.35" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path>
               </svg>
             </div>
-            <div class="process-count-col right-aligned" role="columnheader">Files</div>
           </div>
           {% for group in grouped_parsed_outputs %}
             <details class="mirror-folder">
@@ -795,8 +817,10 @@
                 <span class="mirror-folder-name" role="cell">{{ group.grouper.name|default:"Unassigned" }}</span>
                 <span role="cell"></span>
                 <span role="cell"></span>
-                <span role="cell"></span>
                 <span class="process-count-cell right-aligned" role="cell">{{ group.list|length }}</span>
+                <span role="cell"></span>
+                <span role="cell"></span>
+                <span role="cell"></span>
               </summary>
               <div class="mirror-files">
                 <table>
@@ -885,6 +909,7 @@
               <span class="process-head-title">History</span>
               <span class="process-head-subtitle">{{ approved_outputs|length }} approved files</span>
             </div>
+            <div class="process-count-col right-aligned" role="columnheader">Files</div>
             <div class="mirror-head-search" role="search">
               <input
                 type="search"
@@ -899,7 +924,6 @@
                 <path d="M21 21l-4.35-4.35" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path>
               </svg>
             </div>
-            <div class="process-count-col right-aligned" role="columnheader">Files</div>
           </div>
           {% for group in grouped_approved_outputs %}
             <details class="mirror-folder">
@@ -907,8 +931,10 @@
                 <span class="mirror-folder-name" role="cell">{{ group.grouper.name|default:"Unassigned" }}</span>
                 <span role="cell"></span>
                 <span role="cell"></span>
-                <span role="cell"></span>
                 <span class="process-count-cell right-aligned" role="cell">{{ group.list|length }}</span>
+                <span role="cell"></span>
+                <span role="cell"></span>
+                <span role="cell"></span>
               </summary>
               <div class="mirror-files">
                 <table>
