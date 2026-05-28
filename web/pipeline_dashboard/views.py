@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import calendar
 import os
 import re
 import subprocess
@@ -578,8 +579,46 @@ def process(request):
     approved_outputs = list(
         ParsedOutput.objects.select_related("asset", "vendor")
         .filter(comparison_status="approved")
-        .order_by("-created_at")[:25]
+        .order_by("-created_at")
     )
+
+    today = timezone.localdate()
+    month_window = []
+    year, month = today.year, today.month
+    for _ in range(12):
+        month_window.insert(0, date(year, month, 1))
+        month -= 1
+        if month == 0:
+            month = 12
+            year -= 1
+
+    month_ends = []
+    for m in month_window:
+        _, last_day = calendar.monthrange(m.year, m.month)
+        month_ends.append(date(m.year, m.month, last_day))
+
+    history_coverage = {}
+    if approved_outputs:
+        outputs_with_periods = [
+            o for o in approved_outputs if o.period_start and o.period_end
+        ]
+        vendor_ids = {o.vendor_id for o in approved_outputs}
+        for vid in vendor_ids:
+            covered = set()
+            vendor_outputs = [o for o in outputs_with_periods if o.vendor_id == vid]
+            for idx, (m_start, m_end) in enumerate(zip(month_window, month_ends)):
+                for o in vendor_outputs:
+                    if o.period_start <= m_end and o.period_end >= m_start:
+                        covered.add(idx)
+                        break
+            key = str(vid) if vid is not None else "none"
+            history_coverage[key] = [
+                "current" if idx == 11 else "covered" if idx in covered else "missing"
+                for idx in range(12)
+            ]
+
+    month_labels = [m.strftime("%b %y") for m in month_window]
+
     context = {
         "title": "Parsing",
         "assets": processing_assets,
@@ -589,6 +628,8 @@ def process(request):
         .filter(comparison_status="sent_for_approval")
         .order_by("-created_at")[:50],
         "approved_outputs": approved_outputs,
+        "history_months": month_labels,
+        "history_coverage": history_coverage,
         "active_nav": "process",
     }
     return render(request, "pipeline_dashboard/process.html", context)

@@ -100,6 +100,14 @@ def short_period(value: Any) -> str:
 
 
 @register.filter
+def vendor_coverage(coverage_dict: Any, vendor: Any) -> list[str]:
+    if not coverage_dict:
+        return ["empty"] * 12
+    key = str(vendor.id) if vendor else "none"
+    return coverage_dict.get(key, ["empty"] * 12)
+
+
+@register.filter
 def days_since(value: Any) -> str:
     if not value:
         return "-"
