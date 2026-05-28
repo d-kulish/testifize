@@ -63,6 +63,29 @@ def build_parse_result_preview(asset: Asset, sheet_name: str | None = None) -> d
     }
 
 
+def _review_file_preview(asset: Asset | None) -> dict[str, Any] | None:
+    if not asset:
+        return None
+    return {
+        "name": asset.name,
+        "created_at": asset.remote_created_at.isoformat() if asset.remote_created_at else "",
+        "uploaded_by": asset.created_by_name or "",
+    }
+
+
+def _review_validation_preview(asset: Asset | None) -> dict[str, Any] | None:
+    if not asset:
+        return None
+    paths = parser_paths_for_vendor(asset.vendor) if asset.vendor else None
+    return {
+        "ok": True,
+        "vendor": asset.vendor.name if asset.vendor else "",
+        "parser_key": paths.vendor_key if paths else "",
+        "parser_path": display_path(paths.parser_path) if paths else "",
+        "schema_path": display_path(paths.schema_path) if paths else "",
+    }
+
+
 def build_review_payload(parsed: ParsedOutput) -> dict[str, Any]:
     """Reconstruct the parse-review payload from a saved ParsedOutput CSV."""
     candidates = []
@@ -113,6 +136,8 @@ def build_review_payload(parsed: ParsedOutput) -> dict[str, Any]:
             "preview_count": len(preview_rows),
             "truncated": len(rows) > 200,
         },
+        "file": _review_file_preview(parsed.asset),
+        "validation": _review_validation_preview(parsed.asset),
     }
 
 
