@@ -463,7 +463,37 @@ def validate_excel_schema_probe(source_path: Path, schema: dict[str, Any], probe
 
         worksheets = schema.get("worksheets") or []
         if worksheets:
-            return ["Multi-worksheet schema probing is not supported yet."]
+            worksheet = next(
+                (entry for entry in worksheets if entry.get("name") == probe_sheet_name),
+                None,
+            )
+            if worksheet is None:
+                declared = [entry.get("name") for entry in worksheets if entry.get("name")]
+                if declared:
+                    return [
+                        f"Sheet {probe_sheet_name!r} is not declared in the input schema; "
+                        f"expected one of: {', '.join(declared)}."
+                    ]
+                return [f"Sheet {probe_sheet_name!r} is not declared in the input schema."]
+
+            header_row = worksheet.get("header_row")
+            if not header_row:
+                return [f"Input schema worksheet {probe_sheet_name!r} is missing header_row."]
+
+            selected_columns = schema.get("selected_columns") or {}
+            sheet = workbook[probe_sheet_name]
+            for field, letter in (worksheet.get("columns") or {}).items():
+                expected = selected_columns.get(field)
+                if not expected:
+                    continue
+                column_index = column_letter_to_index(letter)
+                actual = sheet.cell(header_row, column_index).value
+                if actual != expected:
+                    errors.append(
+                        f"Header mismatch in {probe_sheet_name!r} at {letter}{header_row}: "
+                        f"expected {expected!r}, found {actual!r}."
+                    )
+            return errors
 
         header = schema.get("header") or {}
         header_row = header.get("row")

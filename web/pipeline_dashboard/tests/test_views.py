@@ -934,6 +934,75 @@ class DashboardViewTests(TestCase):
         self.assertEqual(payload["candidate"]["summary"]["total_impressions"], "2800")
         self.assertEqual(payload["charts"]["series"][0]["label"], "Parsed March_2026")
 
+    def test_parse_process_file_with_sheet_name_supports_multi_worksheet_schemas(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            repo_root = Path(tmpdir)
+            asset = self._write_rallyadmedia_parse_fixture(repo_root)
+
+            with override_settings(REPO_ROOT=repo_root):
+                response = self.client.post(
+                    reverse("pipeline_dashboard:parse_process_file", args=[asset.remote_item_id]),
+                    data={"sheet_name": "BOL"},
+                )
+
+        self.assertEqual(response.status_code, 200, response.content)
+        payload = response.json()
+        self.assertEqual(payload["candidate"]["summary"]["row_count"], 2)
+        self.assertEqual(payload["candidate"]["summary"]["total_spend"], "280")
+        self.assertEqual(payload["candidate"]["summary"]["total_impressions"], "2800")
+
+    def test_parse_sheet_probe_reports_undeclared_sheet_for_multi_worksheet_schema(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            repo_root = Path(tmpdir)
+            asset = self._write_rallyadmedia_parse_fixture(repo_root)
+            workbook_path = repo_root / asset.local_path
+            from openpyxl import load_workbook
+
+            workbook = load_workbook(workbook_path)
+            workbook.create_sheet("Totals")
+            workbook.save(workbook_path)
+            workbook.close()
+
+            with override_settings(REPO_ROOT=repo_root):
+                response = self.client.get(
+                    reverse("pipeline_dashboard:parse_sheet_probe", args=[asset.remote_item_id]),
+                    data={"sheet_name": "Totals"},
+                )
+
+        self.assertEqual(response.status_code, 200, response.content)
+        validation = response.json()["validation"]
+        self.assertFalse(validation["ok"])
+        self.assertTrue(
+            any("not declared in the input schema" in error for error in validation["errors"]),
+            validation["errors"],
+        )
+
+    def test_parse_sheet_probe_reports_header_mismatch_for_multi_worksheet_schema(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            repo_root = Path(tmpdir)
+            asset = self._write_rallyadmedia_parse_fixture(repo_root)
+            workbook_path = repo_root / asset.local_path
+            from openpyxl import load_workbook
+
+            workbook = load_workbook(workbook_path)
+            workbook["BOL"]["A1"] = "DATE_LABEL_RENAMED"
+            workbook.save(workbook_path)
+            workbook.close()
+
+            with override_settings(REPO_ROOT=repo_root):
+                response = self.client.get(
+                    reverse("pipeline_dashboard:parse_sheet_probe", args=[asset.remote_item_id]),
+                    data={"sheet_name": "BOL"},
+                )
+
+        self.assertEqual(response.status_code, 200, response.content)
+        validation = response.json()["validation"]
+        self.assertFalse(validation["ok"])
+        self.assertTrue(
+            any("'BOL'" in error and "A1" in error for error in validation["errors"]),
+            validation["errors"],
+        )
+
     def test_parse_process_file_distributes_adtaxi_totals_across_report_dates(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             repo_root = Path(tmpdir)
