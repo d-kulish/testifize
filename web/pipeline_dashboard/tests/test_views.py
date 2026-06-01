@@ -14,6 +14,7 @@ from openpyxl import Workbook
 from pipeline_dashboard.models import Asset, AssetEvent, AssetStatus, ParsedOutput, ShareFileFolder, Vendor
 from pipeline_dashboard.parser_workflow import approval_root_id, period_series_from_rows
 from pipeline_dashboard.services import _reconcile_duplicate_roles_for_group
+from pipeline_dashboard.sharefile_mirror import load_approval_mirror
 
 
 class FakeApprovalClient:
@@ -357,6 +358,7 @@ class DashboardViewTests(TestCase):
             with override_settings(REPO_ROOT=repo_root):
                 response = self.client.get(reverse("pipeline_dashboard:folders"))
 
+        content = response.content.decode()
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Loaded Folders")
         self.assertContains(response, "josh")
@@ -387,11 +389,320 @@ class DashboardViewTests(TestCase):
         self.assertContains(response, "Last: May 07, 2026 12:00")
         self.assertContains(response, "Updating SF folders")
         self.assertNotContains(response, f'data-allowed-vendors="{adtaxi.id}"')
-        self.assertNotContains(response, "Approval/May_2026/Loop")
-        self.assertNotContains(response, "Final/April_2026")
-        self.assertNotContains(response, "Loop_May_2026_v1.csv")
-        self.assertNotContains(response, "Loop_April_2026.csv")
+        # Loaded Folders chapter still excludes Approval/Final subfolders.
+        loaded_section_start = content.index(">Loaded Folders<")
+        loaded_section_end = content.index("</section>", loaded_section_start)
+        loaded_block = content[loaded_section_start:loaded_section_end]
+        self.assertNotIn("Approval/May_2026/Loop", loaded_block)
+        self.assertNotIn("Final/April_2026", loaded_block)
+        self.assertNotIn("Loop_May_2026_v1.csv", loaded_block)
+        self.assertNotIn("Loop_April_2026.csv", loaded_block)
+        self.assertNotIn("profile-only.csv", loaded_block)
+        # ...but the new Approval chapter exposes them.
+        self.assertContains(response, "folders-approval-panel")
+        self.assertContains(response, "Loop_May_2026_v1.csv")
+        self.assertNotContains(response, "Loop_April_2026.csv")  # Final-only file is still hidden
         self.assertNotContains(response, "profile-only.csv")
+
+    def _write_approval_fixture(self, repo_root: Path) -> dict[str, str]:
+        state_root = repo_root / "data" / "state"
+        state_root.mkdir(parents=True, exist_ok=True)
+        inbox_root = repo_root / "data" / "inbox"
+        files = [
+            {
+                "remote_item_id": "fi-may-loop-v2",
+                "name": "Loop_May_2026_v2.csv",
+                "remote_path": "allshared/Approval/May_2026/Loop/Loop_May_2026_v2.csv",
+                "local_path": "data/inbox/allshared/Approval/May_2026/Loop/Loop_May_2026_v2.csv",
+                "source_folder_path": "allshared/Approval/May_2026/Loop",
+                "source_folder_id": "fo-may-loop",
+                "extension": ".csv",
+                "size": 100,
+                "modified_at": "2026-05-29T12:00:00Z",
+                "creator": "Data Team",
+                "raw_metadata": {"LastModifiedByUserID": "user-1"},
+            },
+            {
+                "remote_item_id": "fi-may-loop-v1",
+                "name": "Loop_May_2026_v1.csv",
+                "remote_path": "allshared/Approval/May_2026/Loop/Loop_May_2026_v1.csv",
+                "local_path": "data/inbox/allshared/Approval/May_2026/Loop/Loop_May_2026_v1.csv",
+                "source_folder_path": "allshared/Approval/May_2026/Loop",
+                "source_folder_id": "fo-may-loop",
+                "extension": ".csv",
+                "size": 100,
+                "modified_at": "2026-05-07T12:00:00Z",
+                "creator": "Data Team",
+                "raw_metadata": {"LastModifiedByUserID": "user-1"},
+            },
+            {
+                "remote_item_id": "fi-may-tvm-v1",
+                "name": "TVM_May_2026_v1.csv",
+                "remote_path": "allshared/Approval/May_2026/TVM/TVM_May_2026_v1.csv",
+                "local_path": "data/inbox/allshared/Approval/May_2026/TVM/TVM_May_2026_v1.csv",
+                "source_folder_path": "allshared/Approval/May_2026/TVM",
+                "source_folder_id": "fo-may-tvm",
+                "extension": ".csv",
+                "size": 80,
+                "modified_at": "2026-05-07T19:04:40Z",
+                "creator": "Data Team",
+                "raw_metadata": {"LastModifiedByUserID": "user-1"},
+            },
+            {
+                "remote_item_id": "fi-april-adtaxi-v1",
+                "name": "AdTaxi_Apr_2026_v1.csv",
+                "remote_path": "allshared/Approval/April_2026/AdTaxi/AdTaxi_Apr_2026_v1.csv",
+                "local_path": "data/inbox/allshared/Approval/April_2026/AdTaxi/AdTaxi_Apr_2026_v1.csv",
+                "source_folder_path": "allshared/Approval/April_2026/AdTaxi",
+                "source_folder_id": "fo-april-adtaxi",
+                "extension": ".csv",
+                "size": 50,
+                "modified_at": "2026-05-12T10:13:36Z",
+                "creator": "Data Team",
+                "raw_metadata": {"LastModifiedByUserID": "user-1"},
+            },
+            {
+                "remote_item_id": "fi-april-tvm-missing",
+                "name": "TVM_Apr_2026_v1.csv",
+                "remote_path": "allshared/Approval/April_2026/TVM/TVM_Apr_2026_v1.csv",
+                "local_path": "data/inbox/allshared/Approval/April_2026/TVM/TVM_Apr_2026_v1.csv",
+                "source_folder_path": "allshared/Approval/April_2026/TVM",
+                "source_folder_id": "fo-april-tvm",
+                "extension": ".csv",
+                "size": 60,
+                "modified_at": "2026-05-12T10:13:36Z",
+                "creator": "Data Team",
+                "raw_metadata": {"LastModifiedByUserID": "user-1"},
+            },
+            {
+                "remote_item_id": "fi-final-loop",
+                "name": "Loop_April_2026.csv",
+                "remote_path": "allshared/Final/April_2026/Loop_April_2026.csv",
+                "local_path": "data/inbox/allshared/Final/April_2026/Loop_April_2026.csv",
+                "source_folder_path": "allshared/Final/April_2026",
+                "source_folder_id": "fo-final-april",
+                "extension": ".csv",
+                "size": 200,
+                "modified_at": "2026-05-12T10:13:36Z",
+                "creator": "Data Team",
+                "raw_metadata": {"LastModifiedByUserID": "user-1"},
+            },
+            {
+                "remote_item_id": "fi-vendor-loop",
+                "name": "loop-may-2026.xlsx",
+                "remote_path": "home/josh/loop-may-2026.xlsx",
+                "local_path": "data/inbox/home/josh/loop-may-2026.xlsx",
+                "source_folder_path": "home/josh",
+                "source_folder_id": "fo-josh",
+                "extension": ".xlsx",
+                "size": 30,
+                "modified_at": "2026-05-08T08:00:00Z",
+                "creator": "Data Team",
+                "raw_metadata": {"LastModifiedByUserID": "user-1"},
+            },
+        ]
+        (state_root / "sharefile_snapshot_latest.json").write_text(
+            json.dumps(
+                {
+                    "run_id": "snapshot-approval",
+                    "created_at": "2026-05-29T12:00:00Z",
+                    "files": files,
+                }
+            ),
+            encoding="utf-8",
+        )
+        (state_root / "inbox_profile_latest.json").write_text(
+            json.dumps(
+                {
+                    "files": [
+                        {
+                            "local_path": row["local_path"],
+                            "name": row["name"],
+                            "kind": "csv",
+                            "status": "profiled",
+                        }
+                        for row in files
+                    ]
+                }
+            ),
+            encoding="utf-8",
+        )
+        (state_root / "sharefile_users_latest.json").write_text(
+            json.dumps({"users_by_id": {"user-1": {"full_name": "Data Team", "email": "team@example.com"}}}),
+            encoding="utf-8",
+        )
+        (state_root / "sharefile_sync_state.json").write_text(
+            json.dumps({"status": "success", "finished_at": "2026-05-29T12:00:00+00:00"}),
+            encoding="utf-8",
+        )
+
+        written = {}
+        for row in files:
+            if not row["local_path"].startswith("data/inbox/"):
+                continue
+            if row["remote_item_id"] == "fi-april-tvm-missing":
+                # Intentionally do not create the local file to exercise the
+                # "missing locally" code path.
+                continue
+            local = repo_root / row["local_path"]
+            local.parent.mkdir(parents=True, exist_ok=True)
+            local.write_text("Date,Vendor\n2026-05-01,Vendor\n", encoding="utf-8")
+            written[row["local_path"]] = str(local)
+        return written
+
+    def test_folders_page_renders_approval_chapter(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            repo_root = Path(tmpdir)
+            self._write_approval_fixture(repo_root)
+
+            with override_settings(REPO_ROOT=repo_root):
+                response = self.client.get(reverse("pipeline_dashboard:folders"))
+
+        content = response.content.decode()
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "folders-approval-panel")
+        # Months are newest first
+        may_idx = content.index(">May 26<")
+        apr_idx = content.index(">Apr 26<")
+        self.assertLess(may_idx, apr_idx)
+        # Vendors are alphabetical
+        loop_idx = content.index('data-vendor-name="Loop"', may_idx)
+        tvm_idx = content.index('data-vendor-name="TVM"', may_idx)
+        self.assertLess(loop_idx, tvm_idx)
+        # Versions are extracted
+        self.assertIn(">v2<", content)
+        self.assertIn(">v1<", content)
+        # Files from Final/ are not in the approval chapter
+        self.assertNotIn("fi-final-loop", content)
+        self.assertNotIn("Loop_April_2026.csv", content)
+        # No Approve / Cancel buttons in the Approval chapter
+        # Locate the actual HTML section (skip CSS in <style> block)
+        approval_section_start = content.index('aria-label="ShareFile Approval folders grouped by month"')
+        approval_end = content.index("</section>", approval_section_start)
+        approval_block = content[approval_section_start:approval_end]
+        self.assertNotIn("Approved</button>", approval_block)
+        self.assertNotIn(">Cancel</button>", approval_block)
+        # Download + Review buttons present
+        self.assertIn("download-button", approval_block)
+        self.assertIn("data-approval-review-button", approval_block)
+        # Missing-local file shows a missing marker
+        self.assertIn("is-missing", content)
+        # Search input present
+        self.assertContains(response, "data-approval-folders-search")
+
+    def test_review_approval_file_returns_preview(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            repo_root = Path(tmpdir)
+            self._write_approval_fixture(repo_root)
+
+            with override_settings(REPO_ROOT=repo_root):
+                response = self.client.get(
+                    reverse(
+                        "pipeline_dashboard:review_approval_file",
+                        kwargs={"remote_item_id": "fi-may-tvm-v1"},
+                    )
+                )
+
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertIn("file", payload)
+        self.assertEqual(payload["file"]["name"], "TVM_May_2026_v1.csv")
+        self.assertEqual(payload["file"]["kind"], "csv")
+
+    def test_review_approval_file_returns_404_for_unknown(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            repo_root = Path(tmpdir)
+            self._write_approval_fixture(repo_root)
+
+            with override_settings(REPO_ROOT=repo_root):
+                response = self.client.get(
+                    reverse(
+                        "pipeline_dashboard:review_approval_file",
+                        kwargs={"remote_item_id": "fi-unknown"},
+                    )
+                )
+
+        self.assertEqual(response.status_code, 404)
+
+    def test_download_approval_output_returns_csv(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            repo_root = Path(tmpdir)
+            self._write_approval_fixture(repo_root)
+
+            with override_settings(REPO_ROOT=repo_root):
+                response = self.client.get(
+                    reverse(
+                        "pipeline_dashboard:download_approval_output",
+                        kwargs={"remote_item_id": "fi-may-tvm-v1"},
+                    )
+                )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.get("Content-Type"), "text/csv")
+        self.assertIn("attachment", response.get("Content-Disposition", ""))
+        self.assertIn("TVM_May_2026_v1.csv", response.get("Content-Disposition", ""))
+
+    def test_download_approval_output_404_for_unknown(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            repo_root = Path(tmpdir)
+            self._write_approval_fixture(repo_root)
+
+            with override_settings(REPO_ROOT=repo_root):
+                response = self.client.get(
+                    reverse(
+                        "pipeline_dashboard:download_approval_output",
+                        kwargs={"remote_item_id": "fi-unknown"},
+                    )
+                )
+
+        self.assertEqual(response.status_code, 404)
+
+    def test_download_approval_output_excludes_final_folder(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            repo_root = Path(tmpdir)
+            self._write_approval_fixture(repo_root)
+
+            with override_settings(REPO_ROOT=repo_root):
+                response = self.client.get(
+                    reverse(
+                        "pipeline_dashboard:download_approval_output",
+                        kwargs={"remote_item_id": "fi-final-loop"},
+                    )
+                )
+
+        self.assertEqual(response.status_code, 404)
+
+    def test_load_approval_mirror_groups_newest_first_alphabetical(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            repo_root = Path(tmpdir)
+            self._write_approval_fixture(repo_root)
+
+            with override_settings(REPO_ROOT=repo_root):
+                mirror = load_approval_mirror()
+
+        self.assertEqual(mirror.summary["file_count"], 5)
+        self.assertEqual(mirror.summary["month_count"], 2)
+        months = mirror.folders
+        self.assertEqual(months[0]["label"], "May_2026")
+        self.assertEqual(months[1]["label"], "April_2026")
+        may_vendors = [v["name"] for v in months[0]["vendors"]]
+        self.assertEqual(may_vendors, ["Loop", "TVM"])
+        # Loop has 2 files (v1 and v2); v2 should come first because of newer modified_at
+        loop_files = months[0]["vendors"][0]["files"]
+        self.assertEqual([f["name"] for f in loop_files], ["Loop_May_2026_v2.csv", "Loop_May_2026_v1.csv"])
+        # File missing locally
+        april_tvm = next(v for v in months[1]["vendors"] if v["name"] == "TVM")
+        self.assertFalse(april_tvm["files"][0]["exists_locally"])
+        # Final/ files are not in the approval mirror
+        all_remote_ids = [
+            f["remote_item_id"]
+            for m in months
+            for v in m["vendors"]
+            for f in v["files"]
+        ]
+        self.assertNotIn("fi-final-loop", all_remote_ids)
+        # Vendor files for the Loaded Folders chapter are not in the approval mirror
+        self.assertNotIn("fi-vendor-loop", all_remote_ids)
 
     def test_folders_page_renders_search_bar(self):
         with tempfile.TemporaryDirectory() as tmpdir:

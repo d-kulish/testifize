@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import re
 from collections import defaultdict
 from dataclasses import dataclass
 from datetime import datetime
@@ -340,3 +341,174 @@ def _load_json(relative_path: Path, default: Any) -> Any:
     if not path.exists():
         return default
     return json.loads(path.read_text(encoding="utf-8"))
+
+
+APPROVAL_FOLDER_NAMES = {"approval"}
+APPROVAL_VERSION_PATTERN = re.compile(r"_v(\d+)(?=\.csv$)", re.IGNORECASE)
+
+
+def load_approval_mirror() -> MirrorData:
+    snapshot = _load_json(SNAPSHOT_PATH, default={})
+    profile = _load_json(PROFILE_PATH, default={})
+    sync_state = _load_json(SYNC_STATE_PATH, default={})
+    user_cache = _load_json(USERS_PATH, default={})
+
+    remote_by_local_path = {
+        row.get("local_path"): row
+        for row in snapshot.get("files", [])
+        if row.get("local_path")
+    }
+    profile_by_local_path = {
+        row.get("local_path"): row
+        for row in profile.get("files", [])
+        if row.get("local_path")
+    }
+    local_paths = set(remote_by_local_path) | set(profile_by_local_path)
+
+    month_groups: dict[tuple[int, int, str], dict[str, Any]] = {}
+    file_count = 0
+
+    for local_path in sorted(local_paths):
+        remote = remote_by_local_path.get(local_path, {})
+        profile_row = profile_by_local_path.get(local_path, {})
+        folder_path = _folder_path_for(local_path, remote)
+        month_label, vendor_name, sort_key = _approval_split_folder(folder_path)
+        if not month_label or not vendor_name:
+            continue
+
+        status = _file_status(
+            local_path,
+            remote,
+            processing_state={},
+            assets_by_local_path={},
+            assets_by_remote_item_id={},
+        )
+        file_row = _file_row(
+            local_path,
+            remote,
+            profile_row,
+            status,
+            user_cache,
+        )
+        file_row["month_label"] = month_label
+        file_row["vendor_name"] = vendor_name
+        file_row["version"] = _extract_version(file_row.get("name", ""))
+        file_row["exists_locally"] = (settings.REPO_ROOT / local_path).exists()
+
+        month_entry = month_groups.setdefault(
+            sort_key,
+            {
+                "label": month_label,
+                "year": sort_key[0],
+                "month": sort_key[1],
+                "sort_key": sort_key,
+                "vendors": {},
+            },
+        )
+        vendor_entry = month_entry["vendors"].setdefault(
+            vendor_name.casefold(),
+            {
+                "name": vendor_name,
+                "files": [],
+            },
+        )
+        vendor_entry["files"].append(file_row)
+        file_count += 1
+
+    months: list[dict[str, Any]] = []
+    vendor_count = 0
+    for sort_key in sorted(month_groups.keys(), reverse=True):
+        entry = month_groups[sort_key]
+        vendor_list = sorted(entry["vendors"].values(), key=lambda v: v["name"].casefold())
+        for vendor in vendor_list:
+            vendor["files"] = newest_first(vendor["files"])
+            vendor["file_count"] = len(vendor["files"])
+            vendor_count += 1
+        entry["vendors"] = vendor_list
+        entry["vendor_count"] = len(vendor_list)
+        entry["file_count"] = sum(v["file_count"] for v in vendor_list)
+        months.append(entry)
+
+    summary = {
+        "run_id": snapshot.get("run_id", ""),
+        "snapshot_created_at": snapshot.get("created_at", ""),
+        "month_count": len(months),
+        "vendor_count": vendor_count,
+        "file_count": file_count,
+        "last_sync_at": sync_state.get("finished_at") or snapshot.get("created_at", ""),
+        "last_sync_status": sync_state.get("status", ""),
+        "has_snapshot": bool(snapshot),
+    }
+    return MirrorData(folders=months, summary=summary)
+
+
+def _approval_split_folder(folder_path: str) -> tuple[str, str, tuple[int, int, str]]:
+    normalized = (folder_path or "").strip().strip("/")
+    for prefix in ("home/", "allshared/"):
+        if normalized.casefold().startswith(prefix):
+            normalized = normalized[len(prefix):]
+            break
+    parts = [part for part in normalized.split("/") if part]
+    if len(parts) < 3:
+        return "", "", (0, 0, "")
+    first = parts[0].casefold()
+    if first not in APPROVAL_FOLDER_NAMES:
+        return "", "", (0, 0, "")
+    month_label = parts[1]
+    vendor_name = parts[2]
+    year, month = _parse_period_label(month_label)
+    if not year or not month:
+        return "", "", (0, 0, "")
+    return month_label, vendor_name, (year, month, month_label)
+
+
+def _parse_period_label(label: str) -> tuple[int, int]:
+    text = (label or "").strip().replace("-", "_")
+    for separator in ("_", " "):
+        parts = [p for p in text.split(separator) if p]
+        if len(parts) != 2:
+            continue
+        first, second = parts
+        if first.isdigit() and not second.isdigit():
+            year = int(first)
+            month_number = _month_number(second)
+            if month_number:
+                return year, month_number
+        if second.isdigit() and not first.isdigit():
+            year = int(second)
+            month_number = _month_number(first)
+            if month_number:
+                return year, month_number
+    return 0, 0
+
+
+_MONTH_NAME_TO_NUMBER = {
+    "january": 1, "jan": 1,
+    "february": 2, "feb": 2,
+    "march": 3, "mar": 3,
+    "april": 4, "apr": 4,
+    "may": 5,
+    "june": 6, "jun": 6,
+    "july": 7, "jul": 7,
+    "august": 8, "aug": 8,
+    "september": 9, "sep": 9, "sept": 9,
+    "october": 10, "oct": 10,
+    "november": 11, "nov": 11,
+    "december": 12, "dec": 12,
+}
+
+
+def _month_number(value: str) -> int:
+    return _MONTH_NAME_TO_NUMBER.get(value.strip().casefold(), 0)
+
+
+def _extract_version(name: str) -> int:
+    if not name:
+        return 1
+    match = APPROVAL_VERSION_PATTERN.search(name)
+    if not match:
+        return 1
+    try:
+        return max(int(match.group(1)), 1)
+    except (TypeError, ValueError):
+        return 1

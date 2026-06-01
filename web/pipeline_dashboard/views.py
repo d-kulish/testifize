@@ -35,7 +35,7 @@ from .parser_workflow import (
     stage_asset_parser,
     upload_approved_output,
 )
-from .sharefile_mirror import load_sharefile_mirror
+from .sharefile_mirror import load_approval_mirror, load_sharefile_mirror
 from .services import set_asset_status
 from .vendor_dashboard import build_vendor_page_context, can_delete_vendor
 
@@ -637,6 +637,7 @@ def process(request):
 
 def folders(request):
     mirror = load_sharefile_mirror()
+    approval_mirror = load_approval_mirror()
     vendors = list(Vendor.objects.filter(is_active=True).order_by("name"))
     _apply_folder_vendor_rules(mirror.folders, vendors)
     all_folders = mirror.folders
@@ -647,11 +648,17 @@ def folders(request):
         "folders_with_files_count": len(folders_with_files),
         "last_sync_display": _display_timestamp(mirror.summary.get("last_sync_at", "")),
     }
+    approval_summary = {
+        **approval_mirror.summary,
+        "last_sync_display": _display_timestamp(approval_mirror.summary.get("last_sync_at", "")),
+    }
     context = {
         "title": "SF folders",
         "folders": all_folders,
         "folders_with_files": folders_with_files,
         "mirror_summary": mirror_summary,
+        "approval_months": approval_mirror.folders,
+        "approval_summary": approval_summary,
         "vendors": vendors,
         "active_nav": "folders",
     }
@@ -1174,6 +1181,49 @@ def download_approved_output(request, parsed_output_id: int):
         output_path.open("rb"),
         as_attachment=True,
         filename=output_path.name,
+        content_type="text/csv",
+    )
+
+
+def _approval_file_row(remote_item_id: str) -> dict | None:
+    if not remote_item_id:
+        return None
+    mirror = load_approval_mirror()
+    for month in mirror.folders:
+        for vendor in month["vendors"]:
+            for file_row in vendor["files"]:
+                if file_row.get("remote_item_id") == remote_item_id:
+                    return file_row
+    return None
+
+
+@require_GET
+def review_approval_file(request, remote_item_id: str):
+    file_row = _approval_file_row(remote_item_id)
+    if not file_row:
+        return JsonResponse({"error": "File is not in the current ShareFile Approval mirror."}, status=404)
+    local_path = file_row.get("local_path") or ""
+    try:
+        preview = build_file_preview(local_path, file_row)
+    except ReviewPreviewError as exc:
+        return JsonResponse({"error": str(exc)}, status=400)
+    return JsonResponse({"file": preview})
+
+
+@require_GET
+def download_approval_output(request, remote_item_id: str):
+    file_row = _approval_file_row(remote_item_id)
+    if not file_row:
+        return JsonResponse({"error": "File is not in the current ShareFile Approval mirror."}, status=404)
+    local_path = file_row.get("local_path") or ""
+    try:
+        path = inbox_file_path(local_path)
+    except ReviewPreviewError as exc:
+        return JsonResponse({"error": str(exc)}, status=400)
+    return FileResponse(
+        path.open("rb"),
+        as_attachment=True,
+        filename=path.name,
         content_type="text/csv",
     )
 

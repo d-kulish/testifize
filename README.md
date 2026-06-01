@@ -496,12 +496,14 @@ App pages:
 
 ```text
 /          dashboard
-/folders/  ShareFile folder catalogue, file search, status sorting, and review entrypoint
+/folders/  ShareFile folder catalogue with two chapters: Loaded Folders (file search, status sorting, review entrypoint) and Approval (read-only browser of ShareFile Approval CSVs grouped by month and vendor)
 /process/  Parsing page with three chapters: Parsing Files queue, Approval review queue, and approved-file History
 /admin/    Django Admin back office
 ```
 
 The app pages are operational views for the normal workflow. Admin remains available for back-office catalogue edits and exceptional recovery actions.
+
+The `/folders/` **Approval** chapter surfaces every CSV that the pipeline has uploaded to ShareFile `Approval/<Month_Year>/<Vendor>/`. Months are listed newest-first, vendors are alphabetical, and each file row exposes a `Review` button (read-only preview) and a `Download` button (serves the local file under `data/inbox/...`). Files that exist in the mirror but not locally are flagged as missing. This chapter is read-only by design; approve / cancel actions remain on the `/process/` Approval queue where the `ParsedOutput` rows live.
 
 First v1 workflow:
 
@@ -686,6 +688,33 @@ Final/<Reporting_Period>/<Vendor>_<Reporting_Period>.csv
   - Row 2 (`1fr`): the chart / table view — strictly clamped to remaining space, forced to scroll internally
   - Row 3 (`auto`): the KPI summary pills
 - **File**: `web/pipeline_dashboard/templates/pipeline_dashboard/base.html`
+
+### Folders Approval chapter (2026-06-01)
+
+- **Goal**: make ShareFile `Approval/` CSVs visible from the `/folders/` page without forcing the user to navigate to `/process/`. The `/process/` Approval queue reads from the Django `ParsedOutput` table, but the ShareFile mirror itself already lists every CSV uploaded under `allshared/Approval/<Month_Year>/<Vendor>/`. The new chapter surfaces the same files directly from the mirror, grouped by month and vendor.
+- **Chapter shape**:
+  - Mirror head uses the same blue `Loaded Folders` styling; subtitle shows the total file and month counts.
+  - Outer `<details>` per `Month_Year` (newest first). Summary shows the month label plus the number of vendors and files.
+  - Inner `<details>` per `Vendor` (alphabetical). Summary shows the vendor name and file count.
+  - Inner table per vendor with columns: `File`, `Version`, `Period`, `Modified`, `Size`, `Uploader`, `Action`. Version is extracted from the filename (`_v<N>.csv`).
+  - Search input filters by file name, vendor, or month. Matching months/vendors auto-expand.
+  - Files missing locally (e.g. mirror references a file that was deleted) get a red `is-missing` row with a disabled download button.
+- **Read-only by design**: the chapter only exposes `Review` and `Download` actions. The `Approved` / `Cancel` actions that move a parsed output to ShareFile `Final/` and back to `Processing/` stay on the `/process/` Approval queue, where the `ParsedOutput` row is the source of truth.
+- **Review modal**: reuses the existing modal from the `Loaded Folders` chapter in a new `data-mode="approval"`. The modal hides the `Vendor` select and `Parsing` button via CSS, and shows only `Close`. Behind the scenes it calls a new `review_approval_file` view that streams the local CSV preview through `build_file_preview` (no parser invocation).
+- **Download**: new `download_approval_output` view streams the local CSV with the original filename, mirroring the existing `download_approved_output` on `/process/`. Returns 404 if the remote item is not in the current ShareFile Approval mirror.
+- **Backend**:
+  - `sharefile_mirror.py`: added `load_approval_mirror()` that walks only `allshared/Approval/...` (and the `home/Approval/...` equivalent) and returns a `MirrorData` of `months -> vendors -> files`. Excludes `Final/`. Existing `load_sharefile_mirror()` is unchanged so the `Loaded Folders` chapter still hides internal workflow folders.
+  - `views.py`: new `_approval_file_row(remote_item_id)` helper, new `review_approval_file` and `download_approval_output` GET views. The `folders` view also passes `approval_months` and `approval_summary` to the template.
+  - `urls.py`: added `folders/approval/<remote_item_id>/review/` and `folders/approval/<remote_item_id>/download/`.
+- **Frontend**:
+  - `folders.html`: new section below `Loaded Folders` (`folders-approval-panel`), new CSS scope (kept distinct from `process.html`'s `approval-panel` to avoid cross-talk), new `[data-approval-review-button]` and `[data-approval-folders-search]` handlers. The existing review modal gets a `data-mode` attribute that toggles between the `Loaded Folders` review (`Parsing` button + vendor select visible) and the new `Approval` review (both hidden).
+- **Tests** (in `pipeline_dashboard/tests/test_views.py`):
+  - `test_load_approval_mirror_groups_newest_first_alphabetical` confirms month order, vendor order, version extraction, `exists_locally` flag, and that `Final/` plus normal vendor folders are excluded.
+  - `test_folders_page_renders_approval_chapter` confirms the chapter renders with newest months first, alphabetical vendors, version column populated, `Download` and `Review` buttons, no `Approve` / `Cancel` buttons in the chapter, and the missing-file marker.
+  - `test_review_approval_file_returns_preview` and `test_review_approval_file_returns_404_for_unknown`.
+  - `test_download_approval_output_returns_csv` and `test_download_approval_output_404_for_unknown`.
+  - `test_download_approval_output_excludes_final_folder` confirms the `Final/` files are still hidden from the Approval download endpoint.
+- **Files**: `web/pipeline_dashboard/sharefile_mirror.py`, `web/pipeline_dashboard/views.py`, `web/pipeline_dashboard/urls.py`, `web/pipeline_dashboard/templates/pipeline_dashboard/folders.html`, `web/pipeline_dashboard/tests/test_views.py`.
 
 ### Approval Review button (2026-05-26)
 
