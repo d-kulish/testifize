@@ -514,7 +514,6 @@
     .folders-approval-panel details.mirror-folder[data-approval-vendor] > .mirror-summary .approval-count-cell {
       grid-column: 10;
     }
-
     .folders-approval-panel .approval-count-col {
       display: flex;
       align-items: center;
@@ -1799,6 +1798,46 @@
 
       let timer = null;
 
+      function getFileNameCell(row) {
+        return row.querySelector(".file-name");
+      }
+
+      function storeOriginalNames() {
+        panel.querySelectorAll("[data-approval-row]").forEach((row) => {
+          const cell = getFileNameCell(row);
+          if (cell && !cell.dataset.originalName) {
+            cell.dataset.originalName = cell.textContent;
+          }
+        });
+      }
+
+      function highlightText(cell, query) {
+        const original = cell.dataset.originalName || cell.textContent;
+        if (!query) {
+          cell.innerHTML = "";
+          cell.appendChild(document.createTextNode(original));
+          return;
+        }
+        const lowerQuery = query.toLowerCase();
+        const lowerOriginal = original.toLowerCase();
+        cell.innerHTML = "";
+        let start = 0;
+        let index = lowerOriginal.indexOf(lowerQuery, start);
+        while (index !== -1) {
+          if (index > start) {
+            cell.appendChild(document.createTextNode(original.slice(start, index)));
+          }
+          const mark = document.createElement("mark");
+          mark.textContent = original.slice(index, index + query.length);
+          cell.appendChild(mark);
+          start = index + query.length;
+          index = lowerOriginal.indexOf(lowerQuery, start);
+        }
+        if (start < original.length) {
+          cell.appendChild(document.createTextNode(original.slice(start)));
+        }
+      }
+
       function matches(query, text) {
         if (!query) return true;
         return (text || "").toLowerCase().includes(query);
@@ -1815,6 +1854,10 @@
         });
         panel.querySelectorAll("[data-approval-row]").forEach((row) => {
           row.hidden = false;
+          const cell = getFileNameCell(row);
+          if (cell) {
+            highlightText(cell, "");
+          }
         });
       }
 
@@ -1831,11 +1874,15 @@
             let vendorHasMatch = false;
 
             rows.forEach((row) => {
-              const fileName = (row.dataset.name || "").trim();
+              const cell = getFileNameCell(row);
+              const nameText = (cell?.dataset.originalName || cell?.textContent || "").toLowerCase();
               const rowVendor = (row.dataset.vendorName || "").trim();
-              const isMatch = matches(query, fileName) || matches(query, rowVendor) || matches(query, vendorName) || matches(query, monthLabel);
+              const isMatch = matches(query, nameText) || matches(query, rowVendor) || matches(query, vendorName) || matches(query, monthLabel);
               row.hidden = !isMatch;
               if (isMatch) vendorHasMatch = true;
+              if (cell) {
+                highlightText(cell, query);
+              }
             });
 
             vendor.hidden = !vendorHasMatch;
@@ -1849,6 +1896,8 @@
           if (monthHasMatch) month.open = true;
         });
       }
+
+      storeOriginalNames();
 
       searchInput.addEventListener("input", () => {
         const query = searchInput.value.trim().toLowerCase();
