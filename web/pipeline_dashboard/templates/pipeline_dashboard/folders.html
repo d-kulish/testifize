@@ -276,6 +276,8 @@
       color: #000000;
     }
 
+    .folders-mirror .mirror-files table tbody tr:hover { background: #f9fafb; }
+
     .status-text {
       font-size: 14px;
       font-weight: 400;
@@ -390,6 +392,13 @@
       cursor: not-allowed;
     }
 
+    .actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: nowrap;
+      align-items: center;
+    }
+
     .mirror-head-search {
       position: relative;
       display: flex;
@@ -462,114 +471,8 @@
       color: #d19a9a;
     }
 
-    .folders-approval-panel .mirror-head {
-      background: #3b6cb4;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.25);
-      min-height: 86px;
-      padding: 10px 12px;
-      color: #ffffff;
-      border-radius: 8px 8px 0 0;
-      align-items: center;
-    }
 
-    .folders-approval-panel .folders-head-title {
-      color: #ffffff;
-      font-size: 31px;
-      font-weight: 720;
-      text-transform: none;
-      line-height: 1.1;
-    }
-
-    .folders-approval-panel .folders-head-subtitle {
-      color: #ffffff;
-      font-size: 13px;
-      font-weight: 650;
-      text-transform: none;
-    }
-
-    .folders-approval-panel .folders-head-wrapper {
-      display: flex;
-      flex-direction: column;
-      gap: 2px;
-      min-width: 0;
-      height: 100%;
-      justify-content: center;
-    }
-
-    /* Approval panel: pin the Vendors and Files count columns flush to
-       the left of the search box (tracks 9 and 10) so they sit next to
-       the searching window instead of next to the chapter title. */
-    .folders-approval-panel .mirror-head > div:nth-child(2) {
-      grid-column: 9;
-    }
-    .folders-approval-panel .mirror-head > div:nth-child(3) {
-      grid-column: 10;
-    }
-    .folders-approval-panel details.mirror-folder[data-approval-month] > .mirror-summary > span:nth-child(2) {
-      grid-column: 9;
-    }
-    .folders-approval-panel details.mirror-folder[data-approval-month] > .mirror-summary > span:nth-child(3) {
-      grid-column: 10;
-    }
-    .folders-approval-panel details.mirror-folder[data-approval-vendor] > .mirror-summary .approval-count-cell {
-      grid-column: 10;
-    }
-    .folders-approval-panel .approval-count-col {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      text-align: center;
-      color: #ffffff;
-      font-size: 16px;
-      font-weight: 700;
-      text-transform: uppercase;
-      overflow: hidden;
-      white-space: nowrap;
-    }
-
-    .folders-approval-panel .mirror-summary {
-      font-size: 16px;
-    }
-
-    .folders-approval-panel .mirror-summary .approval-count-cell {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      text-align: center;
-      overflow: hidden;
-      white-space: nowrap;
-      color: var(--text);
-    }
-
-    .folders-approval-panel .mirror-summary .mirror-folder-name {
-      color: var(--text);
-      text-align: left;
-    }
-
-    .folders-approval-panel .mirror-folder .mirror-folder {
-      background: #f9fafb;
-    }
-
-    .folders-approval-panel .mirror-folder .mirror-summary {
-      background: #f3f4f6;
-      font-size: 15px;
-    }
-
-    .folders-approval-panel .mirror-folder .mirror-summary::before {
-      width: 8px;
-      height: 8px;
-    }
-
-    .folders-approval-panel .mirror-files {
-      background: #ffffff;
-    }
-
-    .folders-approval-panel .mirror-files table thead th {
-      background: #dbeafe;
-      color: #000000;
-    }
-
-    .folders-approval-panel .download-button {
+    .download-button {
       background: #1f6feb;
       border-color: transparent;
       color: #ffffff;
@@ -582,24 +485,24 @@
       justify-content: center;
     }
 
-    .folders-approval-panel .download-button:hover {
+    .download-button:hover {
       background: #1d4ed8;
       border-color: transparent;
       color: #ffffff;
     }
 
-    .folders-approval-panel .download-button.is-missing {
+    .download-button.is-missing {
       background: #d1d5db;
       border-color: transparent;
       color: #6b7280;
       pointer-events: none;
     }
 
-    .folders-approval-panel .mirror-file-row.is-missing {
+    .mirror-file-row.is-missing {
       background: #fef2f2;
     }
 
-    .folders-approval-panel .mirror-file-row.is-missing .file-name {
+    .mirror-file-row.is-missing .file-name {
       color: #991b1b;
     }
 
@@ -827,36 +730,41 @@
 
   <section class="panel">
     <div class="panel-body">
-      <div class="mirror-table folders-mirror folders-approval-panel" role="table" aria-label="ShareFile Approval folders grouped by month">
-        <div class="mirror-head" role="row">
-          <div class="folders-head-wrapper" role="columnheader">
-            <span class="folders-head-title">Approval</span>
-            <span class="folders-head-subtitle">{{ approval_summary.file_count }} files in {{ approval_summary.month_count }} month{{ approval_summary.month_count|pluralize:"s" }}</span>
+      {% if approval_months %}
+        <div class="mirror-table folders-mirror" role="table" aria-label="Approval folders">
+          <div class="mirror-head" role="row">
+            <div class="folders-head-wrapper" role="columnheader">
+              <span class="folders-head-title">Approval</span>
+              <span class="folders-head-subtitle">{{ approval_summary.file_count }} files in {{ approval_summary.month_count }} month{{ approval_summary.month_count|pluralize:"s" }}</span>
+            </div>
+            <div class="folders-count-col" role="columnheader">Vendors</div>
+            <div class="folders-count-col" role="columnheader">Files</div>
+            <div class="folders-count-col" role="columnheader"></div>
+            <div class="folders-count-col" role="columnheader"></div>
+            <div class="folders-count-col" role="columnheader"></div>
+            <div class="folders-count-col" role="columnheader"></div>
+            <div class="folders-count-col" role="columnheader"></div>
+            <div class="mirror-head-search" role="search">
+              <input
+                type="search"
+                class="mirror-search-input"
+                placeholder="Search approval files by name or vendor..."
+                aria-label="Search approval files by name or vendor"
+                data-approval-search
+                autocomplete="off"
+              />
+              <svg class="search-icon" viewBox="0 0 24 24" aria-hidden="true">
+                <circle cx="11" cy="11" r="8" fill="none" stroke="currentColor" stroke-width="2"></circle>
+                <path d="M21 21l-4.35-4.35" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path>
+              </svg>
+            </div>
           </div>
-          <div class="approval-count-col" role="columnheader">Vendors</div>
-          <div class="approval-count-col" role="columnheader">Files</div>
-          <div class="mirror-head-search" role="search">
-            <input
-              type="search"
-              class="mirror-search-input"
-              placeholder="Search approval files by name or vendor..."
-              aria-label="Search approval files by name or vendor"
-              data-approval-folders-search
-              autocomplete="off"
-            />
-            <svg class="search-icon" viewBox="0 0 24 24" aria-hidden="true">
-              <circle cx="11" cy="11" r="8" fill="none" stroke="currentColor" stroke-width="2"></circle>
-              <path d="M21 21l-4.35-4.35" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path>
-            </svg>
-          </div>
-        </div>
-        {% if approval_months %}
           {% for month in approval_months %}
-            <details class="mirror-folder" data-approval-month>
+            <details class="mirror-folder">
               <summary class="mirror-summary" role="row">
                 <span class="mirror-folder-name" role="cell">{{ month.label|short_period }}</span>
-                <span class="approval-count-cell" role="cell">{{ month.vendor_count }}</span>
-                <span class="approval-count-cell" role="cell">{{ month.file_count }}</span>
+                <span class="folders-count-cell" role="cell">{{ month.vendor_count }}</span>
+                <span class="folders-count-cell" role="cell">{{ month.file_count }}</span>
                 <span role="cell"></span>
                 <span role="cell"></span>
                 <span role="cell"></span>
@@ -867,80 +775,58 @@
                 <span role="cell"></span>
               </summary>
               <div class="mirror-files">
-                {% for vendor in month.vendors %}
-                  <details class="mirror-folder" data-approval-vendor>
-                    <summary class="mirror-summary" role="row">
-                      <span class="mirror-folder-name" role="cell">{{ vendor.name }}</span>
-                      <span class="approval-count-cell" role="cell">{{ vendor.file_count }} file{{ vendor.file_count|pluralize:"s" }}</span>
-                      <span role="cell"></span>
-                      <span role="cell"></span>
-                      <span role="cell"></span>
-                      <span role="cell"></span>
-                      <span role="cell"></span>
-                      <span role="cell"></span>
-                      <span role="cell"></span>
-                      <span role="cell"></span>
-                      <span role="cell"></span>
-                    </summary>
-                    <div class="mirror-files" data-approval-mirror data-preview-url="{% url 'pipeline_dashboard:review_approval_file' 'PLACEHOLDER' %}">
-                      <table>
-                        <thead>
-                          <tr>
-                            <th>File</th>
-                            <th>Version</th>
-                            <th>Period</th>
-                            <th>Modified</th>
-                            <th>Size</th>
-                            <th>Uploader</th>
-                            <th>Action</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {% for file in vendor.files %}
-                            <tr
-                              class="mirror-file-row {% if not file.exists_locally %}is-missing{% endif %}"
-                              data-approval-row
-                              data-remote-item-id="{{ file.remote_item_id }}"
-                              data-name="{{ file.name }}"
-                              data-month-label="{{ month.label }}"
-                              data-vendor-name="{{ vendor.name }}"
-                            >
-                              <td class="file-name" title="{{ file.name }}">{{ file.name }}</td>
-                              <td>v{{ file.version }}</td>
-                              <td>{{ month.label|short_period }}</td>
-                              <td>{{ file.modified_at|short_dt }}</td>
-                              <td>{{ file.size|filesizeformat }}</td>
-                              <td>{{ file.uploaded_by|default:"-" }}</td>
-                              <td>
-                                <div class="actions">
-                                  <button
-                                    class="button small review-button"
-                                    type="button"
-                                    data-approval-review-button
-                                    data-remote-item-id="{{ file.remote_item_id }}"
-                                    data-review-url="{% url 'pipeline_dashboard:review_approval_file' file.remote_item_id %}"
-                                  >Review</button>
-                                  <a
-                                    class="button small download-button {% if not file.exists_locally %}is-missing{% endif %}"
-                                    href="{% url 'pipeline_dashboard:download_approval_output' file.remote_item_id %}"
-                                    download
-                                  >Download</a>
-                                </div>
-                              </td>
-                            </tr>
-                          {% endfor %}
-                        </tbody>
-                      </table>
-                    </div>
-                  </details>
-                {% endfor %}
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Vendor</th>
+                      <th>File</th>
+                      <th>Version</th>
+                      <th>Period</th>
+                      <th>Modified</th>
+                      <th>Size</th>
+                      <th>Uploader</th>
+                      <th>Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for vendor in month.vendors %}
+                      {% for file in vendor.files %}
+                        <tr class="mirror-file-row {% if not file.exists_locally %}is-missing{% endif %}" data-approval-row data-remote-item-id="{{ file.remote_item_id }}" data-name="{{ file.name }}" data-month-label="{{ month.label }}" data-vendor-name="{{ vendor.name }}">
+                          <td>{{ vendor.name }}</td>
+                          <td class="file-name" title="{{ file.name }}">{{ file.name }}</td>
+                          <td>v{{ file.version }}</td>
+                          <td>{{ month.label|short_period }}</td>
+                          <td>{{ file.modified_at|short_dt }}</td>
+                          <td>{{ file.size|filesizeformat }}</td>
+                          <td>{{ file.uploaded_by|default:"-" }}</td>
+                          <td>
+                            <div class="actions">
+                              <button
+                                class="button small review-button"
+                                type="button"
+                                data-approval-review-button
+                                data-remote-item-id="{{ file.remote_item_id }}"
+                                data-review-url="{% url 'pipeline_dashboard:review_approval_file' file.remote_item_id %}"
+                              >Review</button>
+                              <a
+                                class="button small download-button {% if not file.exists_locally %}is-missing{% endif %}"
+                                href="{% url 'pipeline_dashboard:download_approval_output' file.remote_item_id %}"
+                                download
+                              >Download</a>
+                            </div>
+                          </td>
+                        </tr>
+                      {% endfor %}
+                    {% endfor %}
+                  </tbody>
+                </table>
               </div>
             </details>
           {% endfor %}
-        {% else %}
-          <div class="empty">No approval files have been uploaded to ShareFile yet.</div>
-        {% endif %}
-      </div>
+        </div>
+      {% else %}
+        <div class="empty">No approval files have been uploaded to ShareFile yet.</div>
+      {% endif %}
     </div>
   </section>
 
@@ -1790,10 +1676,10 @@
 
     // Approval chapter search
     (function () {
-      const searchInput = document.querySelector("[data-approval-folders-search]");
+      const searchInput = document.querySelector("[data-approval-search]");
       if (!searchInput) return;
 
-      const panel = searchInput.closest(".folders-approval-panel");
+      const panel = searchInput.closest(".folders-mirror");
       if (!panel) return;
 
       let timer = null;
@@ -1843,14 +1729,10 @@
         return (text || "").toLowerCase().includes(query);
       }
 
-      function resetApprovalSearch() {
-        panel.querySelectorAll("[data-approval-month]").forEach((month) => {
+      function resetApproval2Search() {
+        panel.querySelectorAll(".mirror-folder").forEach((month) => {
           month.open = false;
           month.hidden = false;
-        });
-        panel.querySelectorAll("[data-approval-vendor]").forEach((vendor) => {
-          vendor.open = false;
-          vendor.hidden = false;
         });
         panel.querySelectorAll("[data-approval-row]").forEach((row) => {
           row.hidden = false;
@@ -1861,34 +1743,22 @@
         });
       }
 
-      function performApprovalSearch(query) {
-        const months = panel.querySelectorAll("[data-approval-month]");
+      function performApproval2Search(query) {
+        const months = panel.querySelectorAll(".mirror-folder");
         months.forEach((month) => {
           const monthLabel = (month.querySelector(".mirror-folder-name")?.textContent || "").trim();
-          const vendors = month.querySelectorAll("[data-approval-vendor]");
+          const rows = month.querySelectorAll("[data-approval-row]");
           let monthHasMatch = false;
 
-          vendors.forEach((vendor) => {
-            const vendorName = (vendor.querySelector(".mirror-folder-name")?.textContent || "").trim();
-            const rows = vendor.querySelectorAll("[data-approval-row]");
-            let vendorHasMatch = false;
-
-            rows.forEach((row) => {
-              const cell = getFileNameCell(row);
-              const nameText = (cell?.dataset.originalName || cell?.textContent || "").toLowerCase();
-              const rowVendor = (row.dataset.vendorName || "").trim();
-              const isMatch = matches(query, nameText) || matches(query, rowVendor) || matches(query, vendorName) || matches(query, monthLabel);
-              row.hidden = !isMatch;
-              if (isMatch) vendorHasMatch = true;
-              if (cell) {
-                highlightText(cell, query);
-              }
-            });
-
-            vendor.hidden = !vendorHasMatch;
-            if (vendorHasMatch) {
-              vendor.open = true;
-              monthHasMatch = true;
+          rows.forEach((row) => {
+            const cell = getFileNameCell(row);
+            const nameText = (cell?.dataset.originalName || cell?.textContent || "").toLowerCase();
+            const rowVendor = (row.dataset.vendorName || "").trim();
+            const isMatch = matches(query, nameText) || matches(query, rowVendor) || matches(query, monthLabel);
+            row.hidden = !isMatch;
+            if (isMatch) monthHasMatch = true;
+            if (cell) {
+              highlightText(cell, query);
             }
           });
 
@@ -1904,9 +1774,9 @@
         window.clearTimeout(timer);
         timer = window.setTimeout(() => {
           if (query) {
-            performApprovalSearch(query);
+            performApproval2Search(query);
           } else {
-            resetApprovalSearch();
+            resetApproval2Search();
           }
         }, 150);
       });
