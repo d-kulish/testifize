@@ -115,15 +115,27 @@
       color: #ffffff;
     }
 
+    .folders-mirror {
+      min-width: 1740px;
+    }
+
     .folders-mirror .mirror-head,
     .folders-mirror .mirror-summary {
-      grid-template-columns: 16px minmax(200px, 1fr) 120px 120px 120px 120px 120px 120px 120px minmax(220px, 1.5fr);
+      grid-template-columns: 16px minmax(200px, 1fr) minmax(200px, 1fr) 120px 120px 120px 120px 120px 120px 120px 120px 120px 120px;
       align-items: center;
       gap: 10px;
     }
 
+    .folders-mirror .mirror-head .folders-head-wrapper {
+      grid-column: 2 / span 2;
+    }
+
+    .folders-mirror .mirror-head .mirror-head-search {
+      grid-column: 11 / span 3;
+    }
+
     .folders-mirror .mirror-summary .mirror-folder-name {
-      grid-column: 2;
+      grid-column: 2 / span 2;
     }
 
     .folders-mirror .mirror-head::before {
@@ -484,9 +496,23 @@
       justify-content: center;
     }
 
-    .folders-approval-panel .mirror-head,
-    .folders-approval-panel .mirror-summary {
-      grid-template-columns: 16px minmax(200px, 1fr) 120px 120px minmax(220px, 1.5fr);
+    /* Approval panel: pin the Vendors and Files count columns flush to
+       the left of the search box (tracks 9 and 10) so they sit next to
+       the searching window instead of next to the chapter title. */
+    .folders-approval-panel .mirror-head > div:nth-child(2) {
+      grid-column: 9;
+    }
+    .folders-approval-panel .mirror-head > div:nth-child(3) {
+      grid-column: 10;
+    }
+    .folders-approval-panel details.mirror-folder[data-approval-month] > .mirror-summary > span:nth-child(2) {
+      grid-column: 9;
+    }
+    .folders-approval-panel details.mirror-folder[data-approval-month] > .mirror-summary > span:nth-child(3) {
+      grid-column: 10;
+    }
+    .folders-approval-panel details.mirror-folder[data-approval-vendor] > .mirror-summary .approval-count-cell {
+      grid-column: 10;
     }
 
     .folders-approval-panel .approval-count-col {
@@ -709,6 +735,9 @@
                 <span class="folders-count-cell status-red" role="cell">{{ folder.counts.duplicate_names }}</span>
                 <span class="folders-count-cell status-red" role="cell">{{ folder.counts.deleted }}</span>
                 <span class="folders-count-cell" role="cell">{{ folder.counts.total }}</span>
+                <span role="cell"></span>
+                <span role="cell"></span>
+                <span role="cell"></span>
               </summary>
               <div
                 class="mirror-files"
@@ -829,6 +858,14 @@
                 <span class="mirror-folder-name" role="cell">{{ month.label|short_period }}</span>
                 <span class="approval-count-cell" role="cell">{{ month.vendor_count }}</span>
                 <span class="approval-count-cell" role="cell">{{ month.file_count }}</span>
+                <span role="cell"></span>
+                <span role="cell"></span>
+                <span role="cell"></span>
+                <span role="cell"></span>
+                <span role="cell"></span>
+                <span role="cell"></span>
+                <span role="cell"></span>
+                <span role="cell"></span>
               </summary>
               <div class="mirror-files">
                 {% for vendor in month.vendors %}
@@ -836,6 +873,15 @@
                     <summary class="mirror-summary" role="row">
                       <span class="mirror-folder-name" role="cell">{{ vendor.name }}</span>
                       <span class="approval-count-cell" role="cell">{{ vendor.file_count }} file{{ vendor.file_count|pluralize:"s" }}</span>
+                      <span role="cell"></span>
+                      <span role="cell"></span>
+                      <span role="cell"></span>
+                      <span role="cell"></span>
+                      <span role="cell"></span>
+                      <span role="cell"></span>
+                      <span role="cell"></span>
+                      <span role="cell"></span>
+                      <span role="cell"></span>
                     </summary>
                     <div class="mirror-files" data-approval-mirror data-preview-url="{% url 'pipeline_dashboard:review_approval_file' 'PLACEHOLDER' %}">
                       <table>
