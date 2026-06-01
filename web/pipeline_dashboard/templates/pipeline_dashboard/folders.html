@@ -27,6 +27,10 @@
       box-shadow: 0 1px 2px rgba(60, 64, 67, 0.08), 0 2px 6px rgba(60, 64, 67, 0.10), 0 4px 12px rgba(60, 64, 67, 0.12);
     }
 
+    .folders-page .panel + .panel {
+      margin-top: 28px;
+    }
+
     .folders-metrics .update-metric {
       background: #16a34a;
       border-color: #111827;
@@ -113,13 +117,13 @@
 
     .folders-mirror .mirror-head,
     .folders-mirror .mirror-summary {
-      grid-template-columns: 16px minmax(200px, 1fr) minmax(200px, 1fr) 120px 120px 120px 120px 120px 120px 140px;
+      grid-template-columns: 16px minmax(200px, 1fr) 120px 120px 120px 120px 120px 120px 120px minmax(220px, 1.5fr);
       align-items: center;
-      gap: 16px;
+      gap: 10px;
     }
 
     .folders-mirror .mirror-summary .mirror-folder-name {
-      grid-column: span 2;
+      grid-column: 2;
     }
 
     .folders-mirror .mirror-head::before {
@@ -480,6 +484,11 @@
       justify-content: center;
     }
 
+    .folders-approval-panel .mirror-head,
+    .folders-approval-panel .mirror-summary {
+      grid-template-columns: 16px minmax(200px, 1fr) 120px 120px minmax(220px, 1.5fr);
+    }
+
     .folders-approval-panel .approval-count-col {
       display: flex;
       align-items: center;
@@ -667,6 +676,13 @@
               <span class="folders-head-title">Loaded Folders</span>
               <span class="folders-head-subtitle">{{ mirror_summary.file_count }} files in data/inbox</span>
             </div>
+            <div class="folders-count-col" role="columnheader" data-sort="new">New</div>
+            <div class="folders-count-col" role="columnheader" data-sort="active">Active</div>
+            <div class="folders-count-col" role="columnheader" data-sort="review">Review</div>
+            <div class="folders-count-col" role="columnheader" data-sort="processed">Processed</div>
+            <div class="folders-count-col" role="columnheader" data-sort="duplicate_names">Duplicates</div>
+            <div class="folders-count-col" role="columnheader" data-sort="deleted">Deleted</div>
+            <div class="folders-count-col" role="columnheader" data-sort="total">Total</div>
             <div class="mirror-head-search" role="search">
               <input
                 type="search"
@@ -681,13 +697,6 @@
                 <path d="M21 21l-4.35-4.35" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path>
               </svg>
             </div>
-            <div class="folders-count-col" role="columnheader" data-sort="new">New</div>
-            <div class="folders-count-col" role="columnheader" data-sort="active">Active</div>
-            <div class="folders-count-col" role="columnheader" data-sort="review">Review</div>
-            <div class="folders-count-col" role="columnheader" data-sort="processed">Processed</div>
-            <div class="folders-count-col" role="columnheader" data-sort="duplicate_names">Duplicates</div>
-            <div class="folders-count-col" role="columnheader" data-sort="deleted">Deleted</div>
-            <div class="folders-count-col" role="columnheader" data-sort="total">Total</div>
           </div>
           {% for folder in folders %}
               <details class="mirror-folder">
@@ -796,6 +805,8 @@
             <span class="folders-head-title">Approval</span>
             <span class="folders-head-subtitle">{{ approval_summary.file_count }} files in {{ approval_summary.month_count }} month{{ approval_summary.month_count|pluralize:"s" }}</span>
           </div>
+          <div class="approval-count-col" role="columnheader">Vendors</div>
+          <div class="approval-count-col" role="columnheader">Files</div>
           <div class="mirror-head-search" role="search">
             <input
               type="search"
@@ -810,8 +821,6 @@
               <path d="M21 21l-4.35-4.35" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path>
             </svg>
           </div>
-          <div class="approval-count-col" role="columnheader">Vendors</div>
-          <div class="approval-count-col" role="columnheader">Files</div>
         </div>
         {% if approval_months %}
           {% for month in approval_months %}
