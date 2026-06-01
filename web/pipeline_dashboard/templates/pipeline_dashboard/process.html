@@ -800,8 +800,8 @@
 
   .chart-legend-overlay .chart-legend-item .chart-legend-line {
     display: inline-block;
-    width: 14px;
-    height: 3px;
+    width: 18px;
+    height: 4px;
     border-radius: 2px;
     flex-shrink: 0;
   }
@@ -1502,6 +1502,11 @@
       return name.length > 15 ? name.slice(0, 15) + "..." : name;
     }
 
+    function truncateVendorName(name) {
+      if (!name || name === "-") return name || "-";
+      return name.length > 8 ? name.slice(0, 8) + "..." : name;
+    }
+
     function setParseDetails(file, validation) {
       parseTitle.textContent = file.name || "Parse file";
       parseDetails.replaceChildren();
@@ -1973,7 +1978,7 @@
         ? periodParts[0].slice(0, 3) + " " + periodParts[1].slice(-2)
         : periodLabel;
       const metrics = [
-        ["Vendor", summary.vendor_name || "-", "vendor"],
+        ["Vendor", truncateVendorName(summary.vendor_name || "-"), "vendor"],
         ["Period", periodValue, "period"],
         ["Rows", summary.row_count || 0, "rows"],
         ["Spend", formatMetric(summary.total_spend || 0, "spend").replace(/^[^\d+-]+/, ""), "spend"],
@@ -2072,6 +2077,9 @@
             borderWidth: 6,
           };
         }
+        const baseline = index === 1
+          ? {borderWidth: 4, pointRadius: 5, pointBorderWidth: 3}
+          : {borderWidth: 2.5, pointRadius: 3.5, pointBorderWidth: 2};
         return {
           label: compactMonthLabel(item.label),
           data,
@@ -2079,11 +2087,11 @@
           backgroundColor: "transparent",
           fill: false,
           tension: 0.35,
-          pointRadius: 2.5,
+          pointRadius: baseline.pointRadius,
           pointBackgroundColor: "#ffffff",
           pointBorderColor: color,
-          pointBorderWidth: 1.5,
-          borderWidth: 2,
+          pointBorderWidth: baseline.pointBorderWidth,
+          borderWidth: baseline.borderWidth,
         };
       });
 
