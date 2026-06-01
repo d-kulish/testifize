@@ -56,7 +56,7 @@ def parse_file(source_path: Path, input_schema: dict[str, Any], output_columns: 
                 "Brand": defaults["Brand"],
                 "Channel": defaults["Channel"],
                 "Platform": defaults["Platform"],
-                "Spend": decimal_text(totals["Spend"]),
+                "Spend": decimal_text(quantize_spend(totals["Spend"])),
                 "Impressions": decimal_text(totals["Impressions"]),
                 "Data_Grain": defaults["Data_Grain"],
                 "Processed_At": processed_at,
@@ -147,3 +147,10 @@ def decimal_text(value: Decimal) -> str:
     if "." in text:
         text = text.rstrip("0").rstrip(".")
     return text or "0"
+
+
+_SPEND_QUANT = Decimal("0.01")
+
+
+def quantize_spend(value: Decimal) -> Decimal:
+    return value.quantize(_SPEND_QUANT)
