@@ -972,30 +972,30 @@
 
   <section class="panel process-panel" style="margin-top: 16px;">
     <div class="panel-body">
-      {% if parsed_outputs %}
-        {% regroup parsed_outputs by vendor as grouped_parsed_outputs %}
-        <div class="mirror-table process-mirror approval-panel" role="table" aria-label="Parsed outputs grouped by vendor">
-          <div class="mirror-head" role="row">
-            <div class="process-head-wrapper" role="columnheader">
-              <span class="process-head-title">Approval</span>
-              <span class="process-head-subtitle">{{ parsed_outputs|length }} files in approval queue</span>
-            </div>
-            <div class="process-count-col right-aligned" role="columnheader">Files</div>
-            <div class="mirror-head-search" role="search">
-              <input
-                type="search"
-                class="mirror-search-input"
-                placeholder="Search approval files by name..."
-                aria-label="Search approval files by name"
-                data-approval-search
-                autocomplete="off"
-              />
-              <svg class="search-icon" viewBox="0 0 24 24" aria-hidden="true">
-                <circle cx="11" cy="11" r="8" fill="none" stroke="currentColor" stroke-width="2"></circle>
-                <path d="M21 21l-4.35-4.35" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path>
-              </svg>
-            </div>
+      <div class="mirror-table process-mirror approval-panel" role="table" aria-label="Parsed outputs grouped by vendor">
+        <div class="mirror-head" role="row">
+          <div class="process-head-wrapper" role="columnheader">
+            <span class="process-head-title">Approval</span>
+            <span class="process-head-subtitle">{{ parsed_outputs|length }} files in approval queue</span>
           </div>
+          <div class="process-count-col right-aligned" role="columnheader">Files</div>
+          <div class="mirror-head-search" role="search">
+            <input
+              type="search"
+              class="mirror-search-input"
+              placeholder="Search approval files by name..."
+              aria-label="Search approval files by name"
+              data-approval-search
+              autocomplete="off"
+            />
+            <svg class="search-icon" viewBox="0 0 24 24" aria-hidden="true">
+              <circle cx="11" cy="11" r="8" fill="none" stroke="currentColor" stroke-width="2"></circle>
+              <path d="M21 21l-4.35-4.35" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path>
+            </svg>
+          </div>
+        </div>
+        {% if parsed_outputs %}
+          {% regroup parsed_outputs by vendor as grouped_parsed_outputs %}
           {% for group in grouped_parsed_outputs %}
             <details class="mirror-folder">
               <summary class="mirror-summary" role="row">
@@ -1077,10 +1077,10 @@
               </div>
             </details>
           {% endfor %}
-        </div>
-      {% else %}
-        <div class="empty">No parsed CSV outputs are waiting for approval.</div>
-      {% endif %}
+        {% else %}
+          <div class="empty">No parsed CSV outputs are waiting for approval.</div>
+        {% endif %}
+      </div>
     </div>
   </section>
 
