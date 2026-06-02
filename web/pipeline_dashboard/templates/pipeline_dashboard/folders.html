@@ -827,6 +827,41 @@
       font-size: 12px;
       font-weight: 650;
     }
+
+    /* Approval chapter — compact right-aligned columns */
+    .folders-mirror.approval-table .mirror-files {
+      padding-right: 12px;
+    }
+    .folders-mirror.approval-table .mirror-files table {
+      table-layout: fixed;
+      width: auto;
+      min-width: 1000px;
+      margin-left: auto;
+    }
+    .folders-mirror.approval-table .mirror-files th,
+    .folders-mirror.approval-table .mirror-files td {
+      padding: 8px 10px;
+    }
+    .folders-mirror.approval-table .mirror-files th:nth-child(1),
+    .folders-mirror.approval-table .mirror-files td:nth-child(1) { width: 110px; }
+    .folders-mirror.approval-table .mirror-files th:nth-child(2),
+    .folders-mirror.approval-table .mirror-files td:nth-child(2) { width: auto; min-width: 220px; }
+    .folders-mirror.approval-table .mirror-files th:nth-child(3),
+    .folders-mirror.approval-table .mirror-files td:nth-child(3) { width: 60px; text-align: right; }
+    .folders-mirror.approval-table .mirror-files th:nth-child(4),
+    .folders-mirror.approval-table .mirror-files td:nth-child(4) { width: 90px; text-align: right; }
+    .folders-mirror.approval-table .mirror-files th:nth-child(5),
+    .folders-mirror.approval-table .mirror-files td:nth-child(5) { width: 110px; text-align: right; }
+    .folders-mirror.approval-table .mirror-files th:nth-child(6),
+    .folders-mirror.approval-table .mirror-files td:nth-child(6) { width: 70px; text-align: right; }
+    .folders-mirror.approval-table .mirror-files th:nth-child(7),
+    .folders-mirror.approval-table .mirror-files td:nth-child(7) { width: 120px; }
+    .folders-mirror.approval-table .mirror-files th:nth-child(8),
+    .folders-mirror.approval-table .mirror-files td:nth-child(8) { width: 230px; text-align: center; }
+    .folders-mirror.approval-table .mirror-files td:nth-child(8) .actions {
+      flex-wrap: nowrap;
+      justify-content: center;
+    }
   </style>
 
   <section class="folders-page">
@@ -1044,7 +1079,7 @@
   <section class="panel">
     <div class="panel-body">
       {% if approval_months %}
-        <div class="mirror-table folders-mirror" role="table" aria-label="Approval folders">
+        <div class="mirror-table folders-mirror approval-table" role="table" aria-label="Approval folders">
           <div class="mirror-head" role="row">
             <div class="folders-head-wrapper" role="columnheader">
               <span class="folders-head-title">Approval</span>
