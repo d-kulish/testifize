@@ -517,6 +517,14 @@
       display: none !important;
     }
 
+    .review-message:empty {
+      display: none;
+    }
+
+    [hidden] {
+      display: none !important;
+    }
+
     .review-modal[data-mode="approval"] .review-vendor,
     .review-modal[data-mode="approval"] .review-action-parsing,
     .review-modal[data-mode="final"] .review-vendor,
@@ -527,11 +535,15 @@
     /* Parsed-output review styles (mirrors process page) */
     .review-details.review-mode {
       grid-template-columns: 1fr 1fr;
+      grid-template-rows: auto;
       gap: 4px 20px;
-      padding: 0px 18px 8px 24px;
+      padding: 0px 18px 4px 24px;
     }
     .review-details.review-mode > div:nth-child(2) {
       padding-left: 40px;
+    }
+    .review-details.review-mode > div {
+      line-height: 1.5;
     }
     .review-details.review-mode .detail-value {
       white-space: nowrap;
@@ -2246,11 +2258,11 @@
             reviewTitle.textContent = payload.candidate?.summary?.output_filename || fileName;
             setApprovalReviewDetails(payload.file, payload.validation);
             renderParsedResult(payload);
-            reviewDetails.classList.remove("collapsed");
-            reviewSeparator?.classList.remove("collapsed");
+            reviewDetails.classList.add("collapsed");
+            reviewSeparator?.classList.add("collapsed");
             if (reviewDetailsToggle) {
-              reviewDetailsToggle.setAttribute("aria-expanded", "true");
-              reviewDetailsToggle.setAttribute("aria-label", "Hide file details");
+              reviewDetailsToggle.setAttribute("aria-expanded", "false");
+              reviewDetailsToggle.setAttribute("aria-label", "Show file details");
             }
           }
           // Fallback: raw file preview (existing behavior)
@@ -2314,11 +2326,11 @@
             reviewTitle.textContent = payload.candidate?.summary?.output_filename || fileName;
             setApprovalReviewDetails(payload.file, payload.validation);
             renderParsedResult(payload);
-            reviewDetails.classList.remove("collapsed");
-            reviewSeparator?.classList.remove("collapsed");
+            reviewDetails.classList.add("collapsed");
+            reviewSeparator?.classList.add("collapsed");
             if (reviewDetailsToggle) {
-              reviewDetailsToggle.setAttribute("aria-expanded", "true");
-              reviewDetailsToggle.setAttribute("aria-label", "Hide file details");
+              reviewDetailsToggle.setAttribute("aria-expanded", "false");
+              reviewDetailsToggle.setAttribute("aria-label", "Show file details");
             }
           }
           // Fallback: raw file preview (existing behavior)
