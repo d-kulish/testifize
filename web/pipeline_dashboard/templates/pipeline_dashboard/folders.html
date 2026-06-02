@@ -844,13 +844,13 @@
 
     /* Vendor group headers inside Approval/Final tables */
     .vendor-group-header {
-      background: #f1f5f9;
+      background: #ffffff;
       cursor: pointer;
       user-select: none;
       transition: background 120ms ease;
     }
     .vendor-group-header:hover {
-      background: #e2e8f0;
+      background: #f8fafc;
     }
     .vendor-group-header td {
       padding: 8px 10px;
@@ -858,6 +858,19 @@
     }
     .vendor-group-header.expanded td {
       border-bottom-color: #111827;
+    }
+    .vendor-group-head {
+      background: #f8fafc;
+    }
+    .vendor-group-head th {
+      padding: 8px 10px;
+      color: #667085;
+      font-size: 10px;
+      font-weight: 760;
+      text-transform: uppercase;
+      text-align: left;
+      border-bottom: 1px solid #edf0f4;
+      box-shadow: inset 0 -1px 0 #edf0f4;
     }
     .vendor-group-cell {
       display: flex;
@@ -1210,17 +1223,6 @@
               </summary>
               <div class="mirror-files">
                 <table>
-                  <thead>
-                    <tr>
-                      <th>File</th>
-                      <th>Version</th>
-                      <th>Period</th>
-                      <th>Modified</th>
-                      <th>Size</th>
-                      <th>Uploader</th>
-                      <th>Action</th>
-                    </tr>
-                  </thead>
                   <tbody>
                     {% for vendor in month.vendors %}
                       <tr class="vendor-group-header" data-vendor-group data-vendor-name="{{ vendor.name }}">
@@ -1231,6 +1233,15 @@
                             <span class="vendor-group-count">{{ vendor.files|length }} file{{ vendor.files|length|pluralize:"s" }}</span>
                           </div>
                         </td>
+                      </tr>
+                      <tr class="vendor-group-head" data-vendor-head="{{ vendor.name }}" hidden>
+                        <th>File</th>
+                        <th>Version</th>
+                        <th>Period</th>
+                        <th>Modified</th>
+                        <th>Size</th>
+                        <th>Uploader</th>
+                        <th>Action</th>
                       </tr>
                       {% for file in vendor.files %}
                         <tr class="mirror-file-row vendor-file-row {% if not file.exists_locally %}is-missing{% endif %}" data-approval-row data-vendor-files="{{ vendor.name }}" data-remote-item-id="{{ file.remote_item_id }}" data-name="{{ file.name }}" data-month-label="{{ month.label }}" data-vendor-name="{{ vendor.name }}" hidden>
@@ -1319,17 +1330,6 @@
               </summary>
               <div class="mirror-files">
                 <table>
-                  <thead>
-                    <tr>
-                      <th>File</th>
-                      <th>Version</th>
-                      <th>Period</th>
-                      <th>Modified</th>
-                      <th>Size</th>
-                      <th>Uploader</th>
-                      <th>Action</th>
-                    </tr>
-                  </thead>
                   <tbody>
                     {% for vendor in month.vendors %}
                       <tr class="vendor-group-header" data-vendor-group data-vendor-name="{{ vendor.name }}">
@@ -1340,6 +1340,15 @@
                             <span class="vendor-group-count">{{ vendor.files|length }} file{{ vendor.files|length|pluralize:"s" }}</span>
                           </div>
                         </td>
+                      </tr>
+                      <tr class="vendor-group-head" data-vendor-head="{{ vendor.name }}" hidden>
+                        <th>File</th>
+                        <th>Version</th>
+                        <th>Period</th>
+                        <th>Modified</th>
+                        <th>Size</th>
+                        <th>Uploader</th>
+                        <th>Action</th>
                       </tr>
                       {% for file in vendor.files %}
                         <tr class="mirror-file-row vendor-file-row {% if not file.exists_locally %}is-missing{% endif %}" data-final-row data-vendor-files="{{ vendor.name }}" data-remote-item-id="{{ file.remote_item_id }}" data-name="{{ file.name }}" data-month-label="{{ month.label }}" data-vendor-name="{{ vendor.name }}" hidden>
@@ -2767,7 +2776,9 @@
           const month = header.closest(".mirror-folder");
           const vendorName = header.dataset.vendorName;
           const isExpanded = header.classList.contains("expanded");
+          const headRow = month.querySelector(`[data-vendor-head="${vendorName}"]`);
           const fileRows = month.querySelectorAll(`[data-vendor-files="${vendorName}"]`);
+          if (headRow) headRow.hidden = isExpanded;
           fileRows.forEach((row) => {
             row.hidden = isExpanded;
           });
@@ -2847,6 +2858,9 @@
           header.hidden = false;
           header.classList.remove("expanded");
         });
+        panel.querySelectorAll("[data-vendor-head]").forEach((head) => {
+          head.hidden = true;
+        });
       }
 
       function performApproval2Search(query) {
@@ -2858,6 +2872,7 @@
 
           vendorHeaders.forEach((vendorRow) => {
             const vendorName = (vendorRow.dataset.vendorName || "").trim();
+            const headRow = month.querySelector(`[data-vendor-head="${vendorName}"]`);
             const fileRows = month.querySelectorAll(`[data-vendor-files="${vendorName}"]`);
             let vendorHasMatch = false;
 
@@ -2875,6 +2890,7 @@
               }
             });
 
+            if (headRow) headRow.hidden = !vendorHasMatch;
             vendorRow.hidden = !vendorHasMatch;
             if (vendorHasMatch) {
               vendorRow.classList.add("expanded");
@@ -2974,6 +2990,9 @@
           header.hidden = false;
           header.classList.remove("expanded");
         });
+        panel.querySelectorAll("[data-vendor-head]").forEach((head) => {
+          head.hidden = true;
+        });
       }
 
       function performFinalSearch(query) {
@@ -2985,6 +3004,7 @@
 
           vendorHeaders.forEach((vendorRow) => {
             const vendorName = (vendorRow.dataset.vendorName || "").trim();
+            const headRow = month.querySelector(`[data-vendor-head="${vendorName}"]`);
             const fileRows = month.querySelectorAll(`[data-vendor-files="${vendorName}"]`);
             let vendorHasMatch = false;
 
@@ -3002,6 +3022,7 @@
               }
             });
 
+            if (headRow) headRow.hidden = !vendorHasMatch;
             vendorRow.hidden = !vendorHasMatch;
             if (vendorHasMatch) {
               vendorRow.classList.add("expanded");
