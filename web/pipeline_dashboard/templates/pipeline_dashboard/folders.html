@@ -918,7 +918,16 @@
       table-layout: fixed;
       width: auto;
       min-width: 1340px;
-      margin-left: auto;
+    }
+    .folders-mirror.approval-table .mirror-files .reference-head {
+      visibility: collapse;
+      height: 0;
+      line-height: 0;
+      font-size: 0;
+    }
+    .folders-mirror.approval-table .mirror-files .reference-head th {
+      padding: 0;
+      border: none;
     }
     .folders-mirror.approval-table .mirror-files th,
     .folders-mirror.approval-table .mirror-files td {
@@ -1239,6 +1248,17 @@
               </summary>
               <div class="mirror-files">
                 <table>
+                  <thead class="reference-head">
+                    <tr>
+                      <th>File</th>
+                      <th>Version</th>
+                      <th>Period</th>
+                      <th>Modified</th>
+                      <th>Size</th>
+                      <th>Uploader</th>
+                      <th>Action</th>
+                    </tr>
+                  </thead>
                   <tbody>
                     {% for vendor in month.vendors %}
                       <tr class="vendor-group-header" data-vendor-group data-vendor-name="{{ vendor.name }}">
