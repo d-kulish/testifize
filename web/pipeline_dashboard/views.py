@@ -1197,11 +1197,46 @@ def _approval_file_row(remote_item_id: str) -> dict | None:
     return None
 
 
+def _parsed_output_for_approval(remote_item_id: str) -> ParsedOutput | None:
+    """Find the ParsedOutput linked to an approval-mirror file by its ShareFile item ID."""
+    asset = (
+        Asset.objects.filter(uploaded_item_id=remote_item_id)
+        .select_related("vendor")
+        .first()
+    )
+    if asset:
+        return (
+            asset.parsed_outputs.select_related("vendor")
+            .order_by("-created_at")
+            .first()
+        )
+    return (
+        ParsedOutput.objects.filter(
+            comparison_summary__sharefile_item_id=remote_item_id
+        )
+        .select_related("asset", "vendor")
+        .order_by("-created_at")
+        .first()
+    )
+
+
 @require_GET
 def review_approval_file(request, remote_item_id: str):
     file_row = _approval_file_row(remote_item_id)
     if not file_row:
-        return JsonResponse({"error": "File is not in the current ShareFile Approval mirror."}, status=404)
+        return JsonResponse(
+            {"error": "File is not in the current ShareFile Approval mirror."},
+            status=404,
+        )
+
+    parsed = _parsed_output_for_approval(remote_item_id)
+    if parsed:
+        try:
+            payload = build_review_payload(parsed)
+        except ParserWorkflowError as exc:
+            return JsonResponse({"error": str(exc)}, status=400)
+        return JsonResponse(payload)
+
     local_path = file_row.get("local_path") or ""
     try:
         preview = build_file_preview(local_path, file_row)

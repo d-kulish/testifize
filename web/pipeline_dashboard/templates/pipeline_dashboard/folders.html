@@ -521,6 +521,312 @@
     .review-modal[data-mode="approval"] .review-action-parsing {
       display: none;
     }
+
+    /* Parsed-output review styles (mirrors process page) */
+    .review-details.review-mode {
+      grid-template-columns: 1fr 1fr;
+      gap: 4px 20px;
+      padding: 0px 18px 8px 24px;
+    }
+    .review-details.review-mode > div:nth-child(2) {
+      padding-left: 40px;
+    }
+    .review-details.review-mode .detail-value {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .review-view-button {
+      background: #3b82f6;
+      border-color: transparent;
+      color: #ffffff;
+      min-height: 36px;
+      padding: 7px 16px;
+      font-size: 14px;
+      min-width: 100px;
+    }
+    .review-view-button:hover:not(:disabled) {
+      background: #2563eb;
+      border-color: transparent;
+      color: #ffffff;
+    }
+    .review-view-button:disabled {
+      background: #d1d5db;
+      border-color: transparent;
+      color: #6b7280;
+      cursor: not-allowed;
+    }
+
+    .parse-result {
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      min-height: 0;
+      overflow: hidden;
+      padding: 8px 16px 6px;
+      background: #ffffff;
+    }
+    .review-body > .parse-result:not([hidden]) {
+      grid-row: 2;
+    }
+    .parse-result-tabs {
+      display: flex;
+      gap: 0;
+      overflow-x: auto;
+      padding: 0;
+      background: transparent;
+      border-bottom: 0;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+    }
+    .parse-result-tabs::-webkit-scrollbar {
+      display: none;
+    }
+    .parse-result-tabs button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex: 1;
+      height: 32px;
+      padding: 0 12px;
+      border: 1px solid #111827;
+      border-radius: 8px 8px 0 0;
+      background: #dcfce7;
+      color: #667085;
+      font-size: 13px;
+      font-weight: 700;
+      white-space: nowrap;
+      box-shadow: none;
+      cursor: pointer;
+      transition: background 120ms ease, color 120ms ease;
+    }
+    .parse-result-tabs button:not(:first-child) {
+      margin-left: -1px;
+    }
+    .parse-result-tabs button:hover:not(.active) {
+      background: #bbf7d0;
+    }
+    .parse-result-tabs button.active {
+      background: #ffffff;
+      color: #111827;
+      border-color: #111827;
+      border-bottom: 0;
+      z-index: 1;
+      box-shadow: 0 -2px 4px rgba(0,0,0,0.04);
+    }
+    .parse-result-view {
+      flex: 1 1 auto;
+      min-height: 0;
+      margin-top: 16px;
+      margin-bottom: 6px;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .parse-result-summary {
+      display: grid;
+      gap: 6px;
+      flex: 0 0 auto;
+    }
+    .parse-result-pills {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 12px;
+      margin-bottom: 0;
+    }
+    .parse-result-pill {
+      position: relative;
+      display: grid;
+      grid-template-columns: 36px minmax(0, 1fr);
+      column-gap: 10px;
+      row-gap: 4px;
+      align-items: center;
+      padding: 10px 16px;
+      min-height: 48px;
+      overflow: hidden;
+      background: #ffffff;
+      border: 1px solid #111827;
+      border-radius: 8px;
+      box-shadow: 0 1px 2px rgba(16, 24, 40, 0.08), 0 2px 6px rgba(60, 64, 67, 0.10), 0 4px 12px rgba(60, 64, 67, 0.12);
+    }
+    .parse-result-pill .parse-result-label {
+      grid-column: 1 / -1;
+      grid-row: 1;
+      display: block;
+      min-width: 0;
+      color: #667085;
+      font-size: 15px;
+      font-weight: 700;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .parse-result-pill .parse-result-value {
+      grid-column: 2;
+      grid-row: 2;
+      display: block;
+      min-width: 0;
+      color: #111827;
+      font-size: 24px;
+      line-height: 0.95;
+      font-weight: 650;
+      letter-spacing: 0;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .parse-result-pill .parse-result-icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      grid-column: 1;
+      grid-row: 2;
+      width: 34px;
+      height: 34px;
+      color: #667085;
+    }
+    .parse-result-pill .parse-result-icon svg {
+      width: 32px;
+      height: 32px;
+      stroke: currentColor;
+      stroke-width: 1.9;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      fill: none;
+    }
+    .parse-result-pill.rows .parse-result-icon { color: #d97706; }
+    .parse-result-pill.spend .parse-result-icon { color: #6d28d9; }
+    .parse-result-pill.period .parse-result-icon { color: #6d28d9; }
+    .parse-result-pill.impressions .parse-result-icon { color: #1d4ed8; }
+    .parse-result-pill.vendor .parse-result-icon { color: #d97706; }
+    .parse-result-pill.rows .parse-result-label { color: #d97706; }
+    .parse-result-pill.spend .parse-result-label { color: #6d28d9; }
+    .parse-result-pill.period .parse-result-label { color: #6d28d9; }
+    .parse-result-pill.impressions .parse-result-label { color: #1d4ed8; }
+    .parse-result-pill.vendor .parse-result-label { color: #d97706; }
+    .parse-result-pill:hover {
+      border-color: #111827;
+      box-shadow: 0 2px 4px rgba(60, 64, 67, 0.10), 0 4px 10px rgba(60, 64, 67, 0.14), 0 8px 20px rgba(60, 64, 67, 0.16);
+      transform: translateY(-1px);
+      transition: box-shadow 160ms ease, transform 160ms ease;
+    }
+
+    .parse-chart-card {
+      min-width: 0;
+      border: 1px solid #ffffff;
+      border-radius: 8px;
+      background: #ffffff;
+      overflow: hidden;
+      padding: 0;
+      flex: 1 1 auto;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+    }
+    .chart-canvas-wrapper {
+      position: relative;
+      width: 100%;
+      height: 100%;
+    }
+    .chart-canvas-wrapper canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+      border: 1px solid #ffffff;
+      border-radius: 8px;
+      background: #ffffff;
+    }
+    .chart-legend-overlay {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      background: #ffffff;
+      border: 1px solid #e1e7ef;
+      border-radius: 6px;
+      padding: 8px 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      font-size: 11px;
+      font-weight: 600;
+      color: #475467;
+      z-index: 2;
+      cursor: default;
+      user-select: none;
+      pointer-events: none;
+    }
+    .chart-legend-overlay .chart-legend-title {
+      font-weight: 700;
+      margin-bottom: 2px;
+    }
+    .chart-legend-overlay .chart-legend-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      white-space: nowrap;
+      cursor: pointer;
+      pointer-events: auto;
+    }
+    .chart-legend-overlay .chart-legend-item .chart-legend-line {
+      display: inline-block;
+      width: 18px;
+      height: 4px;
+      border-radius: 2px;
+      flex-shrink: 0;
+    }
+    .chart-legend-overlay .chart-legend-item.hidden {
+      opacity: 0.4;
+    }
+
+    .parse-csv-panel {
+      margin-top: 0;
+      flex: 1 1 auto;
+      min-height: 0;
+      display: grid;
+      grid-template-rows: 1fr auto;
+      overflow: hidden;
+      border: 1px solid #ffffff;
+      border-radius: 8px;
+      background: #ffffff;
+    }
+    .parse-csv-table-wrap {
+      min-height: 0;
+      overflow: auto;
+    }
+    .parse-csv-panel table {
+      min-width: 920px;
+      border-collapse: separate;
+      border-spacing: 0;
+      font-size: 11px;
+    }
+    .parse-csv-panel td,
+    .parse-csv-panel th {
+      max-width: 220px;
+      padding: 8px 10px;
+      border-bottom: 1px solid #edf0f4;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .parse-csv-panel th {
+      position: sticky;
+      top: 0;
+      z-index: 1;
+      background: #f8fafc;
+      color: #667085;
+      font-size: 10px;
+      font-weight: 760;
+      text-transform: uppercase;
+      box-shadow: inset 0 -1px 0 #edf0f4;
+    }
+    .parse-csv-note {
+      padding: 10px 14px;
+      border-top: 1px solid #edf0f4;
+      color: #667085;
+      font-size: 12px;
+      font-weight: 650;
+    }
   </style>
 
   <section class="folders-page">
@@ -809,7 +1115,7 @@
                           <td>
                             <div class="actions">
                               <button
-                                class="button small review-button"
+                                class="button small review-view-button"
                                 type="button"
                                 data-approval-review-button
                                 data-remote-item-id="{{ file.remote_item_id }}"
@@ -851,6 +1157,7 @@
         </div>
         <div class="review-separator" data-review-separator aria-hidden="true"></div>
         <div class="review-details" data-review-details></div>
+        <div class="review-message" data-parse-validation></div>
       </header>
       <div class="review-body">
         <div class="review-tabs-row" data-review-tabs-row>
@@ -867,6 +1174,7 @@
             <div class="review-message">Choose a file to preview.</div>
           </div>
         </div>
+        <div class="parse-result" data-chart-preview hidden></div>
       </div>
       <footer class="review-footer">
         <label class="review-vendor">
@@ -1033,6 +1341,7 @@
     const tabNavNext = document.querySelector("[data-tab-next]");
     const csrfToken = document.querySelector("[name=csrfmiddlewaretoken]")?.value || "";
     let activeReview = null;
+    let activeChart = null;
 
     function applyVendorFilter(container) {
       const allowed = (container.dataset.allowedVendors || "").split(",").filter(Boolean);
@@ -1095,6 +1404,70 @@
     function truncateSheetName(name) {
       if (!name || name === "-") return "-";
       return name.length > 15 ? name.slice(0, 15) + "..." : name;
+    }
+
+    function truncateVendorName(name) {
+      if (!name || name === "-") return name || "-";
+      return name.length > 8 ? name.slice(0, 8) + "..." : name;
+    }
+
+    function formatMetric(value, mode) {
+      const number = Number(value || 0);
+      if (!Number.isFinite(number)) return "-";
+      if (mode === "spend") {
+        return new Intl.NumberFormat(undefined, {style: "currency", currency: "USD", maximumFractionDigits: 0}).format(number);
+      }
+      if (mode === "impressions") {
+        return new Intl.NumberFormat(undefined, {maximumFractionDigits: 0}).format(number);
+      }
+      return new Intl.NumberFormat(undefined, {minimumFractionDigits: 4, maximumFractionDigits: 6}).format(number);
+    }
+
+    function compactMonthLabel(raw) {
+      if (!raw) return raw;
+      const label = raw.replace(/^Parsed\s+/, "");
+      const parts = label.split("_");
+      if (parts.length === 2) {
+        return parts[0].slice(0, 3) + " " + parts[1].slice(-2);
+      }
+      return label;
+    }
+
+    function setApprovalReviewDetails(file, validation) {
+      reviewTitle.textContent = file?.name || "Review parsed output";
+      reviewDetails.replaceChildren();
+      reviewDetails.classList.add("review-mode");
+
+      function makeItem(label, value) {
+        const row = document.createElement("div");
+        row.className = "detail-row";
+        const labelSpan = document.createElement("span");
+        labelSpan.className = "detail-label";
+        labelSpan.textContent = label + ":";
+        const valueSpan = document.createElement("span");
+        valueSpan.className = "detail-value";
+        valueSpan.textContent = value;
+        row.appendChild(labelSpan);
+        row.appendChild(valueSpan);
+        return row;
+      }
+
+      if (!file || !validation) {
+        const cell = document.createElement("div");
+        cell.appendChild(makeItem("Status", "Source file unavailable"));
+        reviewDetails.appendChild(cell);
+        return;
+      }
+
+      const col1 = document.createElement("div");
+      col1.appendChild(makeItem("Source", file.name || "-"));
+      col1.appendChild(makeItem("Uploader", file.uploaded_by || "-"));
+      reviewDetails.appendChild(col1);
+
+      const col2 = document.createElement("div");
+      col2.appendChild(makeItem("Schema", validation.schema_path || "-"));
+      col2.appendChild(makeItem("Parser", validation.parser_path || "-"));
+      reviewDetails.appendChild(col2);
     }
 
     function makeDetailRow(label, value) {
@@ -1225,6 +1598,345 @@
       });
     }
 
+    function renderParsedResult(payload) {
+      const chartPreview = document.querySelector("[data-chart-preview]");
+      if (!chartPreview) return;
+      chartPreview.replaceChildren();
+      const tabs = document.createElement("div");
+      tabs.className = "parse-result-tabs";
+      tabs.setAttribute("role", "tablist");
+      const summary = renderResultSummary(payload);
+      const view = document.createElement("div");
+      view.className = "parse-result-view";
+      const configs = [
+        {mode: "spend", label: "Spend", title: "Spend", note: "Daily spend against approved history", type: "chart"},
+        {mode: "impressions", label: "Impressions", title: "Impressions", note: "Daily impressions against approved history", type: "chart"},
+        {mode: "cpm", label: "Cost / impression", title: "Cost / impression", note: "Daily spend divided by daily impressions", type: "chart"},
+        {mode: "csv", label: "Final CSV", title: "Final CSV", type: "table"},
+      ];
+      const buttons = new Map();
+
+      function activate(config) {
+        buttons.forEach((button, key) => {
+          const selected = key === config.mode;
+          button.classList.toggle("active", selected);
+          button.setAttribute("aria-selected", selected ? "true" : "false");
+        });
+        view.replaceChildren();
+        if (config.type === "table") {
+          view.appendChild(renderParsedTable(payload.parsed_table || {}));
+        } else {
+          view.appendChild(renderSingleChart(payload, config));
+        }
+        view.scrollTop = 0;
+      }
+
+      configs.forEach((config) => {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.textContent = config.label;
+        button.setAttribute("role", "tab");
+        button.setAttribute("aria-selected", "false");
+        button.addEventListener("click", () => activate(config));
+        buttons.set(config.mode, button);
+        tabs.appendChild(button);
+      });
+
+      chartPreview.append(tabs, view, summary);
+      activate(configs[0]);
+    }
+
+    function renderResultSummary(payload) {
+      const summary = payload.candidate?.summary || {};
+      const header = document.createElement("div");
+      header.className = "parse-result-summary";
+      const pills = document.createElement("div");
+      pills.className = "parse-result-pills";
+      const periodLabel = summary.period_label || "-";
+      const periodParts = periodLabel === "-" ? null : periodLabel.split("_");
+      const periodValue = periodParts && periodParts.length === 2
+        ? periodParts[0].slice(0, 3) + " " + periodParts[1].slice(-2)
+        : periodLabel;
+      const metrics = [
+        ["Vendor", truncateVendorName(summary.vendor_name || "-"), "vendor"],
+        ["Period", periodValue, "period"],
+        ["Rows", summary.row_count || 0, "rows"],
+        ["Spend", formatMetric(summary.total_spend || 0, "spend").replace(/^[^\d+-]+/, ""), "spend"],
+        ["Impressions", formatMetric(summary.total_impressions || 0, "impressions"), "impressions"],
+      ];
+      metrics.forEach(([label, value, colorKey]) => {
+        const pill = document.createElement("div");
+        pill.className = "parse-result-pill " + colorKey;
+        const iconContainer = document.createElement("div");
+        iconContainer.className = "parse-result-icon";
+        iconContainer.setAttribute("aria-hidden", "true");
+        const iconSvg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+        iconSvg.setAttribute("viewBox", "0 0 24 24");
+        let iconPath;
+        if (colorKey === "vendor") {
+          iconPath = '<path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"><\/path><polyline points="9 22 9 12 15 12 15 22"><\/polyline>';
+        } else if (colorKey === "period") {
+          iconPath = '<rect x="3" y="4" width="18" height="18" rx="2"><\/rect><line x1="16" y1="2" x2="16" y2="6"><\/line><line x1="8" y1="2" x2="8" y2="6"><\/line><line x1="3" y1="10" x2="21" y2="10"><\/line>';
+        } else if (colorKey === "rows") {
+          iconPath = '<path d="M4 7h16"><\/path><path d="M4 12h10"><\/path><path d="M4 17h7"><\/path><path d="m16 16 2 2 4-5"><\/path>';
+        } else if (colorKey === "spend") {
+          iconPath = '<circle cx="12" cy="12" r="9"><\/circle><path d="m8 12 3 3 5-6"><\/path>';
+        } else {
+          iconPath = '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"><\/path><circle cx="9" cy="7" r="4"><\/circle><path d="M22 21v-2a4 4 0 0 0-3-3.87"><\/path><path d="M16 3.13a4 4 0 0 1 0 7.75"><\/path>';
+        }
+        iconSvg.innerHTML = iconPath;
+        iconContainer.appendChild(iconSvg);
+        const lbl = document.createElement("span");
+        lbl.className = "parse-result-label";
+        lbl.textContent = label;
+        const val = document.createElement("strong");
+        val.className = "parse-result-value";
+        val.textContent = value;
+        pill.append(iconContainer, lbl, val);
+        pills.appendChild(pill);
+      });
+      header.appendChild(pills);
+      return header;
+    }
+
+    function renderSingleChart(payload, config) {
+      const card = document.createElement("section");
+      card.className = "parse-chart-card";
+      const wrapper = document.createElement("div");
+      wrapper.className = "chart-canvas-wrapper";
+      const canvas = document.createElement("canvas");
+      wrapper.appendChild(canvas);
+      card.appendChild(wrapper);
+
+      const chartPayload = payload.charts || {};
+      const series = chartPayload.series || [];
+      const labels = [];
+      const maxDay = Math.max(chartPayload.max_day || 0, ...series.map((item) => (item.points || []).length), 1);
+      for (let d = 1; d <= maxDay; d += 1) {
+        labels.push(String(d));
+      }
+
+      const datasets = series.map((item, index) => {
+        const color = index === 0 ? "#16a34a" : index === 1 ? "#b54708" : "#2563eb";
+        const data = item.points
+          ? item.points.map((point) => Number(point[config.mode] || 0))
+          : [];
+        if (index === 0) {
+          const backgroundColor = (() => {
+            const cvs = document.createElement("canvas");
+            cvs.width = 1; cvs.height = 300;
+            const ctx = cvs.getContext("2d");
+            const g = ctx.createLinearGradient(0, 0, 0, 300);
+            g.addColorStop(0, "rgba(22, 163, 74, 0.55)");
+            g.addColorStop(1, "rgba(22, 163, 74, 0.12)");
+            return g;
+          })();
+          return {
+            label: compactMonthLabel(item.label),
+            data,
+            borderColor: color,
+            backgroundColor: backgroundColor,
+            fill: true,
+            tension: 0.35,
+            pointRadius: 7,
+            pointBackgroundColor: "#ffffff",
+            pointBorderColor: color,
+            pointBorderWidth: 4,
+            borderWidth: 6,
+          };
+        }
+        const baseline = index === 1
+          ? {borderWidth: 4, pointRadius: 5, pointBorderWidth: 3}
+          : {borderWidth: 2.5, pointRadius: 3.5, pointBorderWidth: 2};
+        return {
+          label: compactMonthLabel(item.label),
+          data,
+          borderColor: color,
+          backgroundColor: "transparent",
+          fill: false,
+          tension: 0.35,
+          pointRadius: baseline.pointRadius,
+          pointBackgroundColor: "#ffffff",
+          pointBorderColor: color,
+          pointBorderWidth: baseline.pointBorderWidth,
+          borderWidth: baseline.borderWidth,
+        };
+      });
+
+      const legendOverlay = document.createElement("div");
+      legendOverlay.className = "chart-legend-overlay";
+      const legendTitle = document.createElement("div");
+      legendTitle.className = "chart-legend-title";
+      legendTitle.textContent = "Periods";
+      legendOverlay.appendChild(legendTitle);
+
+      datasets.forEach((ds, idx) => {
+        const item = document.createElement("div");
+        item.className = "chart-legend-item";
+        const line = document.createElement("span");
+        line.className = "chart-legend-line";
+        line.style.backgroundColor = ds.borderColor;
+        const label = document.createElement("span");
+        label.textContent = ds.label;
+        item.appendChild(line);
+        item.appendChild(label);
+        item.addEventListener("click", () => {
+          if (!activeChart) return;
+          const visible = activeChart.isDatasetVisible(idx);
+          activeChart.setDatasetVisibility(idx, !visible);
+          item.classList.toggle("hidden", visible);
+          activeChart.update("none");
+        });
+        legendOverlay.appendChild(item);
+      });
+      wrapper.appendChild(legendOverlay);
+
+      if (activeChart) {
+        activeChart.destroy();
+        activeChart = null;
+      }
+
+      const ctx = canvas.getContext("2d");
+      activeChart = new window.Chart(ctx, {
+        type: "line",
+        data: { labels, datasets },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          interaction: { mode: "index", intersect: false },
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              backgroundColor: "rgba(16, 24, 40, 0.92)",
+              titleColor: "#f1f5f9",
+              bodyColor: "#e2e8f0",
+              borderColor: "#334155",
+              borderWidth: 1,
+              padding: 10,
+              titleFont: { size: 12, weight: "700" },
+              bodyFont: { size: 12, weight: "600" },
+              displayColors: true,
+              usePointStyle: true,
+              callbacks: {
+                label: (context) => {
+                  let label = context.dataset.label || "";
+                  if (label) label += ": ";
+                  const num = Number(context.parsed.y || 0);
+                  if (!Number.isFinite(num)) {
+                    label += "-";
+                  } else if (config.mode === "spend") {
+                    label += new Intl.NumberFormat(undefined, {maximumFractionDigits: 0}).format(num);
+                  } else if (config.mode === "impressions") {
+                    label += new Intl.NumberFormat(undefined, {maximumFractionDigits: 0}).format(num);
+                  } else {
+                    label += new Intl.NumberFormat(undefined, {minimumFractionDigits: 4, maximumFractionDigits: 6}).format(num);
+                  }
+                  return label;
+                },
+              },
+            },
+          },
+          scales: {
+            x: {
+              grid: {
+                color: (ctx) => {
+                  const idx = ctx.index;
+                  return idx % 5 === 0 ? "rgba(16,24,40,0.08)" : "rgba(16,24,40,0.04)";
+                },
+                drawTicks: false,
+              },
+              ticks: {
+                color: "#647184",
+                font: { size: 11, weight: "600" },
+                maxRotation: 0,
+              },
+              border: { display: false },
+              title: {
+                display: true,
+                text: "Overlapping period day",
+                color: "#647184",
+                font: { size: 11, weight: "600" },
+                padding: { top: 8 },
+              },
+            },
+            y: {
+              grid: {
+                color: "rgba(16,24,40,0.06)",
+                drawTicks: false,
+              },
+              ticks: {
+                color: "#647184",
+                font: { size: 11, weight: "600" },
+                padding: 6,
+                callback: (value) => {
+                  const num = Number(value || 0);
+                  if (!Number.isFinite(num)) return "-";
+                  if (config.mode === "spend") {
+                    return new Intl.NumberFormat(undefined, {maximumFractionDigits: 0}).format(num);
+                  }
+                  if (config.mode === "impressions") {
+                    return new Intl.NumberFormat(undefined, {maximumFractionDigits: 0}).format(num);
+                  }
+                  return new Intl.NumberFormat(undefined, {minimumFractionDigits: 4, maximumFractionDigits: 6}).format(num);
+                },
+              },
+              border: { display: false },
+              beginAtZero: true,
+            },
+          },
+          layout: { padding: { top: 10, right: 10, bottom: 0, left: 4 } },
+          animation: { duration: 450, easing: "easeOutQuart" },
+        },
+      });
+
+      return card;
+    }
+
+    function renderParsedTable(tablePayload) {
+      const columns = tablePayload.columns || [];
+      const rows = tablePayload.rows || [];
+      const panel = document.createElement("section");
+      panel.className = "parse-csv-panel";
+      if (!columns.length) {
+        const empty = document.createElement("div");
+        empty.className = "review-message";
+        empty.textContent = "No parsed CSV rows were returned.";
+        panel.appendChild(empty);
+        return panel;
+      }
+      const wrapper = document.createElement("div");
+      wrapper.className = "parse-csv-table-wrap";
+      const table = document.createElement("table");
+      const thead = document.createElement("thead");
+      const tbody = document.createElement("tbody");
+      const headerRow = document.createElement("tr");
+      columns.forEach((column) => {
+        const th = document.createElement("th");
+        th.textContent = column;
+        headerRow.appendChild(th);
+      });
+      thead.appendChild(headerRow);
+      rows.forEach((row) => {
+        const tr = document.createElement("tr");
+        columns.forEach((column, index) => {
+          const td = document.createElement("td");
+          td.textContent = Array.isArray(row) ? row[index] || "" : row[column] || "";
+          tr.appendChild(td);
+        });
+        tbody.appendChild(tr);
+      });
+      table.append(thead, tbody);
+      wrapper.appendChild(table);
+      panel.appendChild(wrapper);
+      if (tablePayload.truncated) {
+        const note = document.createElement("div");
+        note.className = "parse-csv-note";
+        note.textContent = "Preview is truncated. The full CSV will be generated during Approval.";
+        panel.appendChild(note);
+      }
+      return panel;
+    }
+
     if (tabNavPrev) {
       tabNavPrev.addEventListener("click", () => {
         reviewTabs.scrollBy({ left: -200, behavior: "smooth" });
@@ -1241,7 +1953,28 @@
     function closeReview() {
       reviewModal.hidden = true;
       activeReview = null;
+      if (activeChart) {
+        activeChart.destroy();
+        activeChart = null;
+      }
+      const chartPreview = document.querySelector("[data-chart-preview]");
+      if (chartPreview) {
+        chartPreview.hidden = true;
+        chartPreview.replaceChildren();
+      }
+      const parseValidation = document.querySelector("[data-parse-validation]");
+      if (parseValidation) {
+        parseValidation.textContent = "";
+        parseValidation.className = "review-message";
+      }
+      const reviewTabsRow = document.querySelector("[data-review-tabs-row]");
+      const reviewTabsEl = document.querySelector("[data-review-tabs]");
+      const reviewPreviewEl = document.querySelector("[data-review-scroll]");
+      if (reviewTabsRow) reviewTabsRow.hidden = false;
+      if (reviewTabsEl) reviewTabsEl.hidden = false;
+      if (reviewPreviewEl) reviewPreviewEl.parentElement.hidden = false;
       reviewDetails.classList.add("collapsed");
+      reviewDetails.classList.remove("review-mode", "parse-mode");
       reviewSeparator?.classList.add("collapsed");
     }
 
@@ -1310,21 +2043,62 @@
         const reviewUrl = button.dataset.reviewUrl;
         const remoteItemId = button.dataset.remoteItemId;
         const fileName = button.closest("[data-approval-row]")?.dataset.name || "Approval file";
+        const chartPreview = document.querySelector("[data-chart-preview]");
+        const parseValidation = document.querySelector("[data-parse-validation]");
+
+        // Reset state
+        if (activeChart) {
+          activeChart.destroy();
+          activeChart = null;
+        }
+        if (chartPreview) {
+          chartPreview.hidden = true;
+          chartPreview.replaceChildren();
+        }
+        if (parseValidation) {
+          parseValidation.textContent = "";
+          parseValidation.className = "review-message";
+        }
+
         if (reviewModal) reviewModal.dataset.mode = "approval";
         activeReview = {
           remoteItemId,
           downloadUrl: "{% url 'pipeline_dashboard:download_approval_output' 'PLACEHOLDER' %}".replace("PLACEHOLDER", remoteItemId),
         };
         reviewModal.hidden = false;
-        reviewTitle.textContent = fileName;
+        reviewTitle.textContent = "Loading...";
         reviewDetails.replaceChildren();
         showReviewMessage("Loading preview...");
         try {
           const response = await fetch(reviewUrl);
           const payload = await response.json();
-          if (!response.ok) throw new Error(payload.error || "Preview failed.");
-          setReviewDetails(payload.file);
-          renderSheets(payload.file);
+          if (!response.ok) throw new Error(payload.error || "Review failed.");
+
+          // Parsed-output review (charts + summary + CSV table)
+          if (payload.charts) {
+            const reviewTabsRow = document.querySelector("[data-review-tabs-row]");
+            const reviewTabsEl = document.querySelector("[data-review-tabs]");
+            const reviewPreviewEl = document.querySelector("[data-review-scroll]");
+            if (reviewTabsRow) reviewTabsRow.hidden = true;
+            if (reviewTabsEl) reviewTabsEl.hidden = true;
+            if (reviewPreviewEl) reviewPreviewEl.parentElement.hidden = true;
+            if (chartPreview) chartPreview.hidden = false;
+            reviewTitle.textContent = payload.candidate?.summary?.output_filename || fileName;
+            setApprovalReviewDetails(payload.file, payload.validation);
+            renderParsedResult(payload);
+            reviewDetails.classList.remove("collapsed");
+            reviewSeparator?.classList.remove("collapsed");
+            if (reviewDetailsToggle) {
+              reviewDetailsToggle.setAttribute("aria-expanded", "true");
+              reviewDetailsToggle.setAttribute("aria-label", "Hide file details");
+            }
+          }
+          // Fallback: raw file preview (existing behavior)
+          else if (payload.file) {
+            reviewTitle.textContent = payload.file.name || fileName;
+            setReviewDetails(payload.file);
+            renderSheets(payload.file);
+          }
         } catch (error) {
           reviewTitle.textContent = "Review approval file";
           showReviewMessage(error.message);
@@ -1790,4 +2564,7 @@
     })();
   </script>
 </section>
+{% endblock %}
+{% block extra_scripts %}
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js" crossorigin="anonymous"></script>
 {% endblock %}
