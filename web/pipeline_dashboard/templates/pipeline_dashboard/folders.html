@@ -116,12 +116,12 @@
     }
 
     .folders-mirror {
-      min-width: 1740px;
+      min-width: 0;
     }
 
     .folders-mirror .mirror-head,
     .folders-mirror .mirror-summary {
-      grid-template-columns: 16px minmax(200px, 1fr) minmax(200px, 1fr) 120px 120px 120px 120px 120px 120px 120px 120px 120px 120px;
+      grid-template-columns: 16px minmax(140px, 1fr) minmax(140px, 1fr) 90px 90px 90px 90px 90px 90px 90px 90px 90px 90px;
       align-items: center;
       gap: 10px;
     }
@@ -132,6 +132,13 @@
 
     .folders-mirror .mirror-head .mirror-head-search {
       grid-column: 11 / span 3;
+      min-width: 0;
+      max-width: 360px;
+      width: 100%;
+    }
+
+    .folders-mirror .mirror-head > [role="columnheader"].folders-count-col {
+      font-size: 13px;
     }
 
     .folders-mirror .mirror-summary .mirror-folder-name {
@@ -737,13 +744,13 @@
               <span class="folders-head-title">Approval</span>
               <span class="folders-head-subtitle">{{ approval_summary.file_count }} files in {{ approval_summary.month_count }} month{{ approval_summary.month_count|pluralize:"s" }}</span>
             </div>
+            <div class="folders-count-col" role="columnheader"></div>
+            <div class="folders-count-col" role="columnheader"></div>
+            <div class="folders-count-col" role="columnheader"></div>
+            <div class="folders-count-col" role="columnheader"></div>
+            <div class="folders-count-col" role="columnheader"></div>
             <div class="folders-count-col" role="columnheader">Vendors</div>
             <div class="folders-count-col" role="columnheader">Files</div>
-            <div class="folders-count-col" role="columnheader"></div>
-            <div class="folders-count-col" role="columnheader"></div>
-            <div class="folders-count-col" role="columnheader"></div>
-            <div class="folders-count-col" role="columnheader"></div>
-            <div class="folders-count-col" role="columnheader"></div>
             <div class="mirror-head-search" role="search">
               <input
                 type="search"
@@ -763,13 +770,13 @@
             <details class="mirror-folder">
               <summary class="mirror-summary" role="row">
                 <span class="mirror-folder-name" role="cell">{{ month.label|short_period }}</span>
+                <span role="cell"></span>
+                <span role="cell"></span>
+                <span role="cell"></span>
+                <span role="cell"></span>
+                <span role="cell"></span>
                 <span class="folders-count-cell" role="cell">{{ month.vendor_count }}</span>
                 <span class="folders-count-cell" role="cell">{{ month.file_count }}</span>
-                <span role="cell"></span>
-                <span role="cell"></span>
-                <span role="cell"></span>
-                <span role="cell"></span>
-                <span role="cell"></span>
                 <span role="cell"></span>
                 <span role="cell"></span>
                 <span role="cell"></span>
