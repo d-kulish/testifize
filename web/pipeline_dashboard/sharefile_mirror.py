@@ -10,7 +10,7 @@ from typing import Any
 
 from django.conf import settings
 
-from .models import Asset, AssetStatus
+from .models import Asset, AssetStatus, ParsedOutput
 
 
 MIRROR_STATE_PATH = Path("data/state/file_processing_state.json")
@@ -352,6 +352,24 @@ FINAL_FOLDER_NAMES = {"final"}
 APPROVAL_VERSION_PATTERN = re.compile(r"_v(\d+)(?=\.csv$)", re.IGNORECASE)
 
 
+def _source_uploader_by_item_id() -> dict[str, str]:
+    """Map ShareFile item IDs to the source input uploader name."""
+    result: dict[str, str] = {}
+    # Link via Asset.uploaded_item_id (output was uploaded back to ShareFile)
+    for asset in Asset.objects.exclude(uploaded_item_id="").select_related("parsed_outputs"):
+        po = asset.parsed_outputs.order_by("-created_at").first()
+        if po and po.asset:
+            result[asset.uploaded_item_id] = po.asset.created_by_name or po.asset.created_by_email or ""
+    # Link via ParsedOutput.comparison_summary.sharefile_item_id
+    for po in ParsedOutput.objects.filter(
+        comparison_summary__has_key="sharefile_item_id",
+    ).select_related("asset"):
+        item_id = po.comparison_summary.get("sharefile_item_id")
+        if item_id and po.asset:
+            result[item_id] = po.asset.created_by_name or po.asset.created_by_email or ""
+    return result
+
+
 def load_approval_mirror() -> MirrorData:
     snapshot = _load_json(SNAPSHOT_PATH, default={})
     profile = _load_json(PROFILE_PATH, default={})
@@ -365,6 +383,7 @@ def load_approval_mirror() -> MirrorData:
         asset.remote_item_id: asset
         for asset in Asset.objects.exclude(remote_item_id="")
     }
+    source_uploader = _source_uploader_by_item_id()
 
     remote_by_local_path = {
         row.get("local_path"): row
@@ -406,6 +425,9 @@ def load_approval_mirror() -> MirrorData:
             user_cache,
             asset=asset,
         )
+        source_name = source_uploader.get(remote_item_id)
+        if source_name:
+            file_row["uploaded_by"] = source_name
         file_row["month_label"] = month_label
         file_row["vendor_name"] = vendor_name
         file_row["version"] = _extract_version(file_row.get("name", ""))
@@ -471,6 +493,7 @@ def load_final_mirror() -> MirrorData:
         asset.remote_item_id: asset
         for asset in Asset.objects.exclude(remote_item_id="")
     }
+    source_uploader = _source_uploader_by_item_id()
 
     remote_by_local_path = {
         row.get("local_path"): row
@@ -513,6 +536,9 @@ def load_final_mirror() -> MirrorData:
             user_cache,
             asset=asset,
         )
+        source_name = source_uploader.get(remote_item_id)
+        if source_name:
+            file_row["uploaded_by"] = source_name
         file_row["month_label"] = month_label
         file_row["vendor_name"] = vendor_name
         file_row["version"] = _extract_version(file_row.get("name", ""))
