@@ -79,6 +79,7 @@ def load_sharefile_mirror() -> MirrorData:
             duplicate_role=getattr(asset, "duplicate_role", "") or "",
             duplicate_group=getattr(asset, "duplicate_group", "") or "",
             is_active=getattr(asset, "is_active", True),
+            asset=asset,
         )
         file_row["folder_path"] = folder_path
         file_row["folder_display_name"] = _display_folder_name(folder_path)
@@ -143,8 +144,11 @@ def _file_row(
     duplicate_role: str = "",
     duplicate_group: str = "",
     is_active: bool = True,
+    asset: Asset | None = None,
 ) -> dict[str, Any]:
     uploader = _uploader_for(remote, user_cache)
+    uploaded_by = (asset.created_by_name or uploader["name"]) if asset else uploader["name"]
+    uploader_email = (asset.created_by_email or uploader["email"]) if asset else uploader["email"]
     return {
         "status": status,
         "status_label": _status_label(status),
@@ -156,8 +160,8 @@ def _file_row(
         "created_at": remote.get("created_at") or "",
         "modified_at": remote.get("modified_at") or "",
         "modified_sort": modified_sort_value(remote.get("modified_at") or ""),
-        "uploaded_by": uploader["name"],
-        "uploader_email": uploader["email"],
+        "uploaded_by": uploaded_by,
+        "uploader_email": uploader_email,
         "remote_item_id": remote.get("remote_item_id") or "",
         "remote_path": remote.get("remote_path") or "",
         "source_folder_id": remote.get("source_folder_id") or "",
@@ -353,6 +357,14 @@ def load_approval_mirror() -> MirrorData:
     profile = _load_json(PROFILE_PATH, default={})
     sync_state = _load_json(SYNC_STATE_PATH, default={})
     user_cache = _load_json(USERS_PATH, default={})
+    assets_by_local_path = {
+        asset.local_path: asset
+        for asset in Asset.objects.exclude(local_path="")
+    }
+    assets_by_remote_item_id = {
+        asset.remote_item_id: asset
+        for asset in Asset.objects.exclude(remote_item_id="")
+    }
 
     remote_by_local_path = {
         row.get("local_path"): row
@@ -381,15 +393,18 @@ def load_approval_mirror() -> MirrorData:
             local_path,
             remote,
             processing_state={},
-            assets_by_local_path={},
-            assets_by_remote_item_id={},
+            assets_by_local_path=assets_by_local_path,
+            assets_by_remote_item_id=assets_by_remote_item_id,
         )
+        remote_item_id = remote.get("remote_item_id") or ""
+        asset = assets_by_remote_item_id.get(remote_item_id) or assets_by_local_path.get(local_path)
         file_row = _file_row(
             local_path,
             remote,
             profile_row,
             status,
             user_cache,
+            asset=asset,
         )
         file_row["month_label"] = month_label
         file_row["vendor_name"] = vendor_name
@@ -448,6 +463,14 @@ def load_final_mirror() -> MirrorData:
     profile = _load_json(PROFILE_PATH, default={})
     sync_state = _load_json(SYNC_STATE_PATH, default={})
     user_cache = _load_json(USERS_PATH, default={})
+    assets_by_local_path = {
+        asset.local_path: asset
+        for asset in Asset.objects.exclude(local_path="")
+    }
+    assets_by_remote_item_id = {
+        asset.remote_item_id: asset
+        for asset in Asset.objects.exclude(remote_item_id="")
+    }
 
     remote_by_local_path = {
         row.get("local_path"): row
@@ -477,15 +500,18 @@ def load_final_mirror() -> MirrorData:
             local_path,
             remote,
             processing_state={},
-            assets_by_local_path={},
-            assets_by_remote_item_id={},
+            assets_by_local_path=assets_by_local_path,
+            assets_by_remote_item_id=assets_by_remote_item_id,
         )
+        remote_item_id = remote.get("remote_item_id") or ""
+        asset = assets_by_remote_item_id.get(remote_item_id) or assets_by_local_path.get(local_path)
         file_row = _file_row(
             local_path,
             remote,
             profile_row,
             status,
             user_cache,
+            asset=asset,
         )
         file_row["month_label"] = month_label
         file_row["vendor_name"] = vendor_name
