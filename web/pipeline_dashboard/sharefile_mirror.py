@@ -356,7 +356,7 @@ def _source_uploader_by_item_id() -> dict[str, str]:
     """Map ShareFile item IDs to the source input uploader name."""
     result: dict[str, str] = {}
     # Link via Asset.uploaded_item_id (output was uploaded back to ShareFile)
-    for asset in Asset.objects.exclude(uploaded_item_id="").select_related("parsed_outputs"):
+    for asset in Asset.objects.exclude(uploaded_item_id="").prefetch_related("parsed_outputs"):
         po = asset.parsed_outputs.order_by("-created_at").first()
         if po and po.asset:
             result[asset.uploaded_item_id] = po.asset.created_by_name or po.asset.created_by_email or ""
