@@ -911,53 +911,69 @@
     }
 
     /* Approval chapter — compact right-aligned columns */
-    .folders-mirror.approval-table .mirror-files,
-    .folders-mirror.final-table .mirror-files {
+    .folders-mirror.approval-table .mirror-files {
       padding-right: 12px;
     }
-    .folders-mirror.approval-table .mirror-files table,
-    .folders-mirror.final-table .mirror-files table {
+    .folders-mirror.approval-table .mirror-files table {
       table-layout: fixed;
       width: auto;
       min-width: 1340px;
       margin-left: auto;
     }
     .folders-mirror.approval-table .mirror-files th,
-    .folders-mirror.approval-table .mirror-files td,
+    .folders-mirror.approval-table .mirror-files td {
+      padding: 8px 10px;
+    }
+    .folders-mirror.approval-table .mirror-files th:nth-child(1),
+    .folders-mirror.approval-table .mirror-files td:nth-child(1) { width: auto; min-width: 500px; }
+    .folders-mirror.approval-table .mirror-files th:nth-child(2),
+    .folders-mirror.approval-table .mirror-files td:nth-child(2) { width: 100px; text-align: right; }
+    .folders-mirror.approval-table .mirror-files th:nth-child(3),
+    .folders-mirror.approval-table .mirror-files td:nth-child(3) { width: 160px; text-align: right; }
+    .folders-mirror.approval-table .mirror-files th:nth-child(4),
+    .folders-mirror.approval-table .mirror-files td:nth-child(4) { width: 180px; text-align: right; }
+    .folders-mirror.approval-table .mirror-files th:nth-child(5),
+    .folders-mirror.approval-table .mirror-files td:nth-child(5) { width: 120px; text-align: right; }
+    .folders-mirror.approval-table .mirror-files th:nth-child(6),
+    .folders-mirror.approval-table .mirror-files td:nth-child(6) { width: 180px; }
+    .folders-mirror.approval-table .mirror-files th:nth-child(7),
+    .folders-mirror.approval-table .mirror-files td:nth-child(7) { width: 300px; text-align: center; }
+    .folders-mirror.approval-table .mirror-files td:nth-child(7) .actions {
+      flex-wrap: nowrap;
+      justify-content: center;
+    }
+
+    /* Final chapter — flat table with Vendor column */
+    .folders-mirror.final-table .mirror-files {
+      padding-right: 12px;
+    }
+    .folders-mirror.final-table .mirror-files table {
+      table-layout: fixed;
+      width: auto;
+      min-width: 1480px;
+      margin-left: auto;
+    }
     .folders-mirror.final-table .mirror-files th,
     .folders-mirror.final-table .mirror-files td {
       padding: 8px 10px;
     }
-    .folders-mirror.approval-table .mirror-files th:nth-child(1),
-    .folders-mirror.approval-table .mirror-files td:nth-child(1),
     .folders-mirror.final-table .mirror-files th:nth-child(1),
-    .folders-mirror.final-table .mirror-files td:nth-child(1) { width: auto; min-width: 500px; }
-    .folders-mirror.approval-table .mirror-files th:nth-child(2),
-    .folders-mirror.approval-table .mirror-files td:nth-child(2),
+    .folders-mirror.final-table .mirror-files td:nth-child(1) { width: 140px; }
     .folders-mirror.final-table .mirror-files th:nth-child(2),
-    .folders-mirror.final-table .mirror-files td:nth-child(2) { width: 100px; text-align: right; }
-    .folders-mirror.approval-table .mirror-files th:nth-child(3),
-    .folders-mirror.approval-table .mirror-files td:nth-child(3),
+    .folders-mirror.final-table .mirror-files td:nth-child(2) { width: auto; min-width: 360px; }
     .folders-mirror.final-table .mirror-files th:nth-child(3),
-    .folders-mirror.final-table .mirror-files td:nth-child(3) { width: 160px; text-align: right; }
-    .folders-mirror.approval-table .mirror-files th:nth-child(4),
-    .folders-mirror.approval-table .mirror-files td:nth-child(4),
+    .folders-mirror.final-table .mirror-files td:nth-child(3) { width: 100px; text-align: right; }
     .folders-mirror.final-table .mirror-files th:nth-child(4),
-    .folders-mirror.final-table .mirror-files td:nth-child(4) { width: 180px; text-align: right; }
-    .folders-mirror.approval-table .mirror-files th:nth-child(5),
-    .folders-mirror.approval-table .mirror-files td:nth-child(5),
+    .folders-mirror.final-table .mirror-files td:nth-child(4) { width: 160px; text-align: right; }
     .folders-mirror.final-table .mirror-files th:nth-child(5),
-    .folders-mirror.final-table .mirror-files td:nth-child(5) { width: 120px; text-align: right; }
-    .folders-mirror.approval-table .mirror-files th:nth-child(6),
-    .folders-mirror.approval-table .mirror-files td:nth-child(6),
+    .folders-mirror.final-table .mirror-files td:nth-child(5) { width: 180px; text-align: right; }
     .folders-mirror.final-table .mirror-files th:nth-child(6),
-    .folders-mirror.final-table .mirror-files td:nth-child(6) { width: 180px; }
-    .folders-mirror.approval-table .mirror-files th:nth-child(7),
-    .folders-mirror.approval-table .mirror-files td:nth-child(7),
+    .folders-mirror.final-table .mirror-files td:nth-child(6) { width: 120px; text-align: right; }
     .folders-mirror.final-table .mirror-files th:nth-child(7),
-    .folders-mirror.final-table .mirror-files td:nth-child(7) { width: 300px; text-align: center; }
-    .folders-mirror.approval-table .mirror-files td:nth-child(7) .actions,
-    .folders-mirror.final-table .mirror-files td:nth-child(7) .actions {
+    .folders-mirror.final-table .mirror-files td:nth-child(7) { width: 180px; }
+    .folders-mirror.final-table .mirror-files th:nth-child(8),
+    .folders-mirror.final-table .mirror-files td:nth-child(8) { width: 300px; text-align: center; }
+    .folders-mirror.final-table .mirror-files td:nth-child(8) .actions {
       flex-wrap: nowrap;
       justify-content: center;
     }
@@ -1330,28 +1346,23 @@
               </summary>
               <div class="mirror-files">
                 <table>
+                  <thead>
+                    <tr>
+                      <th>Vendor</th>
+                      <th>File</th>
+                      <th>Version</th>
+                      <th>Period</th>
+                      <th>Modified</th>
+                      <th>Size</th>
+                      <th>Uploader</th>
+                      <th>Action</th>
+                    </tr>
+                  </thead>
                   <tbody>
                     {% for vendor in month.vendors %}
-                      <tr class="vendor-group-header" data-vendor-group data-vendor-name="{{ vendor.name }}">
-                        <td colspan="7">
-                          <div class="vendor-group-cell">
-                            <span class="vendor-toggle-icon"></span>
-                            <span class="vendor-group-name">{{ vendor.name }}</span>
-                            <span class="vendor-group-count">{{ vendor.files|length }} file{{ vendor.files|length|pluralize:"s" }}</span>
-                          </div>
-                        </td>
-                      </tr>
-                      <tr class="vendor-group-head" data-vendor-head="{{ vendor.name }}" hidden>
-                        <th>File</th>
-                        <th>Version</th>
-                        <th>Period</th>
-                        <th>Modified</th>
-                        <th>Size</th>
-                        <th>Uploader</th>
-                        <th>Action</th>
-                      </tr>
                       {% for file in vendor.files %}
-                        <tr class="mirror-file-row vendor-file-row {% if not file.exists_locally %}is-missing{% endif %}" data-final-row data-vendor-files="{{ vendor.name }}" data-remote-item-id="{{ file.remote_item_id }}" data-name="{{ file.name }}" data-month-label="{{ month.label }}" data-vendor-name="{{ vendor.name }}" hidden>
+                        <tr class="mirror-file-row {% if not file.exists_locally %}is-missing{% endif %}" data-final-row data-remote-item-id="{{ file.remote_item_id }}" data-name="{{ file.name }}" data-month-label="{{ month.label }}" data-vendor-name="{{ vendor.name }}">
+                          <td>{{ vendor.name }}</td>
                           <td class="file-name" title="{{ file.name }}">{{ file.name }}</td>
                           <td>v{{ file.version }}</td>
                           <td>{{ month.label|short_period }}</td>
@@ -2980,18 +2991,11 @@
           month.hidden = false;
         });
         panel.querySelectorAll("[data-final-row]").forEach((row) => {
-          row.hidden = true;
+          row.hidden = false;
           const cell = getFileNameCell(row);
           if (cell) {
             highlightText(cell, "");
           }
-        });
-        panel.querySelectorAll("[data-vendor-group]").forEach((header) => {
-          header.hidden = false;
-          header.classList.remove("expanded");
-        });
-        panel.querySelectorAll("[data-vendor-head]").forEach((head) => {
-          head.hidden = true;
         });
       }
 
@@ -2999,35 +3003,18 @@
         const months = panel.querySelectorAll(".mirror-folder");
         months.forEach((month) => {
           const monthLabel = (month.querySelector(".mirror-folder-name")?.textContent || "").trim();
-          const vendorHeaders = month.querySelectorAll("[data-vendor-group]");
+          const rows = month.querySelectorAll("[data-final-row]");
           let monthHasMatch = false;
 
-          vendorHeaders.forEach((vendorRow) => {
-            const vendorName = (vendorRow.dataset.vendorName || "").trim();
-            const headRow = month.querySelector(`[data-vendor-head="${vendorName}"]`);
-            const fileRows = month.querySelectorAll(`[data-vendor-files="${vendorName}"]`);
-            let vendorHasMatch = false;
-
-            fileRows.forEach((row) => {
-              const cell = getFileNameCell(row);
-              const nameText = (cell?.dataset.originalName || cell?.textContent || "").toLowerCase();
-              const isMatch = matches(query, nameText) || matches(query, vendorName) || matches(query, monthLabel);
-              row.hidden = !isMatch;
-              if (isMatch) {
-                vendorHasMatch = true;
-                monthHasMatch = true;
-              }
-              if (cell) {
-                highlightText(cell, query);
-              }
-            });
-
-            if (headRow) headRow.hidden = !vendorHasMatch;
-            vendorRow.hidden = !vendorHasMatch;
-            if (vendorHasMatch) {
-              vendorRow.classList.add("expanded");
-            } else {
-              vendorRow.classList.remove("expanded");
+          rows.forEach((row) => {
+            const cell = getFileNameCell(row);
+            const nameText = (cell?.dataset.originalName || cell?.textContent || "").toLowerCase();
+            const rowVendor = (row.dataset.vendorName || "").trim();
+            const isMatch = matches(query, nameText) || matches(query, rowVendor) || matches(query, monthLabel);
+            row.hidden = !isMatch;
+            if (isMatch) monthHasMatch = true;
+            if (cell) {
+              highlightText(cell, query);
             }
           });
 
