@@ -853,6 +853,7 @@
       background: #f8fafc;
     }
     .vendor-group-header td {
+      position: relative;
       padding: 8px 10px;
       border-bottom: 1px solid #e2e8f0;
     }
@@ -903,8 +904,12 @@
       white-space: nowrap;
     }
     .vendor-group-count {
-      min-width: 80px;
-      text-align: right;
+      position: absolute;
+      left: 1240px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 90px;
+      text-align: center;
       color: #667085;
       font-size: 13px;
       font-weight: 650;
@@ -1267,7 +1272,7 @@
                           <div class="vendor-group-cell">
                             <span class="vendor-toggle-icon"></span>
                             <span class="vendor-group-name">{{ vendor.name }}</span>
-                            <span class="vendor-group-count">{{ vendor.files|length }} file{{ vendor.files|length|pluralize:"s" }}</span>
+                            <span class="vendor-group-count">{{ vendor.files|length }}</span>
                           </div>
                         </td>
                       </tr>
