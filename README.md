@@ -716,6 +716,24 @@ Final/<Reporting_Period>/<Vendor>_<Reporting_Period>.csv
   - `test_download_approval_output_excludes_final_folder` confirms the `Final/` files are still hidden from the Approval download endpoint.
 - **Files**: `web/pipeline_dashboard/sharefile_mirror.py`, `web/pipeline_dashboard/views.py`, `web/pipeline_dashboard/urls.py`, `web/pipeline_dashboard/templates/pipeline_dashboard/folders.html`, `web/pipeline_dashboard/tests/test_views.py`.
 
+### Folders Final chapter (2026-06-02)
+
+- **Goal**: add a 3rd chapter `Final` on `/folders/` that mirrors the `Approval` chapter but shows files from ShareFile `Final/<Month_Year>/`. These are the approved CSVs that have been promoted out of the Approval queue.
+- **Chapter shape**: identical to Approval — blue mirror head, month groups newest-first, vendor groups alphabetical, file table with columns `Vendor`, `File`, `Version`, `Period`, `Modified`, `Size`, `Uploader`, `Action`.
+- **Folder structure difference** (important for parser logic):
+  - Approval stores files under `allshared/Approval/<Month_Year>/<Vendor>/file.csv` (vendor in the folder path).
+  - Final stores files **directly** under `allshared/Final/<Month_Year>/file.csv` with no vendor subfolder. The vendor name is embedded in the filename (`<Vendor>_<Month>_<Year>.csv`).
+  - `_final_split_folder()` handles this by using the filename stem minus the month label when the path only has two parts (`Final/<month>/`).
+- **Parsed-output review**: when a `ParsedOutput` is linked to the final file (via `Asset.uploaded_item_id` or `comparison_summary__sharefile_item_id`), the green `Review` button opens the rich parsed-output modal — the same 3 charts, summary pills, and CSV table that `/process/` shows. Otherwise it falls back to a raw CSV preview. The `Review` button is green; the `Download` button is orange, matching the `/process/` palette.
+- **Search**: filters by file name, vendor, or month label. Matching months auto-expand.
+- **Backend**:
+  - `sharefile_mirror.py`: added `load_final_mirror()` and `_final_split_folder()`; `FINAL_FOLDER_NAMES = {"final"}`. The existing `load_sharefile_mirror()` continues to hide internal workflow folders, and `load_approval_mirror()` continues to exclude `Final/`.
+  - `views.py`: `_final_file_row()`, `review_final_file()`, `download_final_output()`. The `folders()` view passes `final_months` and `final_summary` to the template.
+  - `urls.py`: added `folders/final/<remote_item_id>/review/` and `folders/final/<remote_item_id>/download/`.
+- **Frontend**:
+  - `folders.html`: new section below Approval, `.final-table` CSS (compact right-aligned columns matching `.approval-table`), `[data-final-search]` and `[data-final-review-button]` handlers. The review modal hides vendor select / Parsing button when `data-mode="final"`.
+- **Files**: `web/pipeline_dashboard/sharefile_mirror.py`, `web/pipeline_dashboard/views.py`, `web/pipeline_dashboard/urls.py`, `web/pipeline_dashboard/templates/pipeline_dashboard/folders.html`.
+
 ### Approval Review button (2026-05-26)
 
 - **Review parsed output without re-running the parser**: each row in the Approval queue now has a **Review** button (blue, in its own column between *Version* and *Source File*).

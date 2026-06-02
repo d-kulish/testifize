@@ -344,6 +344,7 @@ def _load_json(relative_path: Path, default: Any) -> Any:
 
 
 APPROVAL_FOLDER_NAMES = {"approval"}
+FINAL_FOLDER_NAMES = {"final"}
 APPROVAL_VERSION_PATTERN = re.compile(r"_v(\d+)(?=\.csv$)", re.IGNORECASE)
 
 
@@ -442,6 +443,102 @@ def load_approval_mirror() -> MirrorData:
     return MirrorData(folders=months, summary=summary)
 
 
+def load_final_mirror() -> MirrorData:
+    snapshot = _load_json(SNAPSHOT_PATH, default={})
+    profile = _load_json(PROFILE_PATH, default={})
+    sync_state = _load_json(SYNC_STATE_PATH, default={})
+    user_cache = _load_json(USERS_PATH, default={})
+
+    remote_by_local_path = {
+        row.get("local_path"): row
+        for row in snapshot.get("files", [])
+        if row.get("local_path")
+    }
+    profile_by_local_path = {
+        row.get("local_path"): row
+        for row in profile.get("files", [])
+        if row.get("local_path")
+    }
+    local_paths = set(remote_by_local_path) | set(profile_by_local_path)
+
+    month_groups: dict[tuple[int, int, str], dict[str, Any]] = {}
+    file_count = 0
+
+    for local_path in sorted(local_paths):
+        remote = remote_by_local_path.get(local_path, {})
+        profile_row = profile_by_local_path.get(local_path, {})
+        folder_path = _folder_path_for(local_path, remote)
+        file_name = remote.get("name") or profile_row.get("name") or Path(local_path).name
+        month_label, vendor_name, sort_key = _final_split_folder(folder_path, file_name)
+        if not month_label or not vendor_name:
+            continue
+
+        status = _file_status(
+            local_path,
+            remote,
+            processing_state={},
+            assets_by_local_path={},
+            assets_by_remote_item_id={},
+        )
+        file_row = _file_row(
+            local_path,
+            remote,
+            profile_row,
+            status,
+            user_cache,
+        )
+        file_row["month_label"] = month_label
+        file_row["vendor_name"] = vendor_name
+        file_row["version"] = _extract_version(file_row.get("name", ""))
+        file_row["exists_locally"] = (settings.REPO_ROOT / local_path).exists()
+
+        month_entry = month_groups.setdefault(
+            sort_key,
+            {
+                "label": month_label,
+                "year": sort_key[0],
+                "month": sort_key[1],
+                "sort_key": sort_key,
+                "vendors": {},
+            },
+        )
+        vendor_entry = month_entry["vendors"].setdefault(
+            vendor_name.casefold(),
+            {
+                "name": vendor_name,
+                "files": [],
+            },
+        )
+        vendor_entry["files"].append(file_row)
+        file_count += 1
+
+    months: list[dict[str, Any]] = []
+    vendor_count = 0
+    for sort_key in sorted(month_groups.keys(), reverse=True):
+        entry = month_groups[sort_key]
+        vendor_list = sorted(entry["vendors"].values(), key=lambda v: v["name"].casefold())
+        for vendor in vendor_list:
+            vendor["files"] = newest_first(vendor["files"])
+            vendor["file_count"] = len(vendor["files"])
+            vendor_count += 1
+        entry["vendors"] = vendor_list
+        entry["vendor_count"] = len(vendor_list)
+        entry["file_count"] = sum(v["file_count"] for v in vendor_list)
+        months.append(entry)
+
+    summary = {
+        "run_id": snapshot.get("run_id", ""),
+        "snapshot_created_at": snapshot.get("created_at", ""),
+        "month_count": len(months),
+        "vendor_count": vendor_count,
+        "file_count": file_count,
+        "last_sync_at": sync_state.get("finished_at") or snapshot.get("created_at", ""),
+        "last_sync_status": sync_state.get("status", ""),
+        "has_snapshot": bool(snapshot),
+    }
+    return MirrorData(folders=months, summary=summary)
+
+
 def _approval_split_folder(folder_path: str) -> tuple[str, str, tuple[int, int, str]]:
     normalized = (folder_path or "").strip().strip("/")
     for prefix in ("home/", "allshared/"):
@@ -459,6 +556,32 @@ def _approval_split_folder(folder_path: str) -> tuple[str, str, tuple[int, int, 
     year, month = _parse_period_label(month_label)
     if not year or not month:
         return "", "", (0, 0, "")
+    return month_label, vendor_name, (year, month, month_label)
+
+
+def _final_split_folder(folder_path: str, file_name: str = "") -> tuple[str, str, tuple[int, int, str]]:
+    normalized = (folder_path or "").strip().strip("/")
+    for prefix in ("home/", "allshared/"):
+        if normalized.casefold().startswith(prefix):
+            normalized = normalized[len(prefix):]
+            break
+    parts = [part for part in normalized.split("/") if part]
+    if len(parts) < 2:
+        return "", "", (0, 0, "")
+    first = parts[0].casefold()
+    if first not in FINAL_FOLDER_NAMES:
+        return "", "", (0, 0, "")
+    month_label = parts[1]
+    year, month = _parse_period_label(month_label)
+    if not year or not month:
+        return "", "", (0, 0, "")
+    # Final files may sit directly in Final/<month>/ (no vendor subfolder).
+    # In that case, derive the vendor from the filename: <Vendor>_<Month>_<Year>.csv
+    if len(parts) >= 3:
+        vendor_name = parts[2]
+    else:
+        stem = (file_name or "").rsplit(".", 1)[0]
+        vendor_name = stem.replace(month_label, "").strip("_") if stem else ""
     return month_label, vendor_name, (year, month, month_label)
 
 

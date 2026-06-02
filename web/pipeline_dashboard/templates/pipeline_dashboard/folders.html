@@ -518,7 +518,9 @@
     }
 
     .review-modal[data-mode="approval"] .review-vendor,
-    .review-modal[data-mode="approval"] .review-action-parsing {
+    .review-modal[data-mode="approval"] .review-action-parsing,
+    .review-modal[data-mode="final"] .review-vendor,
+    .review-modal[data-mode="final"] .review-action-parsing {
       display: none;
     }
 
@@ -829,36 +831,57 @@
     }
 
     /* Approval chapter — compact right-aligned columns */
-    .folders-mirror.approval-table .mirror-files {
+    .folders-mirror.approval-table .mirror-files,
+    .folders-mirror.final-table .mirror-files {
       padding-right: 12px;
     }
-    .folders-mirror.approval-table .mirror-files table {
+    .folders-mirror.approval-table .mirror-files table,
+    .folders-mirror.final-table .mirror-files table {
       table-layout: fixed;
       width: auto;
       min-width: 1480px;
       margin-left: auto;
     }
     .folders-mirror.approval-table .mirror-files th,
-    .folders-mirror.approval-table .mirror-files td {
+    .folders-mirror.approval-table .mirror-files td,
+    .folders-mirror.final-table .mirror-files th,
+    .folders-mirror.final-table .mirror-files td {
       padding: 8px 10px;
     }
     .folders-mirror.approval-table .mirror-files th:nth-child(1),
-    .folders-mirror.approval-table .mirror-files td:nth-child(1) { width: 140px; }
+    .folders-mirror.approval-table .mirror-files td:nth-child(1),
+    .folders-mirror.final-table .mirror-files th:nth-child(1),
+    .folders-mirror.final-table .mirror-files td:nth-child(1) { width: 140px; }
     .folders-mirror.approval-table .mirror-files th:nth-child(2),
-    .folders-mirror.approval-table .mirror-files td:nth-child(2) { width: auto; min-width: 360px; }
+    .folders-mirror.approval-table .mirror-files td:nth-child(2),
+    .folders-mirror.final-table .mirror-files th:nth-child(2),
+    .folders-mirror.final-table .mirror-files td:nth-child(2) { width: auto; min-width: 360px; }
     .folders-mirror.approval-table .mirror-files th:nth-child(3),
-    .folders-mirror.approval-table .mirror-files td:nth-child(3) { width: 100px; text-align: right; }
+    .folders-mirror.approval-table .mirror-files td:nth-child(3),
+    .folders-mirror.final-table .mirror-files th:nth-child(3),
+    .folders-mirror.final-table .mirror-files td:nth-child(3) { width: 100px; text-align: right; }
     .folders-mirror.approval-table .mirror-files th:nth-child(4),
-    .folders-mirror.approval-table .mirror-files td:nth-child(4) { width: 160px; text-align: right; }
+    .folders-mirror.approval-table .mirror-files td:nth-child(4),
+    .folders-mirror.final-table .mirror-files th:nth-child(4),
+    .folders-mirror.final-table .mirror-files td:nth-child(4) { width: 160px; text-align: right; }
     .folders-mirror.approval-table .mirror-files th:nth-child(5),
-    .folders-mirror.approval-table .mirror-files td:nth-child(5) { width: 180px; text-align: right; }
+    .folders-mirror.approval-table .mirror-files td:nth-child(5),
+    .folders-mirror.final-table .mirror-files th:nth-child(5),
+    .folders-mirror.final-table .mirror-files td:nth-child(5) { width: 180px; text-align: right; }
     .folders-mirror.approval-table .mirror-files th:nth-child(6),
-    .folders-mirror.approval-table .mirror-files td:nth-child(6) { width: 120px; text-align: right; }
+    .folders-mirror.approval-table .mirror-files td:nth-child(6),
+    .folders-mirror.final-table .mirror-files th:nth-child(6),
+    .folders-mirror.final-table .mirror-files td:nth-child(6) { width: 120px; text-align: right; }
     .folders-mirror.approval-table .mirror-files th:nth-child(7),
-    .folders-mirror.approval-table .mirror-files td:nth-child(7) { width: 180px; }
+    .folders-mirror.approval-table .mirror-files td:nth-child(7),
+    .folders-mirror.final-table .mirror-files th:nth-child(7),
+    .folders-mirror.final-table .mirror-files td:nth-child(7) { width: 180px; }
     .folders-mirror.approval-table .mirror-files th:nth-child(8),
-    .folders-mirror.approval-table .mirror-files td:nth-child(8) { width: 300px; text-align: center; }
-    .folders-mirror.approval-table .mirror-files td:nth-child(8) .actions {
+    .folders-mirror.approval-table .mirror-files td:nth-child(8),
+    .folders-mirror.final-table .mirror-files th:nth-child(8),
+    .folders-mirror.final-table .mirror-files td:nth-child(8) { width: 300px; text-align: center; }
+    .folders-mirror.approval-table .mirror-files td:nth-child(8) .actions,
+    .folders-mirror.final-table .mirror-files td:nth-child(8) .actions {
       flex-wrap: nowrap;
       justify-content: center;
     }
@@ -1174,6 +1197,108 @@
         </div>
       {% else %}
         <div class="empty">No approval files have been uploaded to ShareFile yet.</div>
+      {% endif %}
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="panel-body">
+      {% if final_months %}
+        <div class="mirror-table folders-mirror final-table" role="table" aria-label="Final folders">
+          <div class="mirror-head" role="row">
+            <div class="folders-head-wrapper" role="columnheader">
+              <span class="folders-head-title">Final</span>
+              <span class="folders-head-subtitle">{{ final_summary.file_count }} files in {{ final_summary.month_count }} month{{ final_summary.month_count|pluralize:"s" }}</span>
+            </div>
+            <div class="folders-count-col" role="columnheader"></div>
+            <div class="folders-count-col" role="columnheader"></div>
+            <div class="folders-count-col" role="columnheader"></div>
+            <div class="folders-count-col" role="columnheader"></div>
+            <div class="folders-count-col" role="columnheader"></div>
+            <div class="folders-count-col" role="columnheader">Vendors</div>
+            <div class="folders-count-col" role="columnheader">Files</div>
+            <div class="mirror-head-search" role="search">
+              <input
+                type="search"
+                class="mirror-search-input"
+                placeholder="Search final files by name or vendor..."
+                aria-label="Search final files by name or vendor"
+                data-final-search
+                autocomplete="off"
+              />
+              <svg class="search-icon" viewBox="0 0 24 24" aria-hidden="true">
+                <circle cx="11" cy="11" r="8" fill="none" stroke="currentColor" stroke-width="2"></circle>
+                <path d="M21 21l-4.35-4.35" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path>
+              </svg>
+            </div>
+          </div>
+          {% for month in final_months %}
+            <details class="mirror-folder">
+              <summary class="mirror-summary" role="row">
+                <span class="mirror-folder-name" role="cell">{{ month.label|short_period }}</span>
+                <span role="cell"></span>
+                <span role="cell"></span>
+                <span role="cell"></span>
+                <span role="cell"></span>
+                <span role="cell"></span>
+                <span class="folders-count-cell" role="cell">{{ month.vendor_count }}</span>
+                <span class="folders-count-cell" role="cell">{{ month.file_count }}</span>
+                <span role="cell"></span>
+                <span role="cell"></span>
+                <span role="cell"></span>
+              </summary>
+              <div class="mirror-files">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Vendor</th>
+                      <th>File</th>
+                      <th>Version</th>
+                      <th>Period</th>
+                      <th>Modified</th>
+                      <th>Size</th>
+                      <th>Uploader</th>
+                      <th>Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for vendor in month.vendors %}
+                      {% for file in vendor.files %}
+                        <tr class="mirror-file-row {% if not file.exists_locally %}is-missing{% endif %}" data-final-row data-remote-item-id="{{ file.remote_item_id }}" data-name="{{ file.name }}" data-month-label="{{ month.label }}" data-vendor-name="{{ vendor.name }}">
+                          <td>{{ vendor.name }}</td>
+                          <td class="file-name" title="{{ file.name }}">{{ file.name }}</td>
+                          <td>v{{ file.version }}</td>
+                          <td>{{ month.label|short_period }}</td>
+                          <td>{{ file.modified_at|short_dt }}</td>
+                          <td>{{ file.size|filesizeformat }}</td>
+                          <td>{{ file.uploaded_by|default:"-" }}</td>
+                          <td>
+                            <div class="actions">
+                              <button
+                                class="button small review-view-button"
+                                type="button"
+                                data-final-review-button
+                                data-remote-item-id="{{ file.remote_item_id }}"
+                                data-review-url="{% url 'pipeline_dashboard:review_final_file' file.remote_item_id %}"
+                              >Review</button>
+                              <a
+                                class="button small download-button {% if not file.exists_locally %}is-missing{% endif %}"
+                                href="{% url 'pipeline_dashboard:download_final_output' file.remote_item_id %}"
+                                download
+                              >Download</a>
+                            </div>
+                          </td>
+                        </tr>
+                      {% endfor %}
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            </details>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="empty">No final files have been uploaded to ShareFile yet.</div>
       {% endif %}
     </div>
   </section>
@@ -2141,6 +2266,74 @@
       });
     });
 
+    document.querySelectorAll("[data-final-review-button]").forEach((button) => {
+      button.addEventListener("click", async () => {
+        const reviewUrl = button.dataset.reviewUrl;
+        const remoteItemId = button.dataset.remoteItemId;
+        const fileName = button.closest("[data-final-row]")?.dataset.name || "Final file";
+        const chartPreview = document.querySelector("[data-chart-preview]");
+        const parseValidation = document.querySelector("[data-parse-validation]");
+
+        // Reset state
+        if (activeChart) {
+          activeChart.destroy();
+          activeChart = null;
+        }
+        if (chartPreview) {
+          chartPreview.hidden = true;
+          chartPreview.replaceChildren();
+        }
+        if (parseValidation) {
+          parseValidation.textContent = "";
+          parseValidation.className = "review-message";
+        }
+
+        if (reviewModal) reviewModal.dataset.mode = "final";
+        activeReview = {
+          remoteItemId,
+          downloadUrl: "{% url 'pipeline_dashboard:download_final_output' 'PLACEHOLDER' %}".replace("PLACEHOLDER", remoteItemId),
+        };
+        reviewModal.hidden = false;
+        reviewTitle.textContent = "Loading...";
+        reviewDetails.replaceChildren();
+        showReviewMessage("Loading preview...");
+        try {
+          const response = await fetch(reviewUrl);
+          const payload = await response.json();
+          if (!response.ok) throw new Error(payload.error || "Review failed.");
+
+          // Parsed-output review (charts + summary + CSV table)
+          if (payload.charts) {
+            const reviewTabsRow = document.querySelector("[data-review-tabs-row]");
+            const reviewTabsEl = document.querySelector("[data-review-tabs]");
+            const reviewPreviewEl = document.querySelector("[data-review-scroll]");
+            if (reviewTabsRow) reviewTabsRow.hidden = true;
+            if (reviewTabsEl) reviewTabsEl.hidden = true;
+            if (reviewPreviewEl) reviewPreviewEl.parentElement.hidden = true;
+            if (chartPreview) chartPreview.hidden = false;
+            reviewTitle.textContent = payload.candidate?.summary?.output_filename || fileName;
+            setApprovalReviewDetails(payload.file, payload.validation);
+            renderParsedResult(payload);
+            reviewDetails.classList.remove("collapsed");
+            reviewSeparator?.classList.remove("collapsed");
+            if (reviewDetailsToggle) {
+              reviewDetailsToggle.setAttribute("aria-expanded", "true");
+              reviewDetailsToggle.setAttribute("aria-label", "Hide file details");
+            }
+          }
+          // Fallback: raw file preview (existing behavior)
+          else if (payload.file) {
+            reviewTitle.textContent = payload.file.name || fileName;
+            setReviewDetails(payload.file);
+            renderSheets(payload.file);
+          }
+        } catch (error) {
+          reviewTitle.textContent = "Review final file";
+          showReviewMessage(error.message);
+        }
+      });
+    });
+
     processButton.addEventListener("click", async () => {
       if (!activeReview) return;
       if (!reviewVendor.value) {
@@ -2593,6 +2786,114 @@
             performApproval2Search(query);
           } else {
             resetApproval2Search();
+          }
+        }, 150);
+      });
+    })();
+
+    // Final chapter search
+    (function () {
+      const searchInput = document.querySelector("[data-final-search]");
+      if (!searchInput) return;
+
+      const panel = searchInput.closest(".folders-mirror");
+      if (!panel) return;
+
+      let timer = null;
+
+      function getFileNameCell(row) {
+        return row.querySelector(".file-name");
+      }
+
+      function storeOriginalNames() {
+        panel.querySelectorAll("[data-final-row]").forEach((row) => {
+          const cell = getFileNameCell(row);
+          if (cell && !cell.dataset.originalName) {
+            cell.dataset.originalName = cell.textContent;
+          }
+        });
+      }
+
+      function highlightText(cell, query) {
+        const original = cell.dataset.originalName || cell.textContent;
+        if (!query) {
+          cell.innerHTML = "";
+          cell.appendChild(document.createTextNode(original));
+          return;
+        }
+        const lowerQuery = query.toLowerCase();
+        const lowerOriginal = original.toLowerCase();
+        cell.innerHTML = "";
+        let start = 0;
+        let index = lowerOriginal.indexOf(lowerQuery, start);
+        while (index !== -1) {
+          if (index > start) {
+            cell.appendChild(document.createTextNode(original.slice(start, index)));
+          }
+          const mark = document.createElement("mark");
+          mark.textContent = original.slice(index, index + query.length);
+          cell.appendChild(mark);
+          start = index + query.length;
+          index = lowerOriginal.indexOf(lowerQuery, start);
+        }
+        if (start < original.length) {
+          cell.appendChild(document.createTextNode(original.slice(start)));
+        }
+      }
+
+      function matches(query, text) {
+        if (!query) return true;
+        return (text || "").toLowerCase().includes(query);
+      }
+
+      function resetFinalSearch() {
+        panel.querySelectorAll(".mirror-folder").forEach((month) => {
+          month.open = false;
+          month.hidden = false;
+        });
+        panel.querySelectorAll("[data-final-row]").forEach((row) => {
+          row.hidden = false;
+          const cell = getFileNameCell(row);
+          if (cell) {
+            highlightText(cell, "");
+          }
+        });
+      }
+
+      function performFinalSearch(query) {
+        const months = panel.querySelectorAll(".mirror-folder");
+        months.forEach((month) => {
+          const monthLabel = (month.querySelector(".mirror-folder-name")?.textContent || "").trim();
+          const rows = month.querySelectorAll("[data-final-row]");
+          let monthHasMatch = false;
+
+          rows.forEach((row) => {
+            const cell = getFileNameCell(row);
+            const nameText = (cell?.dataset.originalName || cell?.textContent || "").toLowerCase();
+            const rowVendor = (row.dataset.vendorName || "").trim();
+            const isMatch = matches(query, nameText) || matches(query, rowVendor) || matches(query, monthLabel);
+            row.hidden = !isMatch;
+            if (isMatch) monthHasMatch = true;
+            if (cell) {
+              highlightText(cell, query);
+            }
+          });
+
+          month.hidden = !monthHasMatch;
+          if (monthHasMatch) month.open = true;
+        });
+      }
+
+      storeOriginalNames();
+
+      searchInput.addEventListener("input", () => {
+        const query = searchInput.value.trim().toLowerCase();
+        window.clearTimeout(timer);
+        timer = window.setTimeout(() => {
+          if (query) {
+            performFinalSearch(query);
+          } else {
+            resetFinalSearch();
           }
         }, 150);
       });
