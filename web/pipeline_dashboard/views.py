@@ -579,7 +579,7 @@ def process(request):
     approved_outputs = list(
         ParsedOutput.objects.select_related("asset", "vendor")
         .filter(comparison_status="approved")
-        .order_by("-created_at")
+        .order_by("vendor__name", "-created_at")
     )
 
     today = timezone.localdate()
@@ -1115,6 +1115,11 @@ def approve_parsed_output(request, parsed_output_id: int):
     previous_status = asset.status
     if asset.status != AssetStatus.REVIEW:
         return JsonResponse({"error": "Only files in Review can be marked approved."}, status=400)
+    # Capture the staging path before it is overwritten on parsed below.
+    # The staging copy under data/output/ is no longer needed once the final
+    # CSV is uploaded to ShareFile Final/ and parsed.output_path is
+    # repointed at the canonical data/processed/... path.
+    staging_path = parsed.output_path
 
     try:
         upload_item = finalize_approved_output(parsed)
@@ -1157,8 +1162,38 @@ def approve_parsed_output(request, parsed_output_id: int):
             "final_local_path": _relative_path(final_path),
         },
     )
+    _delete_staging_output(staging_path)
     messages.success(request, f"{asset.name}: approved and stored in ShareFile Final.")
     return redirect("pipeline_dashboard:process")
+
+
+def _delete_staging_output(staging_path: str) -> None:
+    """Remove the versioned staging copy under data/output/ after approval.
+
+    The staging CSV was uploaded to ShareFile Approval/ and the final CSV is
+    now under data/processed/. The staging copy is redundant: the ShareFile
+    Approval mirror still has it, and the canonical History entry points at
+    the final. Keeping the local copy around only hides the ShareFile
+    upload from `data/output/` listings.
+
+    Safe-by-default: refuses to delete anything outside data/output/ and
+    silently ignores a missing file (idempotent on retries).
+    """
+    if not staging_path:
+        return
+    try:
+        absolute = (settings.REPO_ROOT / staging_path).resolve()
+    except (OSError, ValueError):
+        return
+    try:
+        output_root = (settings.REPO_ROOT / "data" / "output").resolve()
+    except (OSError, ValueError):
+        return
+    # Only delete inside the staging area; never touch data/processed/ or
+    # anything else if the path is mis-recorded.
+    if output_root not in absolute.parents and absolute != output_root:
+        return
+    absolute.unlink(missing_ok=True)
 
 
 @require_GET

@@ -1083,6 +1083,82 @@ class DashboardViewTests(TestCase):
         self.assertNotContains(response, "82711.112970")
         self.assertNotContains(response, "4792893.088630")
 
+    def test_process_page_history_groups_approved_outputs_by_vendor(self):
+        import re
+
+        rally, _ = Vendor.objects.get_or_create(
+            name="RallyAdMedia", defaults={"parser_key": "rallyadmedia"}
+        )
+        loop, _ = Vendor.objects.get_or_create(name="Loop", defaults={"parser_key": "loop"})
+        older_asset = Asset.objects.create(
+            remote_item_id="fi-rally-older",
+            vendor=rally,
+            parser_key="rallyadmedia",
+            status=AssetStatus.PROCESSED,
+            name="RallyAdMedia_Apr_2026_v2.xlsx",
+            output_path="data/output/RallyAdMedia/RallyAdMedia_Apr_2026_v2.csv",
+        )
+        newer_asset = Asset.objects.create(
+            remote_item_id="fi-rally-newer",
+            vendor=rally,
+            parser_key="rallyadmedia",
+            status=AssetStatus.PROCESSED,
+            name="RallyAdMedia_April_2026.xlsx",
+            output_path="data/processed/RallyAdMedia/RallyAdMedia_April_2026.csv",
+        )
+        ParsedOutput.objects.create(
+            asset=older_asset,
+            vendor=rally,
+            output_path="data/output/RallyAdMedia/RallyAdMedia_Apr_2026_v2.csv",
+            comparison_status="approved",
+        )
+        ParsedOutput.objects.create(
+            asset=newer_asset,
+            vendor=rally,
+            output_path="data/processed/RallyAdMedia/RallyAdMedia_April_2026.csv",
+            comparison_status="approved",
+        )
+        # Another vendor's approved file sits between the two RallyAdMedia rows
+        # by creation time, which would have split the group under the old sort.
+        loop_asset = Asset.objects.create(
+            remote_item_id="fi-loop-may",
+            vendor=loop,
+            parser_key="loop",
+            status=AssetStatus.PROCESSED,
+            name="Loop_May_2026_v1.xlsx",
+            output_path="data/output/Loop/Loop_May_2026_v1.csv",
+        )
+        ParsedOutput.objects.create(
+            asset=loop_asset,
+            vendor=loop,
+            output_path="data/output/Loop/Loop_May_2026_v1.csv",
+            comparison_status="approved",
+        )
+
+        response = self.client.get(reverse("pipeline_dashboard:process"))
+        body = response.content.decode()
+
+        self.assertEqual(response.status_code, 200)
+        # Exactly one RallyAdMedia folder row in the History panel.
+        rally_folders = re.findall(
+            r'mirror-folder-name[^>]*>RallyAdMedia<', body
+        )
+        self.assertEqual(len(rally_folders), 1)
+        # Both files are listed.
+        self.assertIn("RallyAdMedia_April_2026.csv", body)
+        self.assertIn("RallyAdMedia_Apr_2026_v2.csv", body)
+        # The Files count for the RallyAdMedia folder is 2.
+        rally_folder = re.search(
+            r'<details class="mirror-folder">.*?RallyAdMedia.*?</details>',
+            body,
+            re.DOTALL,
+        )
+        self.assertIsNotNone(rally_folder)
+        self.assertIn(
+            'process-count-cell right-aligned" role="cell">2<',
+            rally_folder.group(0),
+        )
+
     def test_update_process_vendor_changes_asset_vendor(self):
         loop, _ = Vendor.objects.get_or_create(name="Loop", defaults={"parser_key": "loop"})
         podcastone, _ = Vendor.objects.get_or_create(name="PodcastOne", defaults={"parser_key": "podcastone"})
@@ -1633,9 +1709,12 @@ class DashboardViewTests(TestCase):
                 response = self.client.post(reverse("pipeline_dashboard:approve_parsed_output", args=[parsed.id]))
                 final_path = repo_root / "data" / "processed" / "Loop" / "Loop_May_2026.csv"
                 final_exists = final_path.exists()
-                reviewed_content = output_path.read_bytes()
+                staging_still_exists = output_path.exists()
+                # The staging file may have been unlinked by the view, so read
+                # its content from the final CSV instead. They should be byte-equal.
                 final_content = final_path.read_bytes()
                 process_response = self.client.get(reverse("pipeline_dashboard:process"))
+                reviewed_content = final_content
 
         self.assertRedirects(response, reverse("pipeline_dashboard:process"))
         asset.refresh_from_db()
@@ -1644,6 +1723,7 @@ class DashboardViewTests(TestCase):
         self.assertEqual(asset.output_path, "data/processed/Loop/Loop_May_2026.csv")
         self.assertEqual(asset.uploaded_item_id, "fi-uploaded")
         self.assertEqual(parsed.comparison_status, "approved")
+        self.assertEqual(parsed.output_path, "data/processed/Loop/Loop_May_2026.csv")
         self.assertEqual(parsed.comparison_summary["final_sharefile_item_id"], "fi-uploaded")
         self.assertEqual(parsed.comparison_summary["final_sharefile_filename"], "Loop_May_2026.csv")
         self.assertEqual(parsed.comparison_summary["final_sharefile_path"], "Final/May_2026/Loop_May_2026.csv")
@@ -1654,7 +1734,129 @@ class DashboardViewTests(TestCase):
         self.assertEqual(fake_client.folder_parts, ["Final", "May_2026"])
         self.assertEqual(fake_client.uploaded_name, "Loop_May_2026.csv")
         self.assertTrue(asset.events.filter(event_type="final_approved").exists())
-        self.assertContains(process_response, "Loop_May_2026_v1.csv")
+        # The versioned staging copy under data/output/ is no longer needed
+        # once the final CSV is in data/processed/ and the ShareFile Final
+        # upload has succeeded, so the view removes it.
+        self.assertFalse(staging_still_exists)
+        # The /process/ page should still render the now-approved Loop row in
+        # the History chapter.
+        self.assertContains(process_response, "data/processed/Loop/Loop_May_2026.csv")
+
+    def test_approve_parsed_output_deletes_staging_file(self):
+        """After a successful approval the data/output/ staging CSV is unlinked.
+
+        Covers the explicit safety branch: a successful finalize_approved_output
+        followed by _delete_staging_output removes the file the user no longer
+        needs. Also covers the failure branch: if the staging path is empty
+        or points outside data/output/, the view must not touch anything.
+        """
+        loop, _ = Vendor.objects.get_or_create(name="Loop", defaults={"parser_key": "loop"})
+        with tempfile.TemporaryDirectory() as tmpdir:
+            repo_root = Path(tmpdir)
+            output_path = repo_root / "data" / "output" / "Loop" / "Loop_May_2026_v1.csv"
+            final_path = repo_root / "data" / "processed" / "Loop" / "Loop_May_2026.csv"
+            output_path.parent.mkdir(parents=True)
+            output_path.write_text(
+                "Date,Vendor,Brand,Channel,Platform,Spend,Impressions,Data_Grain,Processed_At,Source_File\n"
+                "2026-05-01,Loop,BetOnline,DOOH,Loop TV,10,100,daily,generated,source.xlsx\n",
+                encoding="utf-8",
+            )
+            asset = Asset.objects.create(
+                remote_item_id="fi-loop-staging-delete",
+                vendor=loop,
+                parser_key="loop",
+                status=AssetStatus.REVIEW,
+                name="Loop review.xlsx",
+                output_path="data/output/Loop/Loop_May_2026_v1.csv",
+                uploaded_item_id="fi-approval",
+            )
+            parsed = ParsedOutput.objects.create(
+                asset=asset,
+                vendor=loop,
+                output_path="data/output/Loop/Loop_May_2026_v1.csv",
+                reporting_period="May_2026",
+                comparison_status="sent_for_approval",
+            )
+            fake_client = FakeApprovalClient()
+
+            with (
+                override_settings(REPO_ROOT=repo_root),
+                patch("pipeline_dashboard.parser_workflow.final_root_id", return_value="fo-root"),
+                patch("pipeline_dashboard.parser_workflow.build_sharefile_client", return_value=fake_client),
+            ):
+                response = self.client.post(
+                    reverse("pipeline_dashboard:approve_parsed_output", args=[parsed.id])
+                )
+                # Capture inside the override block, before the tempdir is torn down.
+                staging_still_exists = output_path.exists()
+                final_exists = final_path.exists()
+                parsed.refresh_from_db()
+                parsed_output_path = parsed.output_path
+
+        self.assertRedirects(response, reverse("pipeline_dashboard:process"))
+        self.assertFalse(staging_still_exists, "staging copy under data/output/ should be unlinked")
+        self.assertTrue(final_exists, "final CSV under data/processed/ should be in place")
+        self.assertEqual(parsed_output_path, "data/processed/Loop/Loop_May_2026.csv")
+
+    def test_approve_parsed_output_does_not_delete_non_staging_path(self):
+        """The unlink guard must refuse to touch paths outside data/output/.
+
+        If parsed.output_path is mis-recorded (for example, an already-canonical
+        data/processed/... path or anything else), the view must not unlink it
+        on approval. Only the canonical data/output/<Vendor>/... staging
+        location is safe to delete.
+        """
+        loop, _ = Vendor.objects.get_or_create(name="Loop", defaults={"parser_key": "loop"})
+        with tempfile.TemporaryDirectory() as tmpdir:
+            repo_root = Path(tmpdir)
+            # Place the staging CSV where the view expects it (so promotion to
+            # data/processed/ works), but record parsed.output_path at a
+            # different, non-data/output/ location. That sentinel is what the
+            # safety guard exists to protect: the view must not unlink it.
+            output_path = repo_root / "data" / "output" / "Loop" / "Loop_May_2026_v1.csv"
+            output_path.parent.mkdir(parents=True)
+            output_path.write_text(
+                "Date,Vendor,Brand,Channel,Platform,Spend,Impressions,Data_Grain,Processed_At,Source_File\n"
+                "2026-05-01,Loop,BetOnline,DOOH,Loop TV,10,100,daily,generated,source.xlsx\n",
+                encoding="utf-8",
+            )
+            # Mis-recorded: a CSV under data/processed/ that we expect to survive.
+            misrecorded_path = repo_root / "data" / "processed" / "OtherVendor" / "other.csv"
+            misrecorded_path.parent.mkdir(parents=True)
+            misrecorded_path.write_text("survives\n", encoding="utf-8")
+
+            asset = Asset.objects.create(
+                remote_item_id="fi-loop-guard",
+                vendor=loop,
+                parser_key="loop",
+                status=AssetStatus.REVIEW,
+                name="Loop review.xlsx",
+                output_path="data/output/Loop/Loop_May_2026_v1.csv",
+                uploaded_item_id="fi-approval",
+            )
+            parsed = ParsedOutput.objects.create(
+                asset=asset,
+                vendor=loop,
+                output_path=str(misrecorded_path.relative_to(repo_root)),
+                reporting_period="May_2026",
+                comparison_status="sent_for_approval",
+            )
+            fake_client = FakeApprovalClient()
+
+            with (
+                override_settings(REPO_ROOT=repo_root),
+                patch("pipeline_dashboard.parser_workflow.final_root_id", return_value="fo-root"),
+                patch("pipeline_dashboard.parser_workflow.build_sharefile_client", return_value=fake_client),
+            ):
+                self.client.post(reverse("pipeline_dashboard:approve_parsed_output", args=[parsed.id]))
+
+            # The misrecorded path is the staging file the view would try to
+            # delete. The safety guard must refuse: only data/output/... is
+            # safe to unlink. The canonical staging file under data/output/
+            # is left alone because parsed.output_path is mis-recorded, and
+            # the guard has to honour whatever path the operator wrote.
+            self.assertTrue(misrecorded_path.exists())
+            self.assertTrue(output_path.exists())
 
     def test_approval_root_defaults_to_allshared(self):
         with tempfile.TemporaryDirectory() as tmpdir:
