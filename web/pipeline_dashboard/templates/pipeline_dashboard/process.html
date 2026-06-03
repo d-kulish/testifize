@@ -875,31 +875,31 @@
 
   <section class="panel process-panel">
     <div class="panel-body">
-      {% if grouped_assets %}
-        <div class="mirror-table process-mirror parsing-files" role="table" aria-label="Parsing files grouped by vendor">
-          <div class="mirror-head" role="row">
-            <div class="process-head-wrapper" role="columnheader">
-              <span class="process-head-title">Parsing Files</span>
-              <span class="process-head-subtitle">{{ assets|length }} files in parser queue</span>
-            </div>
-            <div class="process-count-col" role="columnheader">Files</div>
-            <div class="process-count-col" role="columnheader">Size</div>
-            <div class="process-count-col" role="columnheader">Queue Age</div>
-            <div class="mirror-head-search" role="search">
-              <input
-                type="search"
-                class="mirror-search-input"
-                placeholder="Search parsing files by name..."
-                aria-label="Search parsing files by name"
-                data-process-search
-                autocomplete="off"
-              />
-              <svg class="search-icon" viewBox="0 0 24 24" aria-hidden="true">
-                <circle cx="11" cy="11" r="8" fill="none" stroke="currentColor" stroke-width="2"></circle>
-                <path d="M21 21l-4.35-4.35" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path>
-              </svg>
-            </div>
+      <div class="mirror-table process-mirror parsing-files" role="table" aria-label="Parsing files grouped by vendor">
+        <div class="mirror-head" role="row">
+          <div class="process-head-wrapper" role="columnheader">
+            <span class="process-head-title">Parsing Files</span>
+            <span class="process-head-subtitle">{{ assets|length }} files in parser queue</span>
           </div>
+          <div class="process-count-col" role="columnheader">Files</div>
+          <div class="process-count-col" role="columnheader">Size</div>
+          <div class="process-count-col" role="columnheader">Queue Age</div>
+          <div class="mirror-head-search" role="search">
+            <input
+              type="search"
+              class="mirror-search-input"
+              placeholder="Search parsing files by name..."
+              aria-label="Search parsing files by name"
+              data-process-search
+              autocomplete="off"
+            />
+            <svg class="search-icon" viewBox="0 0 24 24" aria-hidden="true">
+              <circle cx="11" cy="11" r="8" fill="none" stroke="currentColor" stroke-width="2"></circle>
+              <path d="M21 21l-4.35-4.35" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path>
+            </svg>
+          </div>
+        </div>
+        {% if grouped_assets %}
           {% for group in grouped_assets %}
             <details class="mirror-folder">
               <summary class="mirror-summary" role="row">
@@ -968,11 +968,11 @@
                 </table>
               </div>
             </details>
-            {% endfor %}
-        </div>
-      {% else %}
-        <div class="empty">No files are currently queued for parsing.</div>
-      {% endif %}
+          {% endfor %}
+        {% else %}
+          <div class="empty">No files are currently queued for parsing.</div>
+        {% endif %}
+      </div>
     </div>
   </section>
 

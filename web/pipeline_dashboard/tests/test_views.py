@@ -1054,6 +1054,19 @@ class DashboardViewTests(TestCase):
         self.assertContains(response, "Approval")
         self.assertNotContains(response, "PodcastOne new.csv")
 
+    def test_process_page_keeps_parsing_header_when_queue_is_empty(self):
+        response = self.client.get(reverse("pipeline_dashboard:process"))
+
+        self.assertEqual(response.status_code, 200)
+        # The mirror-head chrome (title, subtitle, count cells, search input) must
+        # remain even when there are no files queued for parsing, so the empty
+        # chapter matches the Approval and History chapters visually.
+        self.assertContains(response, "Parsing Files")
+        self.assertContains(response, "0 files in parser queue")
+        self.assertContains(response, "data-process-search")
+        self.assertContains(response, "process-mirror parsing-files")
+        self.assertContains(response, "No files are currently queued for parsing.")
+
     def test_process_page_formats_approval_totals_for_readability(self):
         loop, _ = Vendor.objects.get_or_create(name="Loop", defaults={"parser_key": "loop"})
         asset = Asset.objects.create(
