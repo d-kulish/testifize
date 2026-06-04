@@ -24,16 +24,20 @@ class FakeApprovalClient:
         self.current_month = datetime.now().strftime("%B_%Y")
         self.folder_parts = []
         self.uploaded_name = ""
+        self.notify = False
+        self.copy_access_controls = False
 
-    def ensure_folder_path(self, root_id, parts):
+    def ensure_folder_path(self, root_id, parts, copy_access_controls=False):
         self.root_id = root_id
         self.folder_parts = parts
+        self.copy_access_controls = copy_access_controls
         return SimpleNamespace(id="fo-approval")
 
     def upload_bytes(self, folder_id, filename, content, content_type, notify, overwrite):
         self.folder_id = folder_id
         self.uploaded_name = filename
         self.uploaded_content = content
+        self.notify = notify
         return SimpleNamespace(id="fi-uploaded", name=filename)
 
 
@@ -1451,6 +1455,8 @@ class DashboardViewTests(TestCase):
         self.assertEqual(parsed.comparison_summary["approval_filename_label"], "Apr_2026")
         self.assertEqual(fake_client.folder_parts, ["Approval", "April_2026", "RallyAdMedia"])
         self.assertEqual(fake_client.uploaded_name, "RallyAdMedia_Apr_2026_v1.csv")
+        self.assertTrue(fake_client.notify)
+        self.assertTrue(fake_client.copy_access_controls)
         self.assertTrue(output_exists)
 
     def test_approve_adtaxi_march_output_uses_april_approval_period(self):
@@ -1477,6 +1483,8 @@ class DashboardViewTests(TestCase):
         self.assertEqual(parsed.comparison_summary["approval_filename_label"], "Apr_2026")
         self.assertEqual(fake_client.folder_parts, ["Approval", "April_2026", "AdTaxi"])
         self.assertEqual(fake_client.uploaded_name, "AdTaxi_Apr_2026_v1.csv")
+        self.assertTrue(fake_client.notify)
+        self.assertTrue(fake_client.copy_access_controls)
         self.assertTrue(output_exists)
 
     def test_parse_process_file_returns_chart_preview_without_writing_output(self):
@@ -1650,6 +1658,8 @@ class DashboardViewTests(TestCase):
         self.assertFalse(processed_exists)
         self.assertEqual(fake_client.folder_parts, ["Approval", "June_2026", "Loop"])
         self.assertEqual(fake_client.uploaded_name, "Loop_Jun_2026_v1.csv")
+        self.assertTrue(fake_client.notify)
+        self.assertTrue(fake_client.copy_access_controls)
         self.assertTrue(asset.events.filter(event_type="approval_sent").exists())
 
     def test_cancel_parsed_output_returns_asset_to_processing(self):
@@ -1746,6 +1756,8 @@ class DashboardViewTests(TestCase):
         self.assertIn(b"2026-05-01,Loop,BetOnline", final_content)
         self.assertEqual(fake_client.folder_parts, ["Final", "May_2026"])
         self.assertEqual(fake_client.uploaded_name, "Loop_May_2026.csv")
+        self.assertTrue(fake_client.notify)
+        self.assertTrue(fake_client.copy_access_controls)
         self.assertTrue(asset.events.filter(event_type="final_approved").exists())
         # The versioned staging copy under data/output/ is no longer needed
         # once the final CSV is in data/processed/ and the ShareFile Final
@@ -1810,6 +1822,8 @@ class DashboardViewTests(TestCase):
         self.assertFalse(staging_still_exists, "staging copy under data/output/ should be unlinked")
         self.assertTrue(final_exists, "final CSV under data/processed/ should be in place")
         self.assertEqual(parsed_output_path, "data/processed/Loop/Loop_May_2026.csv")
+        self.assertTrue(fake_client.notify)
+        self.assertTrue(fake_client.copy_access_controls)
 
     def test_approve_parsed_output_does_not_delete_non_staging_path(self):
         """The unlink guard must refuse to touch paths outside data/output/.
@@ -1870,6 +1884,8 @@ class DashboardViewTests(TestCase):
             # the guard has to honour whatever path the operator wrote.
             self.assertTrue(misrecorded_path.exists())
             self.assertTrue(output_path.exists())
+            self.assertTrue(fake_client.notify)
+            self.assertTrue(fake_client.copy_access_controls)
 
     def test_approval_root_defaults_to_allshared(self):
         with tempfile.TemporaryDirectory() as tmpdir:

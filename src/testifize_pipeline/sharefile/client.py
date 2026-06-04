@@ -140,7 +140,9 @@ class ShareFileClient:
             raise ShareFileError(f"Could not create folder {name} under {parent_id}: status={status} body={body}")
         return ShareFileItem.from_api(body, parent_id=parent_id)
 
-    def ensure_folder_path(self, root_id: str, parts: list[str]) -> ShareFileItem:
+    def ensure_folder_path(
+        self, root_id: str, parts: list[str], copy_access_controls: bool = False
+    ) -> ShareFileItem:
         current_id = root_id
         current_item = self.get_item(root_id)
         for part in parts:
@@ -149,9 +151,50 @@ class ShareFileClient:
                 if child.is_folder and child.name == part:
                     match = child
                     break
-            current_item = match or self.create_folder(current_id, part)
+            if match:
+                current_item = match
+            else:
+                current_item = self.create_folder(current_id, part)
+                if copy_access_controls:
+                    self.copy_access_controls(current_id, current_item.id)
             current_id = current_item.id
         return current_item
+
+    def list_access_controls(self, folder_id: str) -> list[dict[str, Any]]:
+        status, body, _ = self._request_json(
+            "GET", f"{self.base_url}/sf/v3/Items({folder_id})/AccessControls"
+        )
+        if status != 200:
+            raise ShareFileError(
+                f"Could not list access controls for folder {folder_id}: status={status} body={body}"
+            )
+        return body.get("value", [])
+
+    def copy_access_controls(self, source_folder_id: str, target_folder_id: str) -> None:
+        controls = self.list_access_controls(source_folder_id)
+        for control in controls:
+            principal = control.get("Principal")
+            if not principal:
+                continue
+            payload = {
+                "Principal": principal,
+                "CanView": control.get("CanView", True),
+                "CanDownload": control.get("CanDownload", True),
+                "CanUpload": control.get("CanUpload", False),
+                "CanDelete": control.get("CanDelete", False),
+                "CanManagePermissions": control.get("CanManagePermissions", False),
+                "NotifyOnUpload": control.get("NotifyOnUpload", False),
+                "NotifyOnDownload": control.get("NotifyOnDownload", False),
+            }
+            status, body, _ = self._request_json(
+                "POST",
+                f"{self.base_url}/sf/v3/Items({target_folder_id})/AccessControls",
+                json_body=payload,
+            )
+            if status not in {200, 201}:
+                raise ShareFileError(
+                    f"Could not copy access control to folder {target_folder_id}: status={status} body={body}"
+                )
 
     def download_file(self, item_id: str, destination: Path) -> Path:
         destination.parent.mkdir(parents=True, exist_ok=True)

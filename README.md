@@ -734,6 +734,18 @@ Final/<Reporting_Period>/<Vendor>_<Reporting_Period>.csv
   - `folders.html`: new section below Approval, `.final-table` CSS (compact right-aligned columns matching `.approval-table`), `[data-final-search]` and `[data-final-review-button]` handlers. The review modal hides vendor select / Parsing button when `data-mode="final"`.
 - **Files**: `web/pipeline_dashboard/sharefile_mirror.py`, `web/pipeline_dashboard/views.py`, `web/pipeline_dashboard/urls.py`, `web/pipeline_dashboard/templates/pipeline_dashboard/folders.html`.
 
+### ShareFile upload notifications for Approval and Final folders (2026-06-04)
+
+- **Problem**: when parsed CSV files were uploaded to ShareFile `Approval/<Month>/<Vendor>/` and `Final/<Month>/`, no upload notifications were sent to folder subscribers. Two root causes:
+  1. The app explicitly passed `notify=False` to the ShareFile upload API on every upload, suppressing native notifications.
+  2. Dynamically created month and vendor sub-folders did not reliably inherit the parent folder's notification subscriber settings (`NotifyOnUpload`).
+- **Solution**:
+  - Changed `notify=False` → `notify=True` in both `upload_approved_output()` and `finalize_approved_output()` in `parser_workflow.py`.
+  - Extended `ShareFileClient.ensure_folder_path()` with an optional `copy_access_controls=True` parameter. When enabled and a new folder is created, the client copies the parent folder's AccessControls (including `NotifyOnUpload`) to the newly created child folder via the ShareFile API.
+  - The `ensure_folder_path` call in `upload_approved_output` now passes `copy_access_controls=True` so that every new `Approval/<Month>` and `Approval/<Month>/<Vendor>` folder carries the same notification subscribers as the parent `Approval` folder.
+  - The `ensure_folder_path` call in `finalize_approved_output` also passes `copy_access_controls=True` so that every new `Final/<Month>` folder carries the same notification subscribers as the parent `Final` folder.
+- **Files**: `src/testifize_pipeline/sharefile/client.py`, `web/pipeline_dashboard/parser_workflow.py`, `web/pipeline_dashboard/tests/test_views.py`, `web/pipeline_dashboard/tests/test_sharefile_client.py`.
+
 ### Approval Review button (2026-05-26)
 
 - **Review parsed output without re-running the parser**: each row in the Approval queue now has a **Review** button (blue, in its own column between *Version* and *Source File*).

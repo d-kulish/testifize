@@ -355,13 +355,15 @@ def upload_approved_output(
     root_id = approval_root_id()
     approval_month = approval_folder_label(summary)
     client = client or build_sharefile_client()
-    folder = client.ensure_folder_path(root_id, ["Approval", approval_month, vendor.name])
+    folder = client.ensure_folder_path(
+        root_id, ["Approval", approval_month, vendor.name], copy_access_controls=True
+    )
     return client.upload_bytes(
         folder.id,
         output_path.name,
         output_path.read_bytes(),
         content_type="text/csv",
-        notify=False,
+        notify=True,
         overwrite=False,
     )
 
@@ -372,13 +374,13 @@ def finalize_approved_output(parsed_output: ParsedOutput, client: ShareFileClien
     period_label = final_period_label(parsed_output)
     client = client or build_sharefile_client()
     try:
-        folder = client.ensure_folder_path(root_id, ["Final", period_label])
+        folder = client.ensure_folder_path(root_id, ["Final", period_label], copy_access_controls=True)
         return client.upload_bytes(
             folder.id,
             final_path.name,
             final_path.read_bytes(),
             content_type="text/csv",
-            notify=False,
+            notify=True,
             overwrite=False,
         )
     except Exception:
