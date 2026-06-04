@@ -1355,58 +1355,6 @@ class DashboardViewTests(TestCase):
         self.assertEqual(payload["candidate"]["summary"]["total_spend"], "280")
         self.assertEqual(payload["candidate"]["summary"]["total_impressions"], "2800")
 
-    def test_parse_sheet_probe_reports_undeclared_sheet_for_multi_worksheet_schema(self):
-        with tempfile.TemporaryDirectory() as tmpdir:
-            repo_root = Path(tmpdir)
-            asset = self._write_rallyadmedia_parse_fixture(repo_root)
-            workbook_path = repo_root / asset.local_path
-            from openpyxl import load_workbook
-
-            workbook = load_workbook(workbook_path)
-            workbook.create_sheet("Totals")
-            workbook.save(workbook_path)
-            workbook.close()
-
-            with override_settings(REPO_ROOT=repo_root):
-                response = self.client.get(
-                    reverse("pipeline_dashboard:parse_sheet_probe", args=[asset.remote_item_id]),
-                    data={"sheet_name": "Totals"},
-                )
-
-        self.assertEqual(response.status_code, 200, response.content)
-        validation = response.json()["validation"]
-        self.assertFalse(validation["ok"])
-        self.assertTrue(
-            any("not declared in the input schema" in error for error in validation["errors"]),
-            validation["errors"],
-        )
-
-    def test_parse_sheet_probe_reports_header_mismatch_for_multi_worksheet_schema(self):
-        with tempfile.TemporaryDirectory() as tmpdir:
-            repo_root = Path(tmpdir)
-            asset = self._write_rallyadmedia_parse_fixture(repo_root)
-            workbook_path = repo_root / asset.local_path
-            from openpyxl import load_workbook
-
-            workbook = load_workbook(workbook_path)
-            workbook["BOL"]["A1"] = "DATE_LABEL_RENAMED"
-            workbook.save(workbook_path)
-            workbook.close()
-
-            with override_settings(REPO_ROOT=repo_root):
-                response = self.client.get(
-                    reverse("pipeline_dashboard:parse_sheet_probe", args=[asset.remote_item_id]),
-                    data={"sheet_name": "BOL"},
-                )
-
-        self.assertEqual(response.status_code, 200, response.content)
-        validation = response.json()["validation"]
-        self.assertFalse(validation["ok"])
-        self.assertTrue(
-            any("'BOL'" in error and "A1" in error for error in validation["errors"]),
-            validation["errors"],
-        )
-
     def test_parse_process_file_distributes_adtaxi_totals_across_report_dates(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             repo_root = Path(tmpdir)
@@ -2115,15 +2063,19 @@ class DashboardViewTests(TestCase):
         sheet["A3"] = "2026-05-02"
         sheet["B3"] = 200
         sheet["C3"] = 20
-        sheet["A34"] = "Rideshare"
-        sheet["B34"] = "Impressions"
-        sheet["C34"] = "Spend"
-        sheet["A35"] = "2026-05-01"
-        sheet["B35"] = 300
-        sheet["C35"] = 30
-        sheet["A36"] = "2026-05-02"
-        sheet["B36"] = 400
-        sheet["C36"] = 40
+        sheet["A33"] = None
+        sheet["B33"] = 300
+        sheet["C33"] = 30
+        sheet["A34"] = None
+        sheet["A35"] = "Rideshare"
+        sheet["B35"] = "Impressions"
+        sheet["C35"] = "Spend"
+        sheet["A36"] = "2026-05-01"
+        sheet["B36"] = 300
+        sheet["C36"] = 30
+        sheet["A37"] = "2026-05-02"
+        sheet["B37"] = 400
+        sheet["C37"] = 40
         workbook.save(workbook_path)
         workbook.close()
 
@@ -2232,15 +2184,15 @@ class DashboardViewTests(TestCase):
         workbook_path.parent.mkdir(parents=True)
         workbook = Workbook()
         workbook.remove(workbook.active)
-        base = workbook.create_sheet("Week 1-5 BASE DLY 4.1-4.30")
-        wc = workbook.create_sheet("WC Week 1-5 DLY 4.1-4.30")
-        for sheet in [base, wc]:
-            sheet["A5"] = "Order ID"
-            sheet["B5"] = "Order"
-            sheet["C5"] = "Campaign"
-            sheet["D5"] = "Day"
-            sheet["E5"] = "Audio Impressions"
-            sheet["F5"] = "$ By Day"
+        base = workbook.create_sheet("BASE MAY DLY SUMM. 5.1-5.31")
+        wc = workbook.create_sheet("WC MAY DLY SUMM. 5.1-5.31")
+        # BASE sheet keeps all columns
+        base["A5"] = "Order ID"
+        base["B5"] = "Order"
+        base["C5"] = "Campaign"
+        base["D5"] = "Day"
+        base["E5"] = "Audio Impressions"
+        base["F5"] = "$ By Day"
         base["D6"] = "2026-05-01"
         base["E6"] = 100
         base["F6"] = 10.50
@@ -2250,15 +2202,21 @@ class DashboardViewTests(TestCase):
         base["A8"] = "TOTAL"
         base["E8"] = 300
         base["F8"] = 30.75
-        wc["D6"] = "2026-05-01"
-        wc["E6"] = "$300"
-        wc["F6"] = "$30"
-        wc["D7"] = "2026-05-02"
-        wc["E7"] = 400
-        wc["F7"] = 40
+        # WC sheet dropped the Campaign column (shifted left)
+        wc["A5"] = "Order ID"
+        wc["B5"] = "Order"
+        wc["C5"] = "Day"
+        wc["D5"] = "Audio Impressions"
+        wc["E5"] = "$ By Day"
+        wc["C6"] = "2026-05-01"
+        wc["D6"] = "$300"
+        wc["E6"] = "$30"
+        wc["C7"] = "2026-05-02"
+        wc["D7"] = 400
+        wc["E7"] = 40
         wc["A8"] = "TOTAL"
-        wc["E8"] = 700
-        wc["F8"] = 70
+        wc["D8"] = 700
+        wc["E8"] = 70
         workbook.save(workbook_path)
         workbook.close()
 

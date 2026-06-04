@@ -755,51 +755,38 @@ Final/<Reporting_Period>/<Vendor>_<Reporting_Period>.csv
 - **Backend**: added `build_review_payload()` in `parser_workflow.py` and `review_parsed_output` GET view at `process/approval/<id>/review/`.
 - **Frontend**: updated approval table layout (centered values for Period, Version, Review, Rows, Spend, Impressions, Comparison, Age, and Action) and added `[data-review-button]` event handler in `process.html`.
 
-### Sheet probe and parser validation (2026-05-25)
+### Parser resilience and removal of manual validation (2026-06-04)
 
-- **Problem**: vendor Excel files sometimes rename sheets or move data to a new sheet. The parser expects a hardcoded `sheet_name` from `input_schema.json`, so the parse preview immediately fails with "Incorrect parser" and the user never sees the other sheets that exist in the file.
-- **Solution**: the Parse modal now shows **all sheets** as clickable tabs. A new **Validate** button lets the user probe any selected sheet against the parser schema before running the actual parse.
+- **Problem**: May 2026 vendor files arrived with format drift. PodcastOne renamed its daily summary sheets (`BASE MAY DLY SUMM. 5.1-5.31` instead of `Week 1-5 BASE DLY 4.1-4.30`) and dropped the `Campaign` column from the WC sheet, shifting the remaining columns left. Octopus inserted an extra subtotal row before the Rideshare section, pushing the hardcoded header row from 34 to 35, and added a `Totals` row at the end that crashed the date parser.
+- **Old approach**: a partially implemented `Validate` button let users manually probe individual sheets against the schema. It was never fully functional (it did not support multi-worksheet schemas like PodcastOne's, and it could not fix column reordering or row shifts). It has been removed entirely.
+- **New approach**: parsers now discover structure automatically instead of relying on hardcoded names and positions.
 
-**How it works**
+**PodcastOne**
+- `input_schema.json`: replaced exact `sheet_name` with `match_keywords` arrays (`["BASE", "DLY"]`, `["WC", "DLY"]`). Replaced fixed column letters with `columns_by_header` — the parser scans the header row for expected text (`"Day"`, `"Audio Impressions"`, `"$ By Day"`) and discovers the actual column letters.
+- `parser.py`: added `resolve_sheet_name()` for keyword matching and `discover_columns()` for header-text column discovery.
 
-1. Open a file on the Parsing page. The modal lists every sheet in the Excel file as tabs, not just the schema target.
-2. If the default schema sheet is present and validates, the modal behaves exactly as before: the default sheet is pre-selected, `Parse` is active, and `Validate` is hidden.
-3. If the default sheet is missing or the headers do not match, the preview shows "Incorrect parser" and `Parse` is disabled. A `Validate` button appears.
-4. Click any sheet tab to preview its contents. Then click `Validate`. The app calls the backend probe endpoint (`GET /process/<id>/parse/probe/?sheet_name=<name>`) which checks the selected sheet's header row and columns against the schema.
-5. If the probe passes, the preview switches to a green "Parser is correct" message, `Parse` becomes active, and the selected sheet name is remembered.
-6. Click `Parse`. The actual parse POST now includes the selected `sheet_name`, and the parser uses that sheet instead of the hardcoded default.
+**Octopus**
+- `input_schema.json`: replaced fixed `header_row: 34` for the Rideshare table with `match_anchor: "Rideshare"` and `anchor_column: "A"`. Added `header_names` for validation at the discovered row.
+- `parser.py`: added `resolve_table_bounds()` to scan column A for the `"Rideshare"` anchor text and compute the data row dynamically. Added `header_names` support in `validate_table_header()`. Wrapped date parsing in try/except so non-date rows (e.g. `"Totals"`) are skipped instead of crashing.
 
-**Backend changes**
+**Generic validation**
+- `parser_workflow.py`: updated `validate_excel_schema()` and `validate_excel_schema_probe()` to support `match_keywords`, `columns_by_header`, `match_anchor`, and `anchor_column`. Removed `probe_sheet_validation()` entirely and simplified `parse_asset_rows()` — the extra probe-validation branch is gone.
 
-- `parser_workflow.py`:
-  - Added `validate_excel_schema_probe(source_path, schema, probe_sheet_name)` which validates a candidate sheet's headers against the schema without touching the hardcoded `sheet_name`.
-  - Added `probe_sheet_validation(asset, sheet_name)` which returns a full validation payload for a candidate sheet (same shape as the existing validator).
-  - Modified `parse_asset_rows(asset, sheet_name=None)` so that when a `sheet_name` override is provided, it probes that sheet first, then passes the override to the parser module.
-  - Modified `build_parse_result_preview(asset, sheet_name=None)` to thread the override through.
-- `views.py`:
-  - Added `parse_sheet_probe(request, remote_item_id)` — a GET endpoint that takes `sheet_name` and optional `vendor_id` query parameters, runs `probe_sheet_validation`, and returns the validation payload.
-  - Modified `parse_process_file` to read `sheet_name` from the POST body and pass it to `build_parse_result_preview`.
-- `urls.py`:
-  - Added route `process/<str:remote_item_id>/parse/probe/`.
-- All 8 vendor `parser.py` modules (`Loop`, `AdTaxi`, `S2`, `Octopus`, `TAIV`, `TVM`, `PodcastOne`, `RallyAdMedia`):
-  - Updated `parse_file(source_path, input_schema, output_columns, sheet_name=None)` signature.
-  - Changed `workbook[input_schema["sheet_name"]]` to `workbook[sheet_name or input_schema["sheet_name"]]` so the override is respected.
+**UI cleanup**
+- `process.html`: removed the `Validate` button, `parseValidate` JS variable, `showParserCorrect()`, and all related event listeners. The parse modal now only shows sheets and the `Parse` button.
+- `views.py`: removed `parse_sheet_probe` view.
+- `urls.py`: removed `process/<str:remote_item_id>/parse/probe/` route.
 
-**Frontend changes**
+**Tests**
+- `test_views.py`: updated fixtures to simulate May drift — PodcastOne sheets use May naming and a WC sheet without the Campaign column; Octopus inserts a subtotal row shifting Rideshare from row 34 to 35. Removed the two probe-specific test methods. All 13 parser-related tests pass, backward compatibility confirmed against April files.
 
-- `process.html`:
-  - `renderSheets()` now renders every sheet in `file.sheets` as a tab, matching the Review modal tab pattern.
-  - Extracted `showIncorrectParser(errors)` and `showParserCorrect()` helper functions for the overlay messages.
-  - Added a `Validate` button in the footer (`data-parse-validate`), shown only when validation fails.
-  - Sheet tab clicks set `activeParse.selectedSheet` and re-render the preview.
-  - `Validate` click fetches the probe endpoint for the selected sheet. On success, it enables `Parse`. On failure, it re-shows "Incorrect parser" with the specific errors.
-  - `Parse` click sends `sheet_name` in the POST body if a sheet was selected during probing.
-  - `truncateSheetName()` helper added to keep tab labels consistent with the Review modal.
+**Vendor guidelines**
+- Created `docs/vendor_report_guidelines.md` with general structural stability recommendations (sheet/tab stability, column consistency, header row stability, section boundaries, data granularity, file format guidance). These are structural rules, not specific wording requirements.
 
-**Limitations**
-
-- Multi-worksheet schemas (`schema["worksheets"]`) are not yet supported by the probe. The probe returns an error immediately if the schema uses the `worksheets` array format. Single `sheet_name` schemas are fully supported.
-- CSV files cannot be probed because they do not have named sheets.
+**Result**
+- `PODCASTONE MAY 2026 FINAL REPORT.xlsx`: 31 rows parsed
+- `T-MOBILE MAY 2026 FINAL REPORT.xlsx`: 31 rows parsed
+- April files continue to parse correctly (30 rows each).
 
 ## Immediate Next Steps
 

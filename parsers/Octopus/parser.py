@@ -16,15 +16,16 @@ def parse_file(source_path: Path, input_schema: dict[str, Any], output_columns: 
         daily_totals: dict[str, dict[str, Decimal]] = {}
 
         for table in input_schema.get("tables", []):
-            validate_table_header(sheet, table)
+            header_row, first_data_row = resolve_table_bounds(sheet, table)
+            validate_table_header(sheet, table, header_row)
             columns = table["columns"]
             date_column = column_letter_to_index(columns["date"])
             impressions_column = column_letter_to_index(columns["impressions"])
             spend_column = column_letter_to_index(columns["spend"])
 
             for row_number, row in enumerate(
-                sheet.iter_rows(min_row=table["first_data_row"], max_row=sheet.max_row, values_only=True),
-                start=table["first_data_row"],
+                sheet.iter_rows(min_row=first_data_row, max_row=sheet.max_row, values_only=True),
+                start=first_data_row,
             ):
                 date_value = value_at(row, date_column)
                 if date_value == next_table_name(input_schema, table["name"]):
@@ -32,7 +33,10 @@ def parse_file(source_path: Path, input_schema: dict[str, Any], output_columns: 
                 if date_value in (None, ""):
                     continue
 
-                row_date = parse_date(date_value, row_number, table["name"])
+                try:
+                    row_date = parse_date(date_value, row_number, table["name"])
+                except ValueError:
+                    continue
                 totals = daily_totals.setdefault(row_date, {"Spend": Decimal("0"), "Impressions": Decimal("0")})
                 totals["Spend"] += parse_decimal(value_at(row, spend_column), row_number, f"{table['name']} spend")
                 totals["Impressions"] += parse_decimal(
@@ -67,13 +71,47 @@ def parse_file(source_path: Path, input_schema: dict[str, Any], output_columns: 
         workbook.close()
 
 
-def validate_table_header(sheet: Any, table: dict[str, Any]) -> None:
-    header_row = table["header_row"]
-    expected = {
-        "date": table["name"],
-        "impressions": "Impressions",
-        "spend": "Spend",
-    }
+def resolve_table_bounds(sheet: Any, table: dict[str, Any]) -> tuple[int, int]:
+    """Return (header_row, first_data_row) for a table.
+
+    Exact rows are used when header_row is present.
+    Dynamic discovery is used when match_anchor/anchor_column are present.
+    """
+    if "header_row" in table:
+        return table["header_row"], table["first_data_row"]
+
+    anchor_text = table.get("match_anchor")
+    anchor_column = table.get("anchor_column", "A")
+    offset = table.get("first_data_row_offset", 1)
+
+    if not anchor_text:
+        raise ValueError(f"Table {table.get('name')!r} is missing header_row or match_anchor.")
+
+    col_idx = column_letter_to_index(anchor_column)
+    for row_number in range(1, sheet.max_row + 1):
+        cell_value = sheet.cell(row_number, col_idx).value
+        if cell_value is not None and str(cell_value).strip() == anchor_text:
+            return row_number, row_number + offset
+
+    raise ValueError(
+        f"Anchor text {anchor_text!r} not found in column {anchor_column} of sheet '{sheet.title}'."
+    )
+
+
+def validate_table_header(sheet: Any, table: dict[str, Any], header_row: int) -> None:
+    header_names = table.get("header_names")
+    if header_names:
+        expected = {
+            "date": header_names["date"],
+            "impressions": header_names["impressions"],
+            "spend": header_names["spend"],
+        }
+    else:
+        expected = {
+            "date": table["name"],
+            "impressions": "Impressions",
+            "spend": "Spend",
+        }
     for field, expected_name in expected.items():
         column_index = column_letter_to_index(table["columns"][field])
         actual = next(

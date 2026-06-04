@@ -1,6 +1,6 @@
 {
   "source_file": "data/inbox/home/josh/PODCASTONE_April 2026 FINAL REPORT.xlsx",
-  "sheet_name": "Week 1-5 BASE DLY 4.1-4.30",
+  "target_file": "_old/final/PodcastOne.csv",
   "file_type": "xlsx",
   "header": {
     "row": 5,
@@ -33,23 +33,23 @@
   },
   "worksheets": [
     {
-      "name": "Week 1-5 BASE DLY 4.1-4.30",
+      "match_keywords": ["BASE", "DLY"],
       "header_row": 5,
       "first_data_row": 6,
-      "columns": {
-        "date": "D",
-        "impressions": "E",
-        "spend": "F"
+      "columns_by_header": {
+        "date": "Day",
+        "impressions": "Audio Impressions",
+        "spend": "$ By Day"
       }
     },
     {
-      "name": "WC Week 1-5 DLY 4.1-4.30",
+      "match_keywords": ["WC", "DLY"],
       "header_row": 5,
       "first_data_row": 6,
-      "columns": {
-        "date": "D",
-        "impressions": "E",
-        "spend": "F"
+      "columns_by_header": {
+        "date": "Day",
+        "impressions": "Audio Impressions",
+        "spend": "$ By Day"
       }
     }
   ],

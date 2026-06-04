@@ -1244,7 +1244,6 @@
         </div>
         <div class="actions">
           <button class="button review-action-parsing" type="button" data-parse-submit>Parse</button>
-          <button class="button review-action-parsing" type="button" data-parse-validate hidden>Validate</button>
           <button class="button review-action-parsing" type="button" data-approval-submit hidden>Approval</button>
           <button class="button review-action-cancel" type="button" data-parse-close>Cancel</button>
         </div>
@@ -1305,7 +1304,6 @@
     const parsePreviewScroll = parsePreview.querySelector("[data-parse-scroll]");
     const chartPreview = document.querySelector("[data-chart-preview]");
     const parseSubmit = document.querySelector("[data-parse-submit]");
-    const parseValidate = document.querySelector("[data-parse-validate]");
     const approvalSubmit = document.querySelector("[data-approval-submit]");
     const parseVendorSelect = document.querySelector("[data-parse-vendor-select]");
     const parseVendorSave = document.querySelector("[data-parse-vendor-save]");
@@ -1360,7 +1358,6 @@
       parsePreview.hidden = false;
       approvalSubmit.hidden = true;
       parseSubmit.hidden = false;
-      if (parseValidate) parseValidate.hidden = true;
       if (parseDetailsToggle) {
         parseDetailsToggle.setAttribute("aria-expanded", "false");
         parseDetailsToggle.setAttribute("aria-label", "Show file details");
@@ -1399,7 +1396,6 @@
       approvalSubmit.disabled = true;
       parseSubmit.hidden = false;
       parseSubmit.disabled = true;
-      if (parseValidate) parseValidate.hidden = true;
       if (parseVendorSelect) parseVendorSelect.innerHTML = "";
       if (parseDetailsToggle) {
         parseDetailsToggle.setAttribute("aria-expanded", "false");
@@ -1584,7 +1580,6 @@
       parseValidation.textContent = "";
       parseValidation.classList.remove("status-red", "status-green");
       parseSubmit.disabled = !validation.ok;
-      if (parseValidate) parseValidate.hidden = validation.ok;
       if (validation.warnings && validation.warnings.length) {
         parseValidation.textContent = validation.warnings.join("; ");
         parseValidation.classList.add("status-green");
@@ -1804,7 +1799,6 @@
           chartPreview.hidden = false;
           if (parseVendorPanel) parseVendorPanel.hidden = true;
           parseSubmit.hidden = true;
-          if (parseValidate) parseValidate.hidden = true;
           approvalSubmit.hidden = true;
           if (parseBack) parseBack.hidden = true;
           parseTitle.textContent = row.dataset.approvalOutput || row.dataset.historyOutput || "Parsed output";
@@ -1837,7 +1831,6 @@
         chartPreview.hidden = false;
         if (parseVendorPanel) parseVendorPanel.hidden = true;
         parseSubmit.hidden = true;
-        if (parseValidate) parseValidate.hidden = true;
         approvalSubmit.hidden = false;
         approvalSubmit.disabled = false;
         if (parseBack) parseBack.hidden = false;
@@ -1851,40 +1844,6 @@
         parseSubmit.disabled = false;
       }
     });
-
-    if (parseValidate) {
-      parseValidate.addEventListener("click", async () => {
-        if (!activeParse || !activeParse.selectedSheet) return;
-        parseValidate.disabled = true;
-        try {
-          const url = new URL(activeParse.parseUrl + "probe/", window.location.href);
-          url.searchParams.set("sheet_name", activeParse.selectedSheet);
-          if (parseVendorSelect && parseVendorSelect.value) {
-            url.searchParams.set("vendor_id", parseVendorSelect.value);
-          }
-          const response = await fetch(url.toString());
-          const payload = await response.json();
-          if (!response.ok) throw new Error(payload.error || "Validation failed.");
-          const validation = payload.validation;
-          if (validation.ok) {
-            showParserCorrect();
-            parseSubmit.disabled = false;
-            parseValidation.textContent = "";
-            parseValidation.classList.remove("status-red");
-          } else {
-            showIncorrectParser(validation.errors);
-            parseSubmit.disabled = true;
-            parseValidation.textContent = validation.errors.join("; ");
-            parseValidation.classList.add("status-red");
-          }
-        } catch (error) {
-          showIncorrectParser([error.message]);
-          parseSubmit.disabled = true;
-        } finally {
-          parseValidate.disabled = false;
-        }
-      });
-    }
 
     if (parseVendorSave) {
       parseVendorSave.addEventListener("click", async () => {
@@ -2329,7 +2288,6 @@
         approvalSubmit.hidden = true;
         parseSubmit.hidden = false;
         parseSubmit.disabled = false;
-        if (parseValidate) parseValidate.hidden = true;
         if (parseVendorPanel) parseVendorPanel.hidden = false;
         parseBack.hidden = true;
       });

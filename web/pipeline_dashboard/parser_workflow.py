@@ -206,55 +206,6 @@ def validate_asset_parser(asset: Asset) -> dict[str, Any]:
     return validation_payload(asset, paths, schema, errors, warnings, approved_path)
 
 
-def probe_sheet_validation(asset: Asset, sheet_name: str) -> dict[str, Any]:
-    errors: list[str] = []
-    warnings: list[str] = []
-    schema: dict[str, Any] = {}
-    paths = parser_paths_for_vendor(asset.vendor)
-
-    if not asset.vendor:
-        errors.append("No vendor is assigned.")
-    if not paths:
-        errors.append("No parser folder is configured for this vendor.")
-        return validation_payload(asset, None, schema, errors, warnings)
-
-    if not paths.schema_path.exists():
-        errors.append(f"Missing input schema: {display_path(paths.schema_path)}")
-    else:
-        try:
-            schema = json.loads(paths.schema_path.read_text(encoding="utf-8"))
-        except json.JSONDecodeError as exc:
-            errors.append(f"Input schema is not valid JSON: {exc}")
-
-    if not paths.parser_path.exists():
-        errors.append(f"Missing parser file: {display_path(paths.parser_path)}")
-
-    if not asset.local_path:
-        errors.append("Asset has no local file path.")
-    else:
-        try:
-            source_path = inbox_file_path(asset.local_path)
-        except ReviewPreviewError as exc:
-            errors.append(str(exc))
-        else:
-            if schema:
-                file_type = schema.get("file_type", "").lower()
-                extension = source_path.suffix.lower().lstrip(".")
-                if file_type and file_type != extension:
-                    if not (file_type == "xlsx" and extension == "xlsm"):
-                        errors.append(f"Schema expects {file_type}; selected file is {extension or 'unknown'}.")
-                if file_type in {"xlsx", "xlsm"} or extension in {"xlsx", "xlsm"}:
-                    errors.extend(validate_excel_schema_probe(source_path, schema, sheet_name))
-                else:
-                    errors.append("Sheet probing is only supported for Excel files.")
-
-    approved_path = approved_csv_path(asset.vendor)
-    if not approved_path:
-        warnings.append("No approved historical CSV exists for comparison.")
-
-    return validation_payload(asset, paths, schema, errors, warnings, approved_path)
-
-
 def parse_asset_rows(asset: Asset, sheet_name: str | None = None) -> ParsedRows:
     if not asset.vendor:
         raise ParserWorkflowError("No vendor is assigned.")
@@ -269,23 +220,9 @@ def parse_asset_rows(asset: Asset, sheet_name: str | None = None) -> ParsedRows:
     source_path = inbox_file_path(asset.local_path)
     schema = load_json(paths.schema_path)
 
-    if sheet_name:
-        errors: list[str] = []
-        file_type = schema.get("file_type", "").lower()
-        extension = source_path.suffix.lower().lstrip(".")
-        if file_type and file_type != extension:
-            if not (file_type == "xlsx" and extension == "xlsm"):
-                errors.append(f"Schema expects {file_type}; selected file is {extension or 'unknown'}.")
-        if file_type in {"xlsx", "xlsm"} or extension in {"xlsx", "xlsm"}:
-            errors.extend(validate_excel_schema_probe(source_path, schema, sheet_name))
-        else:
-            errors.append("Sheet probing is only supported for Excel files.")
-        if errors:
-            raise ParserWorkflowError("; ".join(errors))
-    else:
-        validation = validate_asset_parser(asset)
-        if not validation["ok"]:
-            raise ParserWorkflowError("; ".join(validation["errors"]))
+    validation = validate_asset_parser(asset)
+    if not validation["ok"]:
+        raise ParserWorkflowError("; ".join(validation["errors"]))
 
     approved_path = approved_csv_path(asset.vendor)
     output_columns = load_output_columns(approved_path, schema)
@@ -454,6 +391,61 @@ def validate_schema_against_file(source_path: Path, schema: dict[str, Any]) -> l
     return errors
 
 
+def _resolve_sheet_name(workbook: Any, worksheet: dict[str, Any]) -> str | None:
+    """Find actual sheet name using match_keywords or exact name."""
+    keywords = worksheet.get("match_keywords")
+    if keywords:
+        keywords_lower = [str(k).lower() for k in keywords]
+        for name in workbook.sheetnames:
+            if all(kw in name.lower() for kw in keywords_lower):
+                return name
+        return None
+    exact = worksheet.get("name")
+    if exact and exact in workbook.sheetnames:
+        return exact
+    return None
+
+
+def _discover_columns(sheet: Any, header_row: int, columns_by_header: dict[str, str]) -> dict[str, str]:
+    """Scan header row and return field -> column letter mapping."""
+    header_values = list(sheet.iter_rows(min_row=header_row, max_row=header_row, values_only=True))[0]
+    result: dict[str, str] = {}
+    for field, expected_text in columns_by_header.items():
+        expected_clean = str(expected_text).strip()
+        found = False
+        for idx, cell in enumerate(header_values, start=1):
+            if cell is not None and str(cell).strip() == expected_clean:
+                result[field] = _index_to_column_letter(idx)
+                found = True
+                break
+        if not found:
+            raise ValueError(
+                f"Header '{expected_clean}' for field '{field}' not found in row {header_row} of sheet '{sheet.title}'."
+            )
+    return result
+
+
+def _index_to_column_letter(index: int) -> str:
+    """Convert a 1-based column index to an Excel column letter."""
+    result = []
+    while index > 0:
+        index, remainder = divmod(index - 1, 26)
+        result.append(chr(remainder + ord("A")))
+    return "".join(reversed(result))
+
+
+def _find_anchor_row(sheet: Any, anchor_text: str, column_letter: str) -> int:
+    """Scan a column for anchor text and return the row number."""
+    col_idx = column_letter_to_index(column_letter)
+    for row_number in range(1, sheet.max_row + 1):
+        cell_value = sheet.cell(row_number, col_idx).value
+        if cell_value is not None and str(cell_value).strip() == anchor_text:
+            return row_number
+    raise ValueError(
+        f"Anchor text {anchor_text!r} not found in column {column_letter} of sheet '{sheet.title}'."
+    )
+
+
 def validate_excel_schema_probe(source_path: Path, schema: dict[str, Any], probe_sheet_name: str) -> list[str]:
     from openpyxl import load_workbook
 
@@ -466,16 +458,10 @@ def validate_excel_schema_probe(source_path: Path, schema: dict[str, Any], probe
         worksheets = schema.get("worksheets") or []
         if worksheets:
             worksheet = next(
-                (entry for entry in worksheets if entry.get("name") == probe_sheet_name),
+                (entry for entry in worksheets if _resolve_sheet_name(workbook, entry) == probe_sheet_name),
                 None,
             )
             if worksheet is None:
-                declared = [entry.get("name") for entry in worksheets if entry.get("name")]
-                if declared:
-                    return [
-                        f"Sheet {probe_sheet_name!r} is not declared in the input schema; "
-                        f"expected one of: {', '.join(declared)}."
-                    ]
                 return [f"Sheet {probe_sheet_name!r} is not declared in the input schema."]
 
             header_row = worksheet.get("header_row")
@@ -484,17 +470,69 @@ def validate_excel_schema_probe(source_path: Path, schema: dict[str, Any], probe
 
             selected_columns = schema.get("selected_columns") or {}
             sheet = workbook[probe_sheet_name]
-            for field, letter in (worksheet.get("columns") or {}).items():
-                expected = selected_columns.get(field)
-                if not expected:
-                    continue
-                column_index = column_letter_to_index(letter)
-                actual = sheet.cell(header_row, column_index).value
-                if actual != expected:
-                    errors.append(
-                        f"Header mismatch in {probe_sheet_name!r} at {letter}{header_row}: "
-                        f"expected {expected!r}, found {actual!r}."
-                    )
+            columns_by_header = worksheet.get("columns_by_header")
+            if columns_by_header:
+                try:
+                    discovered = _discover_columns(sheet, header_row, columns_by_header)
+                except ValueError as exc:
+                    return [str(exc)]
+                for field, expected in selected_columns.items():
+                    if field not in discovered:
+                        continue
+                    actual = sheet.cell(header_row, column_letter_to_index(discovered[field])).value
+                    if actual != expected:
+                        errors.append(
+                            f"Header mismatch in {probe_sheet_name!r} at row {header_row}: "
+                            f"expected {expected!r}, found {actual!r}."
+                        )
+            else:
+                for field, letter in (worksheet.get("columns") or {}).items():
+                    expected = selected_columns.get(field)
+                    if not expected:
+                        continue
+                    column_index = column_letter_to_index(letter)
+                    actual = sheet.cell(header_row, column_index).value
+                    if actual != expected:
+                        errors.append(
+                            f"Header mismatch in {probe_sheet_name!r} at {letter}{header_row}: "
+                            f"expected {expected!r}, found {actual!r}."
+                        )
+            return errors
+
+        tables = schema.get("tables") or []
+        if tables:
+            sheet = workbook[probe_sheet_name]
+            for table in tables:
+                anchor = table.get("match_anchor")
+                anchor_column = table.get("anchor_column", "A")
+                header_names = table.get("header_names")
+                if anchor:
+                    try:
+                        discovered_row = _find_anchor_row(sheet, anchor, anchor_column)
+                    except ValueError:
+                        errors.append(
+                            f"Anchor text {anchor!r} not found in column {anchor_column} of sheet {probe_sheet_name!r}."
+                        )
+                        continue
+                    if header_names:
+                        for field, expected_name in header_names.items():
+                            column_index = column_letter_to_index(table["columns"][field])
+                            actual = sheet.cell(discovered_row, column_index).value
+                            if actual != expected_name:
+                                errors.append(
+                                    f"Header mismatch in {table['name']} at row {discovered_row}: "
+                                    f"expected {expected_name!r}, found {actual!r}."
+                                )
+                elif table.get("header_row"):
+                    header_row = table["header_row"]
+                    for field, expected_name in (table.get("header_names") or {}).items():
+                        column_index = column_letter_to_index(table["columns"][field])
+                        actual = sheet.cell(header_row, column_index).value
+                        if actual != expected_name:
+                            errors.append(
+                                f"Header mismatch in {table['name']} at row {header_row}: "
+                                f"expected {expected_name!r}, found {actual!r}."
+                            )
             return errors
 
         header = schema.get("header") or {}
@@ -526,29 +564,91 @@ def validate_excel_schema(source_path: Path, schema: dict[str, Any]) -> list[str
         if worksheets:
             selected_columns = schema.get("selected_columns") or {}
             for worksheet in worksheets:
-                sheet_name = worksheet.get("name")
+                sheet_name = _resolve_sheet_name(workbook, worksheet)
                 if not sheet_name:
-                    errors.append("Input schema worksheet is missing name.")
-                    continue
-                if sheet_name not in workbook.sheetnames:
-                    errors.append(f"Sheet {sheet_name!r} was not found.")
+                    keywords = worksheet.get("match_keywords")
+                    expected_name = worksheet.get("name")
+                    if keywords:
+                        errors.append(f"No sheet matching keywords {keywords!r} was found.")
+                    elif expected_name:
+                        errors.append(f"Sheet {expected_name!r} was not found.")
+                    else:
+                        errors.append("Input schema worksheet is missing name / match_keywords.")
                     continue
                 header_row = worksheet.get("header_row")
                 if not header_row:
                     errors.append(f"Input schema worksheet {sheet_name!r} is missing header_row.")
                     continue
                 sheet = workbook[sheet_name]
-                for field, letter in (worksheet.get("columns") or {}).items():
-                    expected = selected_columns.get(field)
-                    if not expected:
+                columns_by_header = worksheet.get("columns_by_header")
+                if columns_by_header:
+                    try:
+                        discovered = _discover_columns(sheet, header_row, columns_by_header)
+                    except ValueError as exc:
+                        errors.append(str(exc))
                         continue
-                    column_index = column_letter_to_index(letter)
-                    actual = sheet.cell(header_row, column_index).value
-                    if actual != expected:
+                    for field, expected in selected_columns.items():
+                        if field not in discovered:
+                            continue
+                        actual = sheet.cell(header_row, column_letter_to_index(discovered[field])).value
+                        if actual != expected:
+                            errors.append(
+                                f"Header mismatch in {sheet_name!r} at row {header_row}: "
+                                f"expected {expected!r}, found {actual!r}."
+                            )
+                else:
+                    for field, letter in (worksheet.get("columns") or {}).items():
+                        expected = selected_columns.get(field)
+                        if not expected:
+                            continue
+                        column_index = column_letter_to_index(letter)
+                        actual = sheet.cell(header_row, column_index).value
+                        if actual != expected:
+                            errors.append(
+                                f"Header mismatch in {sheet_name!r} at {letter}{header_row}: "
+                                f"expected {expected!r}, found {actual!r}."
+                            )
+            return errors
+
+        tables = schema.get("tables") or []
+        if tables:
+            sheet_name = schema.get("sheet_name")
+            if not sheet_name:
+                return ["Input schema is missing sheet_name."]
+            if sheet_name not in workbook.sheetnames:
+                return [f"Sheet {sheet_name!r} was not found."]
+            sheet = workbook[sheet_name]
+            for table in tables:
+                anchor = table.get("match_anchor")
+                anchor_column = table.get("anchor_column", "A")
+                header_names = table.get("header_names")
+                if anchor:
+                    try:
+                        discovered_row = _find_anchor_row(sheet, anchor, anchor_column)
+                    except ValueError:
                         errors.append(
-                            f"Header mismatch in {sheet_name!r} at {letter}{header_row}: "
-                            f"expected {expected!r}, found {actual!r}."
+                            f"Anchor text {anchor!r} not found in column {anchor_column} of sheet {sheet_name!r}."
                         )
+                        continue
+                    if header_names:
+                        for field, expected_name in header_names.items():
+                            column_index = column_letter_to_index(table["columns"][field])
+                            actual = sheet.cell(discovered_row, column_index).value
+                            if actual != expected_name:
+                                errors.append(
+                                    f"Header mismatch in {table['name']} at row {discovered_row}: "
+                                    f"expected {expected_name!r}, found {actual!r}."
+                                )
+                elif table.get("header_row"):
+                    header_row = table["header_row"]
+                    for field, expected_name in (table.get("header_names") or {}).items():
+                        column_index = column_letter_to_index(table["columns"][field])
+                        actual = sheet.cell(header_row, column_index).value
+                        if actual != expected_name:
+                            errors.append(
+                                f"Header mismatch in {table['name']} at row {header_row}: "
+                                f"expected {expected_name!r}, found {actual!r}."
+                            )
             return errors
 
         sheet_name = schema.get("sheet_name")

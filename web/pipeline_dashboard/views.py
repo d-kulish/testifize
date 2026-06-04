@@ -31,7 +31,6 @@ from .parser_workflow import (
     final_period_label,
     final_processed_output_path,
     finalize_approved_output,
-    probe_sheet_validation,
     stage_asset_parser,
     upload_approved_output,
 )
@@ -966,31 +965,6 @@ def parse_file_preview(request, remote_item_id: str):
     except (ParserWorkflowError, ReviewPreviewError) as exc:
         return JsonResponse({"error": str(exc)}, status=400)
     return JsonResponse(payload)
-
-
-@require_GET
-def parse_sheet_probe(request, remote_item_id: str):
-    asset = get_object_or_404(
-        Asset.objects.select_related("vendor", "source_folder"),
-        remote_item_id=remote_item_id,
-        status=AssetStatus.PROCESSING,
-    )
-    vendor_id = request.GET.get("vendor_id", "")
-    if vendor_id:
-        try:
-            preview_vendor = Vendor.objects.get(pk=vendor_id, is_active=True)
-        except (Vendor.DoesNotExist, ValueError):
-            preview_vendor = None
-        if preview_vendor:
-            asset.vendor = preview_vendor
-    sheet_name = request.GET.get("sheet_name", "")
-    if not sheet_name:
-        return JsonResponse({"error": "Missing sheet_name parameter."}, status=400)
-    try:
-        validation = probe_sheet_validation(asset, sheet_name)
-    except (ParserWorkflowError, ReviewPreviewError) as exc:
-        return JsonResponse({"error": str(exc)}, status=400)
-    return JsonResponse({"validation": validation})
 
 
 @require_POST

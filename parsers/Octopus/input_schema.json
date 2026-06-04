@@ -33,12 +33,18 @@
     },
     {
       "name": "Rideshare",
-      "header_row": 34,
-      "first_data_row": 35,
+      "match_anchor": "Rideshare",
+      "anchor_column": "A",
+      "first_data_row_offset": 1,
       "columns": {
         "date": "A",
         "impressions": "B",
         "spend": "C"
+      },
+      "header_names": {
+        "date": "Rideshare",
+        "impressions": "Impressions",
+        "spend": "Spend"
       }
     }
   ],

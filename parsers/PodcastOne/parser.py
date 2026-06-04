@@ -15,16 +15,17 @@ def parse_file(source_path: Path, input_schema: dict[str, Any], output_columns: 
         daily_totals: dict[str, dict[str, Decimal]] = {}
 
         for worksheet in input_schema.get("worksheets", []):
-            sheet_name = worksheet["name"]
-            if sheet_name not in workbook.sheetnames:
-                raise ValueError(f"Sheet {sheet_name!r} was not found.")
+            actual_sheet_name = resolve_sheet_name(workbook, worksheet)
+            if actual_sheet_name is None:
+                raise ValueError(f"No sheet matching {worksheet.get('match_keywords') or worksheet.get('name')!r} was found.")
 
-            sheet = workbook[sheet_name]
-            validate_headers(sheet, worksheet)
-            columns = worksheet["columns"]
-            date_column = column_letter_to_index(columns["date"])
-            impressions_column = column_letter_to_index(columns["impressions"])
-            spend_column = column_letter_to_index(columns["spend"])
+            sheet = workbook[actual_sheet_name]
+            discovered = discover_columns(sheet, worksheet)
+            validate_headers(sheet, worksheet, discovered)
+
+            date_column = column_letter_to_index(discovered["date"])
+            impressions_column = column_letter_to_index(discovered["impressions"])
+            spend_column = column_letter_to_index(discovered["spend"])
 
             for row_number, row in enumerate(
                 sheet.iter_rows(min_row=worksheet["first_data_row"], max_row=sheet.max_row, values_only=True),
@@ -34,13 +35,13 @@ def parse_file(source_path: Path, input_schema: dict[str, Any], output_columns: 
                 if date_value in (None, ""):
                     continue
 
-                row_date = parse_date(date_value, row_number, sheet_name)
+                row_date = parse_date(date_value, row_number, actual_sheet_name)
                 totals = daily_totals.setdefault(row_date, {"Spend": Decimal("0"), "Impressions": Decimal("0")})
-                totals["Spend"] += parse_decimal(value_at(row, spend_column), row_number, f"{sheet_name} spend")
+                totals["Spend"] += parse_decimal(value_at(row, spend_column), row_number, f"{actual_sheet_name} spend")
                 totals["Impressions"] += parse_decimal(
                     value_at(row, impressions_column),
                     row_number,
-                    f"{sheet_name} impressions",
+                    f"{actual_sheet_name} impressions",
                 )
 
         if not daily_totals:
@@ -69,7 +70,55 @@ def parse_file(source_path: Path, input_schema: dict[str, Any], output_columns: 
         workbook.close()
 
 
-def validate_headers(sheet: Any, worksheet: dict[str, Any]) -> None:
+def resolve_sheet_name(workbook: Any, worksheet: dict[str, Any]) -> str | None:
+    """Find the actual sheet name using match_keywords or exact name."""
+    keywords = worksheet.get("match_keywords")
+    if keywords:
+        keywords_lower = [str(k).lower() for k in keywords]
+        for name in workbook.sheetnames:
+            name_lower = name.lower()
+            if all(kw in name_lower for kw in keywords_lower):
+                return name
+        return None
+    exact = worksheet.get("name")
+    if exact and exact in workbook.sheetnames:
+        return exact
+    return None
+
+
+def discover_columns(sheet: Any, worksheet: dict[str, Any]) -> dict[str, str]:
+    """Return a dict mapping field → column letter.
+
+    Prefers columns_by_header (scan header row for text), falls back to
+    the legacy columns dict (already letters).
+    """
+    columns_by_header = worksheet.get("columns_by_header")
+    if not columns_by_header:
+        return worksheet.get("columns", {})
+
+    header_row = worksheet.get("header_row")
+    if not header_row:
+        raise ValueError("Worksheet is missing header_row required for columns_by_header.")
+
+    result: dict[str, str] = {}
+    header_values = list(sheet.iter_rows(min_row=header_row, max_row=header_row, values_only=True))[0]
+
+    for field, expected_text in columns_by_header.items():
+        expected_clean = str(expected_text).strip()
+        found = False
+        for idx, cell in enumerate(header_values, start=1):
+            if cell is not None and str(cell).strip() == expected_clean:
+                result[field] = index_to_column_letter(idx)
+                found = True
+                break
+        if not found:
+            raise ValueError(
+                f"Header '{expected_clean}' for field '{field}' not found in row {header_row} of sheet '{sheet.title}'."
+            )
+    return result
+
+
+def validate_headers(sheet: Any, worksheet: dict[str, Any], discovered: dict[str, str]) -> None:
     header_row = worksheet["header_row"]
     expected = {
         "date": "Day",
@@ -77,7 +126,7 @@ def validate_headers(sheet: Any, worksheet: dict[str, Any]) -> None:
         "spend": "$ By Day",
     }
     for field, expected_name in expected.items():
-        column_index = column_letter_to_index(worksheet["columns"][field])
+        column_index = column_letter_to_index(discovered[field])
         actual = next(
             sheet.iter_rows(
                 min_row=header_row,
@@ -89,7 +138,7 @@ def validate_headers(sheet: Any, worksheet: dict[str, Any]) -> None:
         )[0]
         if actual != expected_name:
             raise ValueError(
-                f"Header mismatch in {worksheet['name']} at row {header_row}: "
+                f"Header mismatch in {sheet.title} at row {header_row}: "
                 f"expected {expected_name!r}, found {actual!r}."
             )
 
@@ -106,6 +155,15 @@ def column_letter_to_index(letter: str) -> int:
     for char in letter.upper():
         index = index * 26 + ord(char) - ord("A") + 1
     return index
+
+
+def index_to_column_letter(index: int) -> str:
+    """Convert a 1-based column index to an Excel column letter."""
+    result = []
+    while index > 0:
+        index, remainder = divmod(index - 1, 26)
+        result.append(chr(remainder + ord("A")))
+    return "".join(reversed(result))
 
 
 def parse_date(value: object, row_number: int, sheet_name: str) -> str:
