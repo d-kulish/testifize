@@ -20,16 +20,17 @@ def parse_file(source_path: Path, input_schema: dict[str, Any], output_columns: 
                 raise ValueError(f"No sheet matching {worksheet.get('match_keywords') or worksheet.get('name')!r} was found.")
 
             sheet = workbook[actual_sheet_name]
-            discovered = discover_columns(sheet, worksheet)
-            validate_headers(sheet, worksheet, discovered)
+            discovered, header_row = discover_columns(sheet, worksheet)
+            validate_headers(sheet, worksheet, discovered, header_row)
 
             date_column = column_letter_to_index(discovered["date"])
             impressions_column = column_letter_to_index(discovered["impressions"])
             spend_column = column_letter_to_index(discovered["spend"])
 
+            first_data_row = header_row + 1
             for row_number, row in enumerate(
-                sheet.iter_rows(min_row=worksheet["first_data_row"], max_row=sheet.max_row, values_only=True),
-                start=worksheet["first_data_row"],
+                sheet.iter_rows(min_row=first_data_row, max_row=sheet.max_row, values_only=True),
+                start=first_data_row,
             ):
                 date_value = value_at(row, date_column)
                 if date_value in (None, ""):
@@ -86,19 +87,19 @@ def resolve_sheet_name(workbook: Any, worksheet: dict[str, Any]) -> str | None:
     return None
 
 
-def discover_columns(sheet: Any, worksheet: dict[str, Any]) -> dict[str, str]:
-    """Return a dict mapping field → column letter.
+def discover_columns(sheet: Any, worksheet: dict[str, Any]) -> tuple[dict[str, str], int]:
+    """Return (field → column letter mapping, discovered header row).
 
     Prefers columns_by_header (scan header row for text), falls back to
     the legacy columns dict (already letters).
     """
     columns_by_header = worksheet.get("columns_by_header")
     if not columns_by_header:
-        return worksheet.get("columns", {})
+        return worksheet.get("columns", {}), worksheet.get("header_row", 1)
 
     header_row = worksheet.get("header_row")
     if not header_row:
-        raise ValueError("Worksheet is missing header_row required for columns_by_header.")
+        header_row = _find_header_row(sheet, columns_by_header)
 
     result: dict[str, str] = {}
     header_values = list(sheet.iter_rows(min_row=header_row, max_row=header_row, values_only=True))[0]
@@ -115,11 +116,23 @@ def discover_columns(sheet: Any, worksheet: dict[str, Any]) -> dict[str, str]:
             raise ValueError(
                 f"Header '{expected_clean}' for field '{field}' not found in row {header_row} of sheet '{sheet.title}'."
             )
-    return result
+    return result, header_row
 
 
-def validate_headers(sheet: Any, worksheet: dict[str, Any], discovered: dict[str, str]) -> None:
-    header_row = worksheet["header_row"]
+def _find_header_row(sheet: Any, columns_by_header: dict[str, str], max_search_rows: int = 30) -> int:
+    """Scan rows 1–max_search_rows for a row containing all expected header texts."""
+    expected_headers = {str(v).strip() for v in columns_by_header.values()}
+    for row_number in range(1, min(max_search_rows, sheet.max_row) + 1):
+        row_values = list(sheet.iter_rows(min_row=row_number, max_row=row_number, values_only=True))[0]
+        row_texts = {str(cell).strip() for cell in row_values if cell is not None}
+        if expected_headers.issubset(row_texts):
+            return row_number
+    raise ValueError(
+        f"Could not find a header row containing {sorted(expected_headers)!r} in sheet '{sheet.title}'."
+    )
+
+
+def validate_headers(sheet: Any, worksheet: dict[str, Any], discovered: dict[str, str], header_row: int) -> None:
     expected = {
         "date": "Day",
         "impressions": "Audio Impressions",

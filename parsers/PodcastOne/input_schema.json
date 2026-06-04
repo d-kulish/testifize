@@ -34,8 +34,6 @@
   "worksheets": [
     {
       "match_keywords": ["BASE", "DLY"],
-      "header_row": 5,
-      "first_data_row": 6,
       "columns_by_header": {
         "date": "Day",
         "impressions": "Audio Impressions",
@@ -44,8 +42,6 @@
     },
     {
       "match_keywords": ["WC", "DLY"],
-      "header_row": 5,
-      "first_data_row": 6,
       "columns_by_header": {
         "date": "Day",
         "impressions": "Audio Impressions",

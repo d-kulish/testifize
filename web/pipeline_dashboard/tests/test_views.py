@@ -2186,37 +2186,41 @@ class DashboardViewTests(TestCase):
         workbook.remove(workbook.active)
         base = workbook.create_sheet("BASE MAY DLY SUMM. 5.1-5.31")
         wc = workbook.create_sheet("WC MAY DLY SUMM. 5.1-5.31")
-        # BASE sheet keeps all columns
-        base["A5"] = "Order ID"
-        base["B5"] = "Order"
-        base["C5"] = "Campaign"
-        base["D5"] = "Day"
-        base["E5"] = "Audio Impressions"
-        base["F5"] = "$ By Day"
-        base["D6"] = "2026-05-01"
-        base["E6"] = 100
-        base["F6"] = 10.50
-        base["D7"] = "2026-05-02"
-        base["E7"] = 200
-        base["F7"] = 20.25
-        base["A8"] = "TOTAL"
-        base["E8"] = 300
-        base["F8"] = 30.75
-        # WC sheet dropped the Campaign column (shifted left)
-        wc["A5"] = "Order ID"
-        wc["B5"] = "Order"
-        wc["C5"] = "Day"
-        wc["D5"] = "Audio Impressions"
-        wc["E5"] = "$ By Day"
-        wc["C6"] = "2026-05-01"
-        wc["D6"] = "$300"
-        wc["E6"] = "$30"
-        wc["C7"] = "2026-05-02"
-        wc["D7"] = 400
-        wc["E7"] = 40
-        wc["A8"] = "TOTAL"
-        wc["D8"] = 700
-        wc["E8"] = 70
+        # Row 5 is a title row to prove dynamic header-row discovery
+        base["A5"] = "BASE DAILY SUMMARY"
+        # BASE sheet keeps all columns (header now at row 6)
+        base["A6"] = "Order ID"
+        base["B6"] = "Order"
+        base["C6"] = "Campaign"
+        base["D6"] = "Day"
+        base["E6"] = "Audio Impressions"
+        base["F6"] = "$ By Day"
+        base["D7"] = "2026-05-01"
+        base["E7"] = 100
+        base["F7"] = 10.50
+        base["D8"] = "2026-05-02"
+        base["E8"] = 200
+        base["F8"] = 20.25
+        base["A9"] = "TOTAL"
+        base["E9"] = 300
+        base["F9"] = 30.75
+        # Row 5 is a title row to prove dynamic header-row discovery
+        wc["A5"] = "WC DAILY SUMMARY"
+        # WC sheet dropped the Campaign column (shifted left; header now at row 6)
+        wc["A6"] = "Order ID"
+        wc["B6"] = "Order"
+        wc["C6"] = "Day"
+        wc["D6"] = "Audio Impressions"
+        wc["E6"] = "$ By Day"
+        wc["C7"] = "2026-05-01"
+        wc["D7"] = "$300"
+        wc["E7"] = "$30"
+        wc["C8"] = "2026-05-02"
+        wc["D8"] = 400
+        wc["E8"] = 40
+        wc["A9"] = "TOTAL"
+        wc["D9"] = 700
+        wc["E9"] = 70
         workbook.save(workbook_path)
         workbook.close()
 

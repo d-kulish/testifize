@@ -446,6 +446,19 @@ def _find_anchor_row(sheet: Any, anchor_text: str, column_letter: str) -> int:
     )
 
 
+def _find_header_row(sheet: Any, columns_by_header: dict[str, str], max_search_rows: int = 30) -> int:
+    """Scan rows 1–max_search_rows for a row containing all expected header texts."""
+    expected_headers = {str(v).strip() for v in columns_by_header.values()}
+    for row_number in range(1, min(max_search_rows, sheet.max_row) + 1):
+        row_values = list(sheet.iter_rows(min_row=row_number, max_row=row_number, values_only=True))[0]
+        row_texts = {str(cell).strip() for cell in row_values if cell is not None}
+        if expected_headers.issubset(row_texts):
+            return row_number
+    raise ValueError(
+        f"Could not find a header row containing {sorted(expected_headers)!r} in sheet '{sheet.title}'."
+    )
+
+
 def validate_excel_schema_probe(source_path: Path, schema: dict[str, Any], probe_sheet_name: str) -> list[str]:
     from openpyxl import load_workbook
 
@@ -464,13 +477,18 @@ def validate_excel_schema_probe(source_path: Path, schema: dict[str, Any], probe
             if worksheet is None:
                 return [f"Sheet {probe_sheet_name!r} is not declared in the input schema."]
 
-            header_row = worksheet.get("header_row")
-            if not header_row:
-                return [f"Input schema worksheet {probe_sheet_name!r} is missing header_row."]
-
             selected_columns = schema.get("selected_columns") or {}
             sheet = workbook[probe_sheet_name]
             columns_by_header = worksheet.get("columns_by_header")
+            header_row = worksheet.get("header_row")
+            if columns_by_header and not header_row:
+                try:
+                    header_row = _find_header_row(sheet, columns_by_header)
+                except ValueError as exc:
+                    return [str(exc)]
+            if not header_row:
+                return [f"Input schema worksheet {probe_sheet_name!r} is missing header_row."]
+
             if columns_by_header:
                 try:
                     discovered = _discover_columns(sheet, header_row, columns_by_header)
@@ -575,12 +593,18 @@ def validate_excel_schema(source_path: Path, schema: dict[str, Any]) -> list[str
                     else:
                         errors.append("Input schema worksheet is missing name / match_keywords.")
                     continue
+                sheet = workbook[sheet_name]
+                columns_by_header = worksheet.get("columns_by_header")
                 header_row = worksheet.get("header_row")
+                if columns_by_header and not header_row:
+                    try:
+                        header_row = _find_header_row(sheet, columns_by_header)
+                    except ValueError as exc:
+                        errors.append(str(exc))
+                        continue
                 if not header_row:
                     errors.append(f"Input schema worksheet {sheet_name!r} is missing header_row.")
                     continue
-                sheet = workbook[sheet_name]
-                columns_by_header = worksheet.get("columns_by_header")
                 if columns_by_header:
                     try:
                         discovered = _discover_columns(sheet, header_row, columns_by_header)

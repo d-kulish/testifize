@@ -762,15 +762,15 @@ Final/<Reporting_Period>/<Vendor>_<Reporting_Period>.csv
 - **New approach**: parsers now discover structure automatically instead of relying on hardcoded names and positions.
 
 **PodcastOne**
-- `input_schema.json`: replaced exact `sheet_name` with `match_keywords` arrays (`["BASE", "DLY"]`, `["WC", "DLY"]`). Replaced fixed column letters with `columns_by_header` — the parser scans the header row for expected text (`"Day"`, `"Audio Impressions"`, `"$ By Day"`) and discovers the actual column letters.
-- `parser.py`: added `resolve_sheet_name()` for keyword matching and `discover_columns()` for header-text column discovery.
+- `input_schema.json`: replaced exact `sheet_name` with `match_keywords` arrays (`["BASE", "DLY"]`, `["WC", "DLY"]`). Replaced fixed column letters with `columns_by_header` — the parser scans the header row for expected text (`"Day"`, `"Audio Impressions"`, `"$ By Day"`) and discovers the actual column letters. Removed hardcoded `header_row` and `first_data_row`; the parser now discovers the header row dynamically by scanning for a row that contains all expected header texts.
+- `parser.py`: added `resolve_sheet_name()` for keyword matching, `discover_columns()` for header-text column discovery, and `_find_header_row()` for dynamic header-row scanning.
 
 **Octopus**
 - `input_schema.json`: replaced fixed `header_row: 34` for the Rideshare table with `match_anchor: "Rideshare"` and `anchor_column: "A"`. Added `header_names` for validation at the discovered row.
 - `parser.py`: added `resolve_table_bounds()` to scan column A for the `"Rideshare"` anchor text and compute the data row dynamically. Added `header_names` support in `validate_table_header()`. Wrapped date parsing in try/except so non-date rows (e.g. `"Totals"`) are skipped instead of crashing.
 
 **Generic validation**
-- `parser_workflow.py`: updated `validate_excel_schema()` and `validate_excel_schema_probe()` to support `match_keywords`, `columns_by_header`, `match_anchor`, and `anchor_column`. Removed `probe_sheet_validation()` entirely and simplified `parse_asset_rows()` — the extra probe-validation branch is gone.
+- `parser_workflow.py`: updated `validate_excel_schema()` and `validate_excel_schema_probe()` to support `match_keywords`, `columns_by_header`, `match_anchor`, `anchor_column`, and `_find_header_row()`. Removed `probe_sheet_validation()` entirely and simplified `parse_asset_rows()` — the extra probe-validation branch is gone.
 
 **UI cleanup**
 - `process.html`: removed the `Validate` button, `parseValidate` JS variable, `showParserCorrect()`, and all related event listeners. The parse modal now only shows sheets and the `Parse` button.
@@ -778,7 +778,7 @@ Final/<Reporting_Period>/<Vendor>_<Reporting_Period>.csv
 - `urls.py`: removed `process/<str:remote_item_id>/parse/probe/` route.
 
 **Tests**
-- `test_views.py`: updated fixtures to simulate May drift — PodcastOne sheets use May naming and a WC sheet without the Campaign column; Octopus inserts a subtotal row shifting Rideshare from row 34 to 35. Removed the two probe-specific test methods. All 13 parser-related tests pass, backward compatibility confirmed against April files.
+- `test_views.py`: updated fixtures to simulate May drift — PodcastOne sheets use May naming and a WC sheet without the Campaign column, with an extra title row shifting the header from row 5 to row 6; Octopus inserts a subtotal row shifting Rideshare from row 34 to 35. Removed the two probe-specific test methods. All 13 parser-related tests pass, backward compatibility confirmed against April files.
 
 **Vendor guidelines**
 - Created `docs/vendor_report_guidelines.md` with general structural stability recommendations (sheet/tab stability, column consistency, header row stability, section boundaries, data granularity, file format guidance). These are structural rules, not specific wording requirements.
