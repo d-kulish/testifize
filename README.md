@@ -788,6 +788,13 @@ Final/<Reporting_Period>/<Vendor>_<Reporting_Period>.csv
 - `T-MOBILE MAY 2026 FINAL REPORT.xlsx`: 31 rows parsed
 - April files continue to parse correctly (30 rows each).
 
+### Octopus UPDATED file rejection (2026-06-05)
+
+- **Problem**: Josh resubmitted `UPDATED T-MOBILE MAY 2026 FINAL REPORT.xlsx` after the initial May file had already been parsed. The UPDATED file removed the `"Daily Spend"` sheet entirely and replaced it with eight new detail sheets (`DOOH Venue Types`, `Rideshare Engagement`, `DOOH Media Owner`, `State`, `State by Day`, `Creatives`, `Raw Data 1`, `Raw Data 2`). The parser failed with `"Sheet 'Daily Spend' was not found"`.
+- **Analysis**: The `"Raw Data 2"` sheet (10,321 rows) contains the same combined daily DOOH + Rideshare data at the raw placement level. When aggregated by date, the totals are mathematically identical to the already-processed `Octopus_May_2026.csv`. However, the file structure is fundamentally different — no `"Daily Spend"` sheet, no pre-aggregated daily summary, dates in text format (`"May 1, 2026"`), and multiple overlapping data sources with inconsistent splits between DOOH and Rideshare.
+- **Decision**: We **rejected** the structural change. Josh was asked to keep the standard `"Daily Spend"` sheet (with DOOH and Rideshare sections) for automated parsing, and to add any extra detail sheets as *additional* tabs rather than replacements. No parser or schema changes were made to accommodate the UPDATED layout.
+- **Rationale**: The vendor guidelines explicitly require sheet/tab stability. Rewriting the parser for a one-off format experiment would set a dangerous precedent, introduce ambiguity about which sheet is authoritative, and add unnecessary complexity. The data was not actually "updated" — the combined daily totals matched the original file exactly. The only change was the vendor experimenting with their reporting tool.
+
 ## Immediate Next Steps
 
 1. Define the shared target schema location and validation rules for final approved outputs.
