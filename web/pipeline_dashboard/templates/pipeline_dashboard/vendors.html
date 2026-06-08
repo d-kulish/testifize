@@ -62,6 +62,18 @@
       min-height: 200px;
     }
 
+    .vendor-card.reporting-closed {
+      background: #f5fdf7;
+    }
+
+    .vendor-card.reporting-alert {
+      background: #f0f6ff;
+    }
+
+    .vendor-card.reporting-overdue {
+      background: #fef5f5;
+    }
+
     .vendor-card:hover {
       border-color: #111827;
       box-shadow: 0 2px 4px rgba(60, 64, 67, 0.10), 0 4px 10px rgba(60, 64, 67, 0.14), 0 8px 20px rgba(60, 64, 67, 0.16);
@@ -349,7 +361,7 @@
 
   <section class="vendor-grid" aria-label="Vendor cards">
     {% for row in vendor_rows %}
-      <article class="vendor-card" data-vendor-card>
+      <article class="vendor-card{% if row.gap_months <= 1 %} reporting-closed{% elif row.gap_months == 2 %} reporting-alert{% elif row.gap_months > 2 %} reporting-overdue{% endif %}" data-vendor-card>
         <div class="vendor-card-name">{{ row.vendor.name }}</div>
         <div class="vendor-card-people">
           {% if row.people %}

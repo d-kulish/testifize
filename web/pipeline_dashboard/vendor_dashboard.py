@@ -46,6 +46,15 @@ def build_vendor_page_context() -> dict[str, Any]:
         "observed_people": len({person.email or person.name for row in vendor_rows for person in row.people}),
     }
     month_labels, history_coverage = _compute_vendor_coverage(vendors)
+    for row in vendor_rows:
+        key = str(row.vendor.id) if row.vendor else "none"
+        coverage = history_coverage.get(key, ["missing"] * 12)
+        gap = 12
+        for idx in range(11, -1, -1):
+            if coverage[idx] == "covered":
+                gap = 11 - idx
+                break
+        row.gap_months = gap
     return {
         "title": "Vendors",
         "active_nav": "vendors",
