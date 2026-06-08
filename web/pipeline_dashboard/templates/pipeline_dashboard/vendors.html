@@ -154,6 +154,45 @@
       display: none !important;
     }
 
+    .vendor-card-add {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      border-style: dashed;
+      border-color: #667085;
+      background: #f8fafc;
+      cursor: pointer;
+      min-height: 200px;
+      user-select: none;
+    }
+
+    .vendor-card-add:hover {
+      border-color: #111827;
+      background: #f3f7ff;
+    }
+
+    .vendor-card-add .add-icon {
+      width: 40px;
+      height: 40px;
+      color: #667085;
+    }
+
+    .vendor-card-add:hover .add-icon {
+      color: #111827;
+    }
+
+    .vendor-card-add .add-label {
+      font-size: 14px;
+      font-weight: 720;
+      color: #667085;
+    }
+
+    .vendor-card-add:hover .add-label {
+      color: #111827;
+    }
+
     .vendor-search-panel {
       display: flex;
       align-items: center;
@@ -293,8 +332,9 @@
   </div>
 
   <section class="vendor-grid" aria-label="Vendor cards">
-    {% for row in vendor_rows %}
-      <article class="vendor-card">
+    {# First 3 vendors — fill columns 1–3 of the first row #}
+    {% for row in vendor_rows|slice:":3" %}
+      <article class="vendor-card" data-vendor-card>
         <div class="vendor-card-name">{{ row.vendor.name }}</div>
         <div class="vendor-card-people">
           {% if row.people %}
@@ -318,9 +358,48 @@
           </div>
         </div>
       </article>
-    {% empty %}
-      <div class="empty" style="grid-column: 1 / -1;">No vendors are configured yet.</div>
     {% endfor %}
+
+    {# + New Vendor — pinned to column 4 of the first row #}
+    <article class="vendor-card vendor-card-add" style="grid-column: 4;" data-create-vendor-card role="button" tabindex="0">
+      <svg class="add-icon" viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+      </svg>
+      <span class="add-label">Create New Vendor</span>
+    </article>
+
+    {# Remaining vendors — start filling from column 1 of subsequent rows #}
+    {% for row in vendor_rows|slice:"3:" %}
+      <article class="vendor-card" data-vendor-card>
+        <div class="vendor-card-name">{{ row.vendor.name }}</div>
+        <div class="vendor-card-people">
+          {% if row.people %}
+            {% for person in row.people %}
+              <span class="vendor-person-badge">{{ person.name }}</span>
+            {% endfor %}
+          {% else %}
+            <span class="vendor-person-badge missing">No observed uploaders</span>
+          {% endif %}
+        </div>
+        <div class="vendor-card-matrix">
+          <div class="vendor-month-boxes">
+            {% for month_class in history_coverage|vendor_coverage:row.vendor %}
+              <span class="vendor-month-box {{ month_class }}"></span>
+            {% endfor %}
+          </div>
+          <div class="vendor-card-months">
+            {% for label in history_months %}
+              <span class="vendor-month-label">{{ label|slice:":3" }}</span>
+            {% endfor %}
+          </div>
+        </div>
+      </article>
+    {% endfor %}
+
+    {% if not vendor_rows %}
+      <div class="empty" style="grid-column: 1 / -1;">No vendors are configured yet.</div>
+    {% endif %}
+
     <div class="empty vendor-search-empty" data-vendor-empty hidden style="grid-column: 1 / -1;">No vendors match your search.</div>
   </section>
 
@@ -334,7 +413,7 @@
       let timer = null;
 
       function performSearch(query) {
-        const cards = document.querySelectorAll(".vendor-card");
+        const cards = document.querySelectorAll("[data-vendor-card]");
         let visible = 0;
         cards.forEach((card) => {
           const name = card.querySelector(".vendor-card-name")?.textContent?.toLowerCase() || "";
@@ -361,5 +440,62 @@
         }, 150);
       });
     })();
+
+    // + New Vendor modal
+    (function () {
+      const addCard = document.querySelector("[data-create-vendor-card]");
+      const modal = document.querySelector("[data-create-vendor-modal]");
+      const closeBtn = document.querySelector("[data-create-vendor-close]");
+      if (!addCard || !modal) return;
+
+      function openModal() {
+        modal.hidden = false;
+        const nameInput = modal.querySelector("[name='name']");
+        if (nameInput) nameInput.focus();
+      }
+
+      function closeModal() {
+        modal.hidden = true;
+        const form = modal.querySelector("form");
+        if (form) form.reset();
+      }
+
+      addCard.addEventListener("click", openModal);
+      addCard.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          openModal();
+        }
+      });
+
+      closeBtn?.addEventListener("click", closeModal);
+      modal.querySelector("[data-create-vendor-backdrop]")?.addEventListener("click", closeModal);
+    })();
   </script>
+
+  <div class="update-modal" data-create-vendor-modal hidden>
+    <div class="update-backdrop" data-create-vendor-backdrop aria-hidden="true"></div>
+    <section class="update-dialog" role="dialog" aria-modal="true" aria-labelledby="create-vendor-title">
+      <h2 class="update-title" id="create-vendor-title">Create New Vendor</h2>
+      <form method="post" action="{% url 'pipeline_dashboard:create_vendor' %}" style="display: grid; gap: 14px; width: 100%;">
+        {% csrf_token %}
+        <label class="vendor-field" style="color: var(--text); font-size: 13px; font-weight: 720; display: grid; gap: 6px;">
+          Name
+          <input name="name" type="text" autocomplete="off" required style="width: 100%; min-height: 38px; padding: 8px 10px; border: 1px solid var(--border); border-radius: 8px; background: var(--panel); color: var(--text); font: inherit;">
+        </label>
+        <label class="vendor-field" style="color: var(--text); font-size: 13px; font-weight: 720; display: grid; gap: 6px;">
+          Parser key
+          <input name="parser_key" type="text" autocomplete="off" placeholder="auto" style="width: 100%; min-height: 38px; padding: 8px 10px; border: 1px solid var(--border); border-radius: 8px; background: var(--panel); color: var(--text); font: inherit;">
+        </label>
+        <label class="vendor-field" style="color: var(--text); font-size: 13px; font-weight: 720; display: grid; gap: 6px;">
+          Notes
+          <input name="notes" type="text" autocomplete="off" style="width: 100%; min-height: 38px; padding: 8px 10px; border: 1px solid var(--border); border-radius: 8px; background: var(--panel); color: var(--text); font: inherit;">
+        </label>
+        <div class="confirm-actions" style="margin-top: 4px;">
+          <button class="button confirm-ok" type="submit">Create</button>
+          <button class="button confirm-cancel" type="button" data-create-vendor-close>Cancel</button>
+        </div>
+      </form>
+    </section>
+  </div>
 {% endblock %}
