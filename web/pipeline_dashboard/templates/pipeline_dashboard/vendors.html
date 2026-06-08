@@ -129,8 +129,33 @@
       gap: 6px;
     }
 
-    .vendor-card-matrix {
+    .vendor-kpis {
+      display: flex;
+      justify-content: flex-end;
+      gap: 16px;
       margin-top: auto;
+    }
+
+    .vendor-kpi {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 2px;
+    }
+
+    .vendor-kpi-value {
+      font-size: 18px;
+      font-weight: 760;
+      line-height: 1.1;
+      color: var(--text);
+    }
+
+    .vendor-kpi-label {
+      font-size: 10px;
+      font-weight: 650;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
     }
 
     .vendor-person-badge {
@@ -206,10 +231,10 @@
       gap: 6px;
       min-height: 34px;
       padding: 6px 14px;
-      border: 1px solid var(--border);
+      border: none;
       border-radius: 8px;
-      background: var(--panel);
-      color: #344054;
+      background: #22c55e;
+      color: #ffffff;
       font-size: 13px;
       font-weight: 650;
       cursor: pointer;
@@ -218,19 +243,12 @@
     }
 
     .vendor-new-btn:hover {
-      border-color: var(--accent);
-      background: #f8fbff;
-      color: var(--accent-strong);
+      background: #16a34a;
     }
 
-    .vendor-new-btn svg {
-      width: 16px;
-      height: 16px;
-      stroke: currentColor;
-      stroke-width: 2.5;
-      stroke-linecap: round;
-      stroke-linejoin: round;
-      fill: none;
+    .vendor-new-btn.toggled,
+    .vendor-new-btn:active {
+      background: #15803d;
     }
 
     @media (max-width: 1200px) {
@@ -325,9 +343,6 @@
     />
     <span class="vendor-count" data-vendor-count>{{ vendor_rows|length }} vendors</span>
     <button class="vendor-new-btn" type="button" data-create-vendor-btn>
-      <svg viewBox="0 0 24 24" aria-hidden="true">
-        <path d="M12 5v14M5 12h14"/>
-      </svg>
       New Vendor
     </button>
   </div>
@@ -344,6 +359,20 @@
           {% else %}
             <span class="vendor-person-badge missing">No observed uploaders</span>
           {% endif %}
+        </div>
+        <div class="vendor-kpis">
+          <div class="vendor-kpi">
+            <span class="vendor-kpi-value">{{ row.processing_count }}</span>
+            <span class="vendor-kpi-label">Parsing</span>
+          </div>
+          <div class="vendor-kpi">
+            <span class="vendor-kpi-value">{{ row.approval_count }}</span>
+            <span class="vendor-kpi-label">Approval</span>
+          </div>
+          <div class="vendor-kpi">
+            <span class="vendor-kpi-value">{{ row.approved_count }}</span>
+            <span class="vendor-kpi-label">History</span>
+          </div>
         </div>
         <div class="vendor-card-matrix">
           <div class="vendor-month-boxes">
@@ -411,12 +440,14 @@
 
       function openModal() {
         modal.hidden = false;
+        addBtn.classList.add("toggled");
         const nameInput = modal.querySelector("[name='name']");
         if (nameInput) nameInput.focus();
       }
 
       function closeModal() {
         modal.hidden = true;
+        addBtn.classList.remove("toggled");
         const form = modal.querySelector("form");
         if (form) form.reset();
       }
