@@ -795,6 +795,21 @@ Final/<Reporting_Period>/<Vendor>_<Reporting_Period>.csv
 - **Decision**: We **rejected** the structural change. Josh was asked to keep the standard `"Daily Spend"` sheet (with DOOH and Rideshare sections) for automated parsing, and to add any extra detail sheets as *additional* tabs rather than replacements. No parser or schema changes were made to accommodate the UPDATED layout.
 - **Rationale**: The vendor guidelines explicitly require sheet/tab stability. Rewriting the parser for a one-off format experiment would set a dangerous precedent, introduce ambiguity about which sheet is authoritative, and add unnecessary complexity. The data was not actually "updated" — the combined daily totals matched the original file exactly. The only change was the vendor experimenting with their reporting tool.
 
+### Vendors page rebuild (2026-06-08)
+
+- **Goal**: replace the old `/vendors/` operational management page (Create Vendor, Vendor Directory, Folder Ownership) with a clean, high-level overview of all configured vendors.
+- **Old chapters removed**: `Create Vendor`, `Vendor Directory`, and `Folder Ownership` were removed entirely. The corresponding CRUD routes and forms remain in `urls.py` and `views.py` for future back-office use, but the public page no longer renders them.
+- **Header metrics**: the five compact tablets remain, reordered to `Vendors | People | Folders | Active | Parsers`. Each tablet shows a count and a short note.
+- **Vendor card grid**: a 4-column responsive grid (`4 → 3 → 2 → 1` on smaller screens) with one card per vendor.
+- **Card layout**:
+  - **Vendor name** at the top, bold 22px.
+  - **Uploader badges** — one pill per observed person (`created_by_name`); shows `No observed uploaders` if empty.
+  - **12-month coverage matrix** pinned to the bottom of the card. A row of 12 small boxes (`18px` tall, `2px` radius, `1px` gap) showing `covered` (green), `current` (blue), or `missing` (white). Month labels sit beneath the boxes, truncated to 3 letters (`Jul`, `Aug`, etc.).
+- **Coverage logic**: copied from the `/process/` History chapter. `vendor_dashboard.py` now computes a rolling 12-month window and marks each month as covered if any approved `ParsedOutput` overlaps that month. The same `_compute_vendor_coverage()` helper is used.
+- **Search bar**: a full-width white panel between the header metrics and the card grid. Filters cards by vendor name or uploader badge text in real time. The counter on the right updates from "8 vendors" to "2 vendors" as matches narrow. Non-matching cards are hidden and the grid reflows. A "No vendors match your search" empty state appears when the query filters everything out.
+- **Backend**: `build_vendor_page_context()` now returns `history_months` and `history_coverage` alongside the existing `metrics` and `vendor_rows`.
+- **Files**: `web/pipeline_dashboard/vendor_dashboard.py`, `web/pipeline_dashboard/templates/pipeline_dashboard/vendors.html`.
+
 ## Immediate Next Steps
 
 1. Define the shared target schema location and validation rules for final approved outputs.

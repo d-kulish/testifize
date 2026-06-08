@@ -1,12 +1,15 @@
 from __future__ import annotations
 
+import calendar
 from dataclasses import dataclass
+from datetime import date
 from pathlib import Path
 from types import SimpleNamespace
 from typing import Any
 
 from django.conf import settings
 from django.db.models import Count, Max
+from django.utils import timezone
 
 from .models import Asset, AssetEvent, AssetStatus, ParsedOutput, ShareFileFolder, Vendor
 
@@ -42,6 +45,7 @@ def build_vendor_page_context() -> dict[str, Any]:
         "folders": len(folders),
         "observed_people": len({person.email or person.name for row in vendor_rows for person in row.people}),
     }
+    month_labels, history_coverage = _compute_vendor_coverage(vendors)
     return {
         "title": "Vendors",
         "active_nav": "vendors",
@@ -49,7 +53,56 @@ def build_vendor_page_context() -> dict[str, Any]:
         "folders": folders,
         "all_vendors": vendors,
         "metrics": metrics,
+        "history_months": month_labels,
+        "history_coverage": history_coverage,
     }
+
+
+def _compute_vendor_coverage(vendors: list[Vendor]) -> tuple[list[str], dict[str, list[str]]]:
+    approved_outputs = list(
+        ParsedOutput.objects.select_related("vendor")
+        .filter(comparison_status="approved")
+        .order_by("vendor__name", "-created_at")
+    )
+
+    today = timezone.localdate()
+    month_window = []
+    year, month = today.year, today.month
+    for _ in range(12):
+        month_window.insert(0, date(year, month, 1))
+        month -= 1
+        if month == 0:
+            month = 12
+            year -= 1
+
+    month_ends = []
+    for m in month_window:
+        _, last_day = calendar.monthrange(m.year, m.month)
+        month_ends.append(date(m.year, m.month, last_day))
+
+    month_labels = [m.strftime("%b %y") for m in month_window]
+
+    history_coverage: dict[str, list[str]] = {}
+    if approved_outputs:
+        outputs_with_periods = [
+            o for o in approved_outputs if o.period_start and o.period_end
+        ]
+        vendor_ids = {o.vendor_id for o in approved_outputs}
+        for vid in vendor_ids:
+            covered = set()
+            vendor_outputs = [o for o in outputs_with_periods if o.vendor_id == vid]
+            for idx, (m_start, m_end) in enumerate(zip(month_window, month_ends)):
+                for o in vendor_outputs:
+                    if o.period_start <= m_end and o.period_end >= m_start:
+                        covered.add(idx)
+                        break
+            key = str(vid) if vid is not None else "none"
+            history_coverage[key] = [
+                "current" if idx == 11 else "covered" if idx in covered else "missing"
+                for idx in range(12)
+            ]
+
+    return month_labels, history_coverage
 
 
 def vendor_summary(vendor: Vendor) -> SimpleNamespace:

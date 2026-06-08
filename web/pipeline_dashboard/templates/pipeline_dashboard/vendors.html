@@ -1,4 +1,5 @@
 {% extends "pipeline_dashboard/base.html" %}
+{% load pipeline_numbers %}
 
 {% block title %}Vendors{% endblock %}
 
@@ -43,155 +44,176 @@
       color: #d97706;
     }
 
-    .vendor-create-grid,
-    .vendor-edit-grid {
+    /* Vendor card grid */
+    .vendor-grid {
       display: grid;
-      grid-template-columns: minmax(180px, 1fr) minmax(140px, 0.7fr) minmax(220px, 1.5fr) auto;
-      gap: 10px;
-      align-items: end;
-    }
-
-    .vendor-edit-grid {
-      grid-template-columns: minmax(170px, 1fr) minmax(130px, 0.7fr) minmax(220px, 1.4fr) auto auto;
-      align-items: center;
-    }
-
-    .vendor-field {
-      display: grid;
-      gap: 6px;
-      min-width: 0;
-      color: var(--muted);
-      font-size: 12px;
-      font-weight: 720;
-    }
-
-    .vendor-field input,
-    .vendor-field textarea,
-    .vendor-field select {
-      width: 100%;
-      min-height: 34px;
-      padding: 8px 10px;
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      background: var(--panel);
-      color: var(--text);
-      font: inherit;
-    }
-
-    .vendor-field textarea {
-      min-height: 34px;
-      resize: vertical;
-    }
-
-    .vendor-list {
-      display: grid;
-      gap: 12px;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 16px;
     }
 
     .vendor-card {
-      border: 1px solid var(--border);
+      display: grid;
+      gap: 14px;
+      padding: 16px;
+      border: 1px solid #111827;
       border-radius: 8px;
-      background: rgba(255, 255, 255, 0.78);
-      overflow: hidden;
+      background: #ffffff;
+      box-shadow: 0 1px 2px rgba(60, 64, 67, 0.08), 0 2px 6px rgba(60, 64, 67, 0.10), 0 4px 12px rgba(60, 64, 67, 0.12);
+      min-height: 200px;
     }
 
-    .vendor-summary {
-      display: grid;
-      grid-template-columns: minmax(180px, 1.2fr) repeat(5, minmax(90px, 0.45fr)) minmax(220px, 1fr);
-      gap: 12px;
+    .vendor-card:hover {
+      border-color: #111827;
+      box-shadow: 0 2px 4px rgba(60, 64, 67, 0.10), 0 4px 10px rgba(60, 64, 67, 0.14), 0 8px 20px rgba(60, 64, 67, 0.16);
+      transform: translateY(-1px);
+      transition: box-shadow 160ms ease, transform 160ms ease;
+    }
+
+    .vendor-card-name {
+      font-size: 22px;
+      font-weight: 760;
+      line-height: 1.2;
+      color: var(--text);
+    }
+
+    .vendor-card-months {
+      display: flex;
       align-items: center;
-      padding: 12px 14px;
-      cursor: pointer;
+      justify-content: space-between;
+      gap: 1px;
     }
 
-    .vendor-name {
-      font-weight: 760;
-    }
-
-    .vendor-kpi {
-      display: grid;
-      gap: 2px;
-    }
-
-    .vendor-kpi span:first-child {
+    .vendor-month-label {
+      flex: 1 1 0;
+      min-width: 0;
+      text-align: center;
       color: var(--muted);
-      font-size: 11px;
-      font-weight: 720;
+      font-size: 8px;
+      font-weight: 700;
       text-transform: uppercase;
+      white-space: nowrap;
+      overflow: hidden;
+      letter-spacing: -0.2px;
     }
 
-    .vendor-kpi span:last-child {
-      font-weight: 760;
+    .vendor-month-boxes {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1px;
     }
 
-    .vendor-badges {
+    .vendor-month-box {
+      flex: 1 1 0;
+      min-width: 0;
+      display: block;
+      height: 18px;
+      border-radius: 2px;
+      border: 1px solid #e1e7ef;
+      background: #ffffff;
+    }
+
+    .vendor-month-box.current {
+      border: 1px solid #111827;
+      background: #dbeafe;
+    }
+
+    .vendor-month-box.covered {
+      background: #dcfce7;
+      border-color: #86efac;
+    }
+
+    .vendor-card-people {
       display: flex;
       flex-wrap: wrap;
       gap: 6px;
-      justify-content: flex-end;
     }
 
-    .vendor-detail {
-      display: grid;
-      gap: 14px;
-      padding: 14px;
-      border-top: 1px solid var(--border);
-      background: rgba(248, 250, 252, 0.72);
+    .vendor-card-matrix {
+      margin-top: auto;
     }
 
-    .vendor-detail-grid {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 14px;
-    }
-
-    .vendor-subpanel {
-      min-width: 0;
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      background: var(--panel);
-      overflow: hidden;
-    }
-
-    .vendor-subpanel h3 {
-      margin: 0;
-      padding: 11px 12px;
-      border-bottom: 1px solid var(--border);
-      font-size: 13px;
-      font-weight: 760;
-    }
-
-    .vendor-subpanel-body {
-      padding: 12px;
-    }
-
-    .vendor-path {
-      color: var(--muted);
-      font-size: 12px;
-      word-break: break-word;
-    }
-
-    .vendor-empty {
-      color: var(--muted);
-      font-size: 13px;
-    }
-
-    .folder-assignment-row {
-      display: flex;
-      gap: 8px;
+    .vendor-person-badge {
+      display: inline-flex;
       align-items: center;
+      min-height: 26px;
+      padding: 2px 10px;
+      border-radius: 999px;
+      background: #eef2ff;
+      color: #3730a3;
+      font-size: 12px;
+      font-weight: 700;
     }
 
-    @media (max-width: 1180px) {
-      .vendor-detail-grid,
-      .vendor-create-grid,
-      .vendor-edit-grid,
-      .vendor-summary {
-        grid-template-columns: 1fr;
-      }
+    .vendor-person-badge.missing {
+      background: #f2f4f7;
+      color: #475467;
+    }
 
-      .vendor-badges {
-        justify-content: flex-start;
+    .vendor-card[hidden] {
+      display: none !important;
+    }
+
+    .vendor-search-panel {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin: 20px 0;
+      padding: 12px 16px;
+      border: 1px solid #111827;
+      border-radius: 8px;
+      background: #ffffff;
+      box-shadow: 0 1px 2px rgba(60, 64, 67, 0.08), 0 2px 6px rgba(60, 64, 67, 0.10), 0 4px 12px rgba(60, 64, 67, 0.12);
+    }
+
+    .vendor-search-panel .search-icon {
+      width: 20px;
+      height: 20px;
+      color: var(--muted);
+      flex-shrink: 0;
+    }
+
+    .vendor-search-panel input {
+      flex: 1 1 auto;
+      min-width: 0;
+      min-height: 34px;
+      padding: 6px 0;
+      border: none;
+      background: transparent;
+      color: var(--text);
+      font-size: 15px;
+      font-weight: 600;
+      font-family: inherit;
+      outline: none;
+    }
+
+    .vendor-search-panel input::placeholder {
+      color: #98a2b3;
+      font-weight: 600;
+    }
+
+    .vendor-count {
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 650;
+      white-space: nowrap;
+    }
+
+    @media (max-width: 1200px) {
+      .vendor-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 760px) {
+      .vendor-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 520px) {
+      .vendor-grid {
+        grid-template-columns: 1fr;
       }
     }
   </style>
@@ -211,6 +233,26 @@
         <div class="metric-label">Vendors</div>
         <div class="metric-value">{{ metrics.vendors }}</div>
         <div class="metric-note">Configured locally</div>
+      </div>
+    </div>
+    <div class="metric amber">
+      <div class="metric-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24"><path d="M16 11c1.66 0 3-1.57 3-3.5S17.66 4 16 4s-3 1.57-3 3.5S14.34 11 16 11Z"></path><path d="M8 11c1.66 0 3-1.57 3-3.5S9.66 4 8 4 5 5.57 5 7.5 6.34 11 8 11Z"></path><path d="M2 20c.5-3 2.5-5 6-5s5.5 2 6 5"></path><path d="M10 20c.42-2.4 2-4 4.8-4 2.75 0 4.43 1.6 5.2 4"></path></svg>
+      </div>
+      <div class="metric-body">
+        <div class="metric-label">People</div>
+        <div class="metric-value">{{ metrics.observed_people }}</div>
+        <div class="metric-note">Observed uploaders</div>
+      </div>
+    </div>
+    <div class="metric slate">
+      <div class="metric-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24"><path d="M3 7.5V18a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-7l-2-2H5a2 2 0 0 0-2 2.5Z"></path></svg>
+      </div>
+      <div class="metric-body">
+        <div class="metric-label">Folders</div>
+        <div class="metric-value">{{ metrics.folders }}</div>
+        <div class="metric-note">Registered sources</div>
       </div>
     </div>
     <div class="metric green">
@@ -233,346 +275,91 @@
         <div class="metric-note">Ready folders</div>
       </div>
     </div>
-    <div class="metric slate">
-      <div class="metric-icon" aria-hidden="true">
-        <svg viewBox="0 0 24 24"><path d="M3 7.5V18a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-7l-2-2H5a2 2 0 0 0-2 2.5Z"></path></svg>
-      </div>
-      <div class="metric-body">
-        <div class="metric-label">Folders</div>
-        <div class="metric-value">{{ metrics.folders }}</div>
-        <div class="metric-note">Registered sources</div>
-      </div>
-    </div>
-    <div class="metric amber">
-      <div class="metric-icon" aria-hidden="true">
-        <svg viewBox="0 0 24 24"><path d="M16 11c1.66 0 3-1.57 3-3.5S17.66 4 16 4s-3 1.57-3 3.5S14.34 11 16 11Z"></path><path d="M8 11c1.66 0 3-1.57 3-3.5S9.66 4 8 4 5 5.57 5 7.5 6.34 11 8 11Z"></path><path d="M2 20c.5-3 2.5-5 6-5s5.5 2 6 5"></path><path d="M10 20c.42-2.4 2-4 4.8-4 2.75 0 4.43 1.6 5.2 4"></path></svg>
-      </div>
-      <div class="metric-body">
-        <div class="metric-label">People</div>
-        <div class="metric-value">{{ metrics.observed_people }}</div>
-        <div class="metric-note">Observed uploaders</div>
-      </div>
-    </div>
   </section>
 
-  <section class="panel">
-    <div class="panel-header">
-      <h2 class="panel-title">Create Vendor</h2>
-    </div>
-    <div class="panel-body">
-      <form method="post" action="{% url 'pipeline_dashboard:create_vendor' %}" class="vendor-create-grid">
-        {% csrf_token %}
-        <label class="vendor-field">
-          Name
-          <input name="name" type="text" autocomplete="off" required>
-        </label>
-        <label class="vendor-field">
-          Parser key
-          <input name="parser_key" type="text" autocomplete="off" placeholder="auto">
-        </label>
-        <label class="vendor-field">
-          Notes
-          <input name="notes" type="text" autocomplete="off">
-        </label>
-        <button class="button primary" type="submit">Create</button>
-      </form>
-    </div>
-  </section>
+  <div class="vendor-search-panel" role="search">
+    <svg class="search-icon" viewBox="0 0 24 24" aria-hidden="true">
+      <circle cx="11" cy="11" r="8" fill="none" stroke="currentColor" stroke-width="2"></circle>
+      <path d="M21 21l-4.35-4.35" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path>
+    </svg>
+    <input
+      type="search"
+      placeholder="Search vendors by name or uploader..."
+      aria-label="Search vendors by name or uploader"
+      data-vendor-search
+      autocomplete="off"
+    />
+    <span class="vendor-count" data-vendor-count>{{ vendor_rows|length }} vendors</span>
+  </div>
 
-  <section class="panel" style="margin-top: 16px;">
-    <div class="panel-header">
-      <h2 class="panel-title">Vendor Directory</h2>
-      <span class="muted">{{ vendor_rows|length }} vendors</span>
-    </div>
-    <div class="panel-body">
-      {% if vendor_rows %}
-        <div class="vendor-list">
-          {% for row in vendor_rows %}
-            <details class="vendor-card" {% if forloop.first %}open{% endif %}>
-              <summary class="vendor-summary">
-                <div>
-                  <div class="vendor-name">{{ row.vendor.name }}</div>
-                  <div class="vendor-path">{{ row.vendor.parser_key|default:"-" }}</div>
-                </div>
-                <div class="vendor-kpi"><span>Files</span><span>{{ row.asset_count }}</span></div>
-                <div class="vendor-kpi"><span>Parsing</span><span>{{ row.processing_count }}</span></div>
-                <div class="vendor-kpi"><span>Review</span><span>{{ row.review_count|add:row.approval_count }}</span></div>
-                <div class="vendor-kpi"><span>Processed</span><span>{{ row.processed_count }}</span></div>
-                <div class="vendor-kpi"><span>Folders</span><span>{{ row.folder_count }}</span></div>
-                <div class="vendor-badges">
-                  <span class="badge {{ row.parser.badge_class }}">{{ row.parser.label }}</span>
-                  {% for badge in row.health_badges %}
-                    <span class="badge {{ badge.class }}">{{ badge.label }}</span>
-                  {% endfor %}
-                </div>
-              </summary>
-
-              <div class="vendor-detail">
-                <form method="post" action="{% url 'pipeline_dashboard:update_vendor' row.vendor.id %}" class="vendor-edit-grid">
-                  {% csrf_token %}
-                  <label class="vendor-field">
-                    Name
-                    <input name="name" type="text" value="{{ row.vendor.name }}" required>
-                  </label>
-                  <label class="vendor-field">
-                    Parser key
-                    <input name="parser_key" type="text" value="{{ row.vendor.parser_key }}">
-                  </label>
-                  <label class="vendor-field">
-                    Notes
-                    <input name="notes" type="text" value="{{ row.vendor.notes }}">
-                  </label>
-                  <label class="inline-form">
-                    <input name="is_active" type="checkbox" {% if row.vendor.is_active %}checked{% endif %}>
-                    Active
-                  </label>
-                  <div class="actions">
-                    <button class="button small primary" type="submit">Save</button>
-                  </div>
-                </form>
-
-                <div class="vendor-detail-grid">
-                  <section class="vendor-subpanel">
-                    <h3>Folders</h3>
-                    <div class="vendor-subpanel-body">
-                      {% if row.folders %}
-                        <table>
-                          <thead>
-                            <tr>
-                              <th>Label</th>
-                              <th>Role</th>
-                              <th>Active</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {% for folder in row.folders %}
-                              <tr>
-                                <td class="file-name" title="{{ folder.folder_id }}">{{ folder.label }}</td>
-                                <td>{{ folder.role }}</td>
-                                <td>{% if folder.is_active %}Yes{% else %}No{% endif %}</td>
-                              </tr>
-                            {% endfor %}
-                          </tbody>
-                        </table>
-                      {% else %}
-                        <div class="vendor-empty">No registered folders.</div>
-                      {% endif %}
-                    </div>
-                  </section>
-
-                  <section class="vendor-subpanel">
-                    <h3>Parser</h3>
-                    <div class="vendor-subpanel-body">
-                      <table>
-                        <tbody>
-                          <tr>
-                            <th>Schema</th>
-                            <td>
-                              <span class="badge {% if row.parser.has_schema %}passed{% else %}failed{% endif %}">
-                                {% if row.parser.has_schema %}Found{% else %}Missing{% endif %}
-                              </span>
-                              <div class="vendor-path">{{ row.parser.schema_path }}</div>
-                            </td>
-                          </tr>
-                          <tr>
-                            <th>Parser</th>
-                            <td>
-                              <span class="badge {% if row.parser.has_parser %}passed{% else %}failed{% endif %}">
-                                {% if row.parser.has_parser %}Found{% else %}Missing{% endif %}
-                              </span>
-                              <div class="vendor-path">{{ row.parser.parser_path }}</div>
-                            </td>
-                          </tr>
-                        </tbody>
-                      </table>
-                    </div>
-                  </section>
-
-                  <section class="vendor-subpanel">
-                    <h3>People</h3>
-                    <div class="vendor-subpanel-body">
-                      {% if row.people %}
-                        <table>
-                          <thead>
-                            <tr>
-                              <th>Name</th>
-                              <th>Email</th>
-                              <th>Uploads</th>
-                              <th>Last</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {% for person in row.people %}
-                              <tr>
-                                <td>{{ person.name }}</td>
-                                <td>{{ person.email|default:"-" }}</td>
-                                <td>{{ person.upload_count }}</td>
-                                <td>{{ person.last_upload|date:"Y-m-d H:i"|default:"-" }}</td>
-                              </tr>
-                            {% endfor %}
-                          </tbody>
-                        </table>
-                      {% else %}
-                        <div class="vendor-empty">No observed uploaders.</div>
-                      {% endif %}
-                    </div>
-                  </section>
-
-                  <section class="vendor-subpanel">
-                    <h3>Recent Files</h3>
-                    <div class="vendor-subpanel-body">
-                      {% if row.recent_assets %}
-                        <table>
-                          <thead>
-                            <tr>
-                              <th>File</th>
-                              <th>Status</th>
-                              <th>Modified</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {% for asset in row.recent_assets %}
-                              <tr>
-                                <td class="file-name" title="{{ asset.name }}">{{ asset.name }}</td>
-                                <td><span class="badge {{ asset.status }}">{{ asset.status }}</span></td>
-                                <td>{{ asset.remote_modified_at|date:"Y-m-d H:i"|default:"-" }}</td>
-                              </tr>
-                            {% endfor %}
-                          </tbody>
-                        </table>
-                      {% else %}
-                        <div class="vendor-empty">No files yet.</div>
-                      {% endif %}
-                    </div>
-                  </section>
-
-                  <section class="vendor-subpanel">
-                    <h3>Activity</h3>
-                    <div class="vendor-subpanel-body">
-                      {% if row.recent_events %}
-                        <table>
-                          <thead>
-                            <tr>
-                              <th>When</th>
-                              <th>Event</th>
-                              <th>File</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {% for event in row.recent_events %}
-                              <tr>
-                                <td>{{ event.created_at|date:"Y-m-d H:i" }}</td>
-                                <td>{{ event.event_type }}</td>
-                                <td class="file-name" title="{{ event.asset.name }}">{{ event.asset.name }}</td>
-                              </tr>
-                            {% endfor %}
-                          </tbody>
-                        </table>
-                      {% else %}
-                        <div class="vendor-empty">No local events yet.</div>
-                      {% endif %}
-                    </div>
-                  </section>
-
-                  <section class="vendor-subpanel">
-                    <h3>Lifecycle</h3>
-                    <div class="vendor-subpanel-body">
-                      <table>
-                        <tbody>
-                          <tr>
-                            <th>Created</th>
-                            <td>{{ row.vendor.created_at|date:"Y-m-d H:i" }}</td>
-                          </tr>
-                          <tr>
-                            <th>Updated</th>
-                            <td>{{ row.vendor.updated_at|date:"Y-m-d H:i" }}</td>
-                          </tr>
-                          <tr>
-                            <th>Latest activity</th>
-                            <td>{{ row.latest_activity_at|date:"Y-m-d H:i"|default:"-" }}</td>
-                          </tr>
-                          <tr>
-                            <th>Action</th>
-                            <td>
-                              <form method="post" action="{% url 'pipeline_dashboard:delete_vendor' row.vendor.id %}" data-vendor-delete-form>
-                                {% csrf_token %}
-                                <button class="button small" type="submit">
-                                  {% if row.can_delete %}Delete{% else %}Deactivate{% endif %}
-                                </button>
-                              </form>
-                            </td>
-                          </tr>
-                        </tbody>
-                      </table>
-                    </div>
-                  </section>
-                </div>
-              </div>
-            </details>
-          {% endfor %}
-        </div>
-      {% else %}
-        <div class="empty">No vendors are configured yet.</div>
-      {% endif %}
-    </div>
-  </section>
-
-  <section class="panel" style="margin-top: 16px;">
-    <div class="panel-header">
-      <h2 class="panel-title">Folder Ownership</h2>
-      <span class="muted">{{ folders|length }} registered folders</span>
-    </div>
-    <div class="panel-body">
-      {% if folders %}
-        <table>
-          <thead>
-            <tr>
-              <th>Folder</th>
-              <th>Role</th>
-              <th>Current Vendor</th>
-              <th>Assign</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for folder in folders %}
-              <tr>
-                <td class="file-name" title="{{ folder.folder_id }}">{{ folder.label }}</td>
-                <td>{{ folder.role }}</td>
-                <td>{{ folder.vendor.name|default:"Unassigned" }}</td>
-                <td>
-                  <form method="post" action="{% url 'pipeline_dashboard:assign_vendor_folder' folder.id %}" class="folder-assignment-row">
-                    {% csrf_token %}
-                    <select class="table-select" name="vendor_id" aria-label="Vendor for {{ folder.label }}">
-                      <option value="">Unassigned</option>
-                      {% for vendor in all_vendors %}
-                        {% if vendor.is_active %}
-                          <option value="{{ vendor.id }}" {% if folder.vendor_id == vendor.id %}selected{% endif %}>{{ vendor.name }}</option>
-                        {% endif %}
-                      {% endfor %}
-                    </select>
-                    <button class="button small" type="submit">Save</button>
-                  </form>
-                </td>
-              </tr>
+  <section class="vendor-grid" aria-label="Vendor cards">
+    {% for row in vendor_rows %}
+      <article class="vendor-card">
+        <div class="vendor-card-name">{{ row.vendor.name }}</div>
+        <div class="vendor-card-people">
+          {% if row.people %}
+            {% for person in row.people %}
+              <span class="vendor-person-badge">{{ person.name }}</span>
             {% endfor %}
-          </tbody>
-        </table>
-      {% else %}
-        <div class="empty">No ShareFile folders are registered yet.</div>
-      {% endif %}
-    </div>
+          {% else %}
+            <span class="vendor-person-badge missing">No observed uploaders</span>
+          {% endif %}
+        </div>
+        <div class="vendor-card-matrix">
+          <div class="vendor-month-boxes">
+            {% for month_class in history_coverage|vendor_coverage:row.vendor %}
+              <span class="vendor-month-box {{ month_class }}"></span>
+            {% endfor %}
+          </div>
+          <div class="vendor-card-months">
+            {% for label in history_months %}
+              <span class="vendor-month-label">{{ label|slice:":3" }}</span>
+            {% endfor %}
+          </div>
+        </div>
+      </article>
+    {% empty %}
+      <div class="empty" style="grid-column: 1 / -1;">No vendors are configured yet.</div>
+    {% endfor %}
+    <div class="empty vendor-search-empty" data-vendor-empty hidden style="grid-column: 1 / -1;">No vendors match your search.</div>
   </section>
 
   <script>
-    document.querySelectorAll("[data-vendor-delete-form]").forEach((form) => {
-      form.addEventListener("submit", (event) => {
-        const card = form.closest(".vendor-card");
-        const name = card?.querySelector(".vendor-name")?.textContent?.trim() || "this vendor";
-        const confirmed = window.confirm(`Apply lifecycle action for ${name}?`);
-        if (!confirmed) {
-          event.preventDefault();
+    (function () {
+      const searchInput = document.querySelector("[data-vendor-search]");
+      const countLabel = document.querySelector("[data-vendor-count]");
+      const emptyMsg = document.querySelector("[data-vendor-empty]");
+      if (!searchInput) return;
+
+      let timer = null;
+
+      function performSearch(query) {
+        const cards = document.querySelectorAll(".vendor-card");
+        let visible = 0;
+        cards.forEach((card) => {
+          const name = card.querySelector(".vendor-card-name")?.textContent?.toLowerCase() || "";
+          const people = Array.from(card.querySelectorAll(".vendor-person-badge"))
+            .map((b) => b.textContent.toLowerCase())
+            .join(" ");
+          const match = name.includes(query) || people.includes(query);
+          card.hidden = !match;
+          if (match) visible += 1;
+        });
+        if (countLabel) {
+          countLabel.textContent = visible + " vendor" + (visible === 1 ? "" : "s");
         }
+        if (emptyMsg) {
+          emptyMsg.hidden = visible > 0;
+        }
+      }
+
+      searchInput.addEventListener("input", () => {
+        const query = searchInput.value.trim().toLowerCase();
+        window.clearTimeout(timer);
+        timer = window.setTimeout(() => {
+          performSearch(query);
+        }, 150);
       });
-    });
+    })();
   </script>
 {% endblock %}
