@@ -360,9 +360,17 @@ def _build_histogram_maturity(vendor: Vendor, cutoff_date: date) -> list[dict[st
                 d += timedelta(days=1)
 
     stage_names = {0: None, 1: "submitted", 2: "parsing", 3: "approval", 4: "approved"}
+
+    # Extend to include remaining days of the current week up to Sunday
+    # so the upcoming weekend is always visible.
+    last_day = dates[-1]
+    days_to_sunday = (6 - last_day.weekday()) % 7
+    extra_dates = [last_day + timedelta(days=i + 1) for i in range(days_to_sunday)]
+    all_dates = dates + extra_dates
+
     return [
-        {"date": str(d), "stage": stage_names[date_to_stage[d]], "is_weekend": d.weekday() >= 5}
-        for d in dates
+        {"date": str(d), "stage": stage_names[date_to_stage.get(d, 0)], "is_weekend": d.weekday() >= 5}
+        for d in all_dates
     ]
 
 
