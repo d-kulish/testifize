@@ -3,6 +3,130 @@
 {% block title %}{{ title }}{% endblock %}
 
 {% block content %}
+  <style>
+    .file-tablet > .file-tablet-top {
+      grid-template-columns: minmax(0, 1fr) auto auto;
+      gap: 8px;
+    }
+
+    .file-tablet-open {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 28px;
+      height: 28px;
+      padding: 0;
+      border: 1px solid #111827;
+      border-radius: 6px;
+      background: inherit;
+      color: #111827;
+      cursor: pointer;
+      transition: background 120ms ease, color 120ms ease, border-color 120ms ease;
+      flex-shrink: 0;
+    }
+
+    .file-tablet-open:hover {
+      background: rgba(0, 0, 0, 0.06);
+      color: #000000;
+      border-color: #000000;
+    }
+
+    .file-tablet-open svg {
+      width: 16px;
+      height: 16px;
+      stroke: currentColor;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      fill: none;
+    }
+
+    .tablet-modal[hidden] {
+      display: none;
+    }
+
+    .tablet-modal {
+      position: fixed;
+      inset: 0;
+      z-index: 50;
+      display: grid;
+      place-items: center;
+      padding: 24px;
+    }
+
+    .tablet-backdrop {
+      position: absolute;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.34);
+      backdrop-filter: blur(6px);
+    }
+
+    .tablet-dialog {
+      position: relative;
+      z-index: 1;
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      width: min(680px, calc(100vw - 48px));
+      height: min(480px, calc(100vh - 48px));
+      overflow: hidden;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      box-shadow: 0 28px 70px rgba(15, 23, 42, 0.22);
+    }
+
+    .tablet-dialog-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 14px 18px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .tablet-dialog-title {
+      margin: 0;
+      font-size: 18px;
+      font-weight: 760;
+    }
+
+    .tablet-dialog-body {
+      padding: 24px;
+      overflow: auto;
+    }
+
+    .tablet-dialog-close {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 32px;
+      height: 32px;
+      padding: 0;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: var(--panel);
+      color: var(--muted);
+      cursor: pointer;
+      transition: background 120ms ease, color 120ms ease, border-color 120ms ease;
+    }
+
+    .tablet-dialog-close:hover {
+      background: #f8fbff;
+      color: var(--accent-strong);
+      border-color: #b8c7da;
+    }
+
+    .tablet-dialog-close svg {
+      width: 16px;
+      height: 16px;
+      stroke: currentColor;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      fill: none;
+    }
+  </style>
+
   <section class="topbar">
     <div>
       <h1 class="dashboard-heading">Dashboard</h1>
@@ -264,6 +388,13 @@
                   <div class="file-tablet-age" aria-label="{{ asset.card_age_label }}">
                     {{ asset.card_age_days }}
                   </div>
+                  <button class="file-tablet-open" type="button" data-tablet-open aria-label="Open details">
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                      <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                      <polyline points="15 3 21 3 21 9"></polyline>
+                      <line x1="10" y1="14" x2="21" y2="3"></line>
+                    </svg>
+                  </button>
                 </div>
                 <dl class="file-tablet-meta">
                   <div>
@@ -306,6 +437,21 @@
     </aside>
   </section>
 
+  <div class="tablet-modal" data-tablet-modal hidden>
+    <div class="tablet-backdrop" data-tablet-backdrop></div>
+    <section class="tablet-dialog" role="dialog" aria-modal="true" aria-labelledby="tablet-dialog-title">
+      <header class="tablet-dialog-header">
+        <h2 class="tablet-dialog-title" id="tablet-dialog-title">Details</h2>
+        <button class="tablet-dialog-close" type="button" data-tablet-close aria-label="Close">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M18 6L6 18M6 6l12 12"></path>
+          </svg>
+        </button>
+      </header>
+      <div class="tablet-dialog-body"></div>
+    </section>
+  </div>
+
   <script>
     document.querySelectorAll("[data-tablet-list]").forEach((list) => {
       const items = Array.from(list.querySelectorAll("[data-tablet-item]"));
@@ -343,5 +489,31 @@
       });
       render();
     });
+
+    // Tablet detail modal
+    (() => {
+      const modal = document.querySelector("[data-tablet-modal]");
+      const backdrop = document.querySelector("[data-tablet-backdrop]");
+      const closeBtn = document.querySelector("[data-tablet-close]");
+      if (!modal) return;
+
+      function openModal() {
+        modal.hidden = false;
+      }
+
+      function closeModal() {
+        modal.hidden = true;
+      }
+
+      document.querySelectorAll("[data-tablet-open]").forEach((btn) => {
+        btn.addEventListener("click", (event) => {
+          event.stopPropagation();
+          openModal();
+        });
+      });
+
+      backdrop?.addEventListener("click", closeModal);
+      closeBtn?.addEventListener("click", closeModal);
+    })();
   </script>
 {% endblock %}

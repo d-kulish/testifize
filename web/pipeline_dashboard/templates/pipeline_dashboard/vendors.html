@@ -81,11 +81,138 @@
       transition: box-shadow 160ms ease, transform 160ms ease;
     }
 
+    .vendor-card-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
     .vendor-card-name {
       font-size: 22px;
       font-weight: 760;
       line-height: 1.2;
       color: var(--text);
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .vendor-card-open {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 28px;
+      height: 28px;
+      padding: 0;
+      border: 1px solid #111827;
+      border-radius: 6px;
+      background: inherit;
+      color: #111827;
+      cursor: pointer;
+      transition: background 120ms ease, color 120ms ease, border-color 120ms ease;
+      flex-shrink: 0;
+    }
+
+    .vendor-card-open:hover {
+      background: rgba(0, 0, 0, 0.06);
+      color: #000000;
+      border-color: #000000;
+    }
+
+    .vendor-card-open svg {
+      width: 16px;
+      height: 16px;
+      stroke: currentColor;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      fill: none;
+    }
+
+    .vendor-modal[hidden] {
+      display: none;
+    }
+
+    .vendor-modal {
+      position: fixed;
+      inset: 0;
+      z-index: 50;
+      display: grid;
+      place-items: center;
+      padding: 24px;
+    }
+
+    .vendor-modal-backdrop {
+      position: absolute;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.34);
+      backdrop-filter: blur(6px);
+    }
+
+    .vendor-modal-dialog {
+      position: relative;
+      z-index: 1;
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      width: min(680px, calc(100vw - 48px));
+      height: min(480px, calc(100vh - 48px));
+      overflow: hidden;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      box-shadow: 0 28px 70px rgba(15, 23, 42, 0.22);
+    }
+
+    .vendor-modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 14px 18px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .vendor-modal-title {
+      margin: 0;
+      font-size: 18px;
+      font-weight: 760;
+    }
+
+    .vendor-modal-body {
+      padding: 24px;
+      overflow: auto;
+    }
+
+    .vendor-modal-close {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 32px;
+      height: 32px;
+      padding: 0;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: var(--panel);
+      color: var(--muted);
+      cursor: pointer;
+      transition: background 120ms ease, color 120ms ease, border-color 120ms ease;
+    }
+
+    .vendor-modal-close:hover {
+      background: #f8fbff;
+      color: var(--accent-strong);
+      border-color: #b8c7da;
+    }
+
+    .vendor-modal-close svg {
+      width: 16px;
+      height: 16px;
+      stroke: currentColor;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      fill: none;
     }
 
     .vendor-card-months {
@@ -241,26 +368,31 @@
       align-items: center;
       justify-content: center;
       gap: 6px;
-      min-height: 34px;
-      padding: 6px 14px;
-      border: none;
+      min-height: 36px;
+      padding: 7px 16px;
+      border: 1px solid transparent;
       border-radius: 8px;
-      background: #22c55e;
+      background: #16a34a;
       color: #ffffff;
-      font-size: 13px;
+      font-size: 14px;
       font-weight: 650;
       cursor: pointer;
       white-space: nowrap;
       flex-shrink: 0;
+      min-width: 100px;
     }
 
     .vendor-new-btn:hover {
-      background: #16a34a;
+      background: #15803d;
+      border-color: transparent;
+      color: #ffffff;
     }
 
     .vendor-new-btn.toggled,
     .vendor-new-btn:active {
       background: #15803d;
+      border-color: transparent;
+      color: #ffffff;
     }
 
     @media (max-width: 1200px) {
@@ -362,7 +494,16 @@
   <section class="vendor-grid" aria-label="Vendor cards">
     {% for row in vendor_rows %}
       <article class="vendor-card{% if row.gap_months <= 1 %} reporting-closed{% elif row.gap_months == 2 %} reporting-alert{% elif row.gap_months > 2 %} reporting-overdue{% endif %}" data-vendor-card>
-        <div class="vendor-card-name">{{ row.vendor.name }}</div>
+        <div class="vendor-card-header">
+          <div class="vendor-card-name">{{ row.vendor.name }}</div>
+          <button class="vendor-card-open" type="button" data-vendor-open aria-label="Open details">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+              <polyline points="15 3 21 3 21 9"></polyline>
+              <line x1="10" y1="14" x2="21" y2="3"></line>
+            </svg>
+          </button>
+        </div>
         <div class="vendor-card-people">
           {% if row.people %}
             {% for person in row.people %}
@@ -404,6 +545,21 @@
     {% endfor %}
     <div class="empty vendor-search-empty" data-vendor-empty hidden style="grid-column: 1 / -1;">No vendors match your search.</div>
   </section>
+
+  <div class="vendor-modal" data-vendor-modal hidden>
+    <div class="vendor-modal-backdrop" data-vendor-backdrop></div>
+    <section class="vendor-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="vendor-modal-title">
+      <header class="vendor-modal-header">
+        <h2 class="vendor-modal-title" id="vendor-modal-title">Vendor Details</h2>
+        <button class="vendor-modal-close" type="button" data-vendor-close aria-label="Close">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M18 6L6 18M6 6l12 12"></path>
+          </svg>
+        </button>
+      </header>
+      <div class="vendor-modal-body"></div>
+    </section>
+  </div>
 
   <script>
     (function () {
@@ -468,6 +624,32 @@
 
       closeBtn?.addEventListener("click", closeModal);
       modal.querySelector("[data-create-vendor-backdrop]")?.addEventListener("click", closeModal);
+    })();
+
+    // Vendor detail modal
+    (function () {
+      const modal = document.querySelector("[data-vendor-modal]");
+      const backdrop = document.querySelector("[data-vendor-backdrop]");
+      const closeBtn = document.querySelector("[data-vendor-close]");
+      if (!modal) return;
+
+      function openModal() {
+        modal.hidden = false;
+      }
+
+      function closeModal() {
+        modal.hidden = true;
+      }
+
+      document.querySelectorAll("[data-vendor-open]").forEach((btn) => {
+        btn.addEventListener("click", (event) => {
+          event.stopPropagation();
+          openModal();
+        });
+      });
+
+      backdrop?.addEventListener("click", closeModal);
+      closeBtn?.addEventListener("click", closeModal);
     })();
   </script>
 
