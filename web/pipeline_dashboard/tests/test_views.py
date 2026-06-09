@@ -7,8 +7,11 @@ from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import patch
 
+from datetime import timedelta
+
 from django.test import TestCase, override_settings
 from django.urls import reverse
+from django.utils import timezone
 from openpyxl import Workbook
 
 from pipeline_dashboard.models import Asset, AssetEvent, AssetStatus, ParsedOutput, ShareFileFolder, Vendor
@@ -206,6 +209,117 @@ class DashboardViewTests(TestCase):
         self.assertRedirects(response, reverse("pipeline_dashboard:vendors"))
         folder.refresh_from_db()
         self.assertIsNone(folder.vendor)
+
+    def test_vendor_details_returns_all_panels(self):
+        vendor = Vendor.objects.create(name="Detail Vendor", parser_key="detail_vendor")
+        folder = ShareFileFolder.objects.create(
+            vendor=vendor, folder_id="fo-detail", label="Shared Folders/Detail"
+        )
+        asset = Asset.objects.create(
+            remote_item_id="fi-detail",
+            vendor=vendor,
+            source_folder=folder,
+            status=AssetStatus.NEW,
+            name="detail.xlsx",
+            file_size=1024,
+            remote_modified_at=timezone.now(),
+            created_by_name="Alice",
+            created_by_email="alice@example.com",
+        )
+        AssetEvent.objects.create(
+            asset=asset,
+            event_type="discovered",
+            from_status="",
+            to_status=AssetStatus.NEW,
+            message="File discovered.",
+        )
+        ParsedOutput.objects.create(
+            asset=asset,
+            vendor=vendor,
+            output_path="data/output/detail.csv",
+            reporting_period="May_2026",
+            version=1,
+            row_count=100,
+            total_spend=1234.56,
+            total_impressions=7890.00,
+            comparison_status="sent_for_approval",
+        )
+        ParsedOutput.objects.create(
+            asset=asset,
+            vendor=vendor,
+            output_path="data/output/detail_approved.csv",
+            reporting_period="April_2026",
+            version=1,
+            row_count=80,
+            total_spend=900.00,
+            total_impressions=5000.00,
+            comparison_status="approved",
+        )
+
+        response = self.client.get(reverse("pipeline_dashboard:vendor_details", args=[vendor.id]))
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertTrue(data["ok"])
+        self.assertEqual(data["vendor"]["name"], "Detail Vendor")
+        panels = data["panels"]
+        self.assertIn("health", panels)
+        self.assertIn("histogram", panels)
+        self.assertIn("people", panels)
+        self.assertIn("assets", panels)
+        self.assertIn("approval", panels)
+        self.assertIn("history", panels)
+        self.assertIn("events", panels)
+        self.assertEqual(len(panels["people"]), 1)
+        self.assertEqual(panels["people"][0]["upload_count"], 1)
+        self.assertEqual(len(panels["assets"]), 1)
+        self.assertEqual(panels["assets"][0]["name"], "detail.xlsx")
+        self.assertEqual(len(panels["approval"]), 1)
+        self.assertEqual(len(panels["history"]), 1)
+        self.assertEqual(len(panels["events"]), 1)
+        self.assertEqual(panels["health"]["parser"]["has_schema"], False)
+        self.assertEqual(panels["health"]["folders"][0]["label"], "Shared Folders/Detail")
+
+    def test_vendor_details_404_for_missing_vendor(self):
+        response = self.client.get(reverse("pipeline_dashboard:vendor_details", args=[99999]))
+        self.assertEqual(response.status_code, 404)
+
+    def test_vendor_details_empty_panels_for_fresh_vendor(self):
+        vendor = Vendor.objects.create(name="Fresh Vendor", parser_key="fresh")
+        response = self.client.get(reverse("pipeline_dashboard:vendor_details", args=[vendor.id]))
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertTrue(data["ok"])
+        panels = data["panels"]
+        self.assertEqual(len(panels["histogram"]), 90)
+        self.assertEqual(len(panels["people"]), 0)
+        self.assertEqual(len(panels["assets"]), 0)
+        self.assertEqual(len(panels["approval"]), 0)
+        self.assertEqual(len(panels["history"]), 0)
+        self.assertEqual(len(panels["events"]), 0)
+
+    def test_vendor_details_histogram_90_day_cutoff(self):
+        vendor = Vendor.objects.create(name="Hist Vendor", parser_key="hist")
+        today = timezone.now()
+        Asset.objects.create(
+            remote_item_id="fi-today",
+            vendor=vendor,
+            status=AssetStatus.NEW,
+            name="today.xlsx",
+            remote_created_at=today,
+        )
+        Asset.objects.create(
+            remote_item_id="fi-old",
+            vendor=vendor,
+            status=AssetStatus.NEW,
+            name="old.xlsx",
+            remote_created_at=today - timedelta(days=100),
+        )
+        response = self.client.get(reverse("pipeline_dashboard:vendor_details", args=[vendor.id]))
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertTrue(data["ok"])
+        total_count = sum(day["count"] for day in data["panels"]["histogram"])
+        self.assertEqual(total_count, 1)
 
     def test_folders_page_renders_sharefile_mirror(self):
         with tempfile.TemporaryDirectory() as tmpdir:

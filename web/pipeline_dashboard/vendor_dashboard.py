@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import calendar
 from dataclasses import dataclass
-from datetime import date
+from datetime import date, timedelta
 from pathlib import Path
 from types import SimpleNamespace
 from typing import Any
@@ -248,3 +248,149 @@ def display_path(path: Path) -> str:
         return str(path.relative_to(settings.REPO_ROOT))
     except ValueError:
         return str(path)
+
+
+def build_vendor_detail_payload(vendor: Vendor) -> dict[str, Any]:
+    """Assemble all Phase 1 Details-tab panels from existing models."""
+    today = timezone.localdate()
+    cutoff_date = today - timedelta(days=89)
+    cutoff_dt = timezone.make_aware(
+        timezone.datetime.combine(cutoff_date, timezone.datetime.min.time())
+    ) if timezone.get_current_timezone() else cutoff_date
+
+    # Panel B: 90-day histogram (dense list including zero-count days)
+    hist_qs = (
+        Asset.objects.filter(vendor=vendor, remote_created_at__date__gte=cutoff_date)
+        .values("remote_created_at__date")
+        .annotate(count=Count("remote_item_id"))
+    )
+    hist_lookup: dict[date, int] = {
+        row["remote_created_at__date"]: row["count"]
+        for row in hist_qs
+        if row["remote_created_at__date"]
+    }
+    histogram = [
+        {"date": (cutoff_date + timedelta(days=i)).isoformat(), "count": hist_lookup.get(cutoff_date + timedelta(days=i), 0)}
+        for i in range(90)
+    ]
+
+    # Panel A helpers
+    people = observed_people(vendor)
+    status_counts = {
+        row["status"]: row["count"]
+        for row in Asset.objects.filter(vendor=vendor).values("status").annotate(count=Count("remote_item_id"))
+    }
+    parsed_counts = {
+        row["comparison_status"]: row["count"]
+        for row in ParsedOutput.objects.filter(vendor=vendor).values("comparison_status").annotate(count=Count("id"))
+    }
+    health = parser_health(vendor)
+
+    # Panel D: Recent raw files
+    recent_assets = list(
+        Asset.objects.filter(vendor=vendor)
+        .select_related("source_folder")
+        .order_by("-remote_modified_at")[:20]
+    )
+
+    # Panel E: Approval queue
+    approval_files = list(
+        ParsedOutput.objects.filter(vendor=vendor, comparison_status="sent_for_approval")
+        .select_related("asset")
+        .order_by("-created_at")[:5]
+    )
+
+    # Panel F: Approved history
+    history_files = list(
+        ParsedOutput.objects.filter(vendor=vendor, comparison_status="approved")
+        .select_related("asset")
+        .order_by("-created_at")[:5]
+    )
+
+    # Panel G: Activity stream
+    events = list(
+        AssetEvent.objects.filter(asset__vendor=vendor)
+        .select_related("asset")
+        .order_by("-created_at")[:20]
+    )
+
+    return {
+        "health": {
+            "parser": {
+                "has_schema": health.has_schema,
+                "has_parser": health.has_parser,
+                "label": health.label,
+                "badge_class": health.badge_class,
+                "schema_path": health.schema_path,
+                "parser_path": health.parser_path,
+            },
+            "folders": [
+                {"label": f.label, "role": f.role, "folder_id": f.folder_id}
+                for f in vendor.folders.order_by("label")
+            ],
+            "badges": health_badges(vendor, status_counts, parsed_counts, people),
+        },
+        "histogram": histogram,
+        "people": [
+            {
+                "name": p.name,
+                "email": p.email,
+                "upload_count": p.upload_count,
+                "last_upload": p.last_upload.isoformat() if p.last_upload else None,
+            }
+            for p in people
+        ],
+        "assets": [
+            {
+                "remote_item_id": a.remote_item_id,
+                "name": a.name,
+                "status": a.status,
+                "file_size": a.file_size,
+                "remote_modified_at": a.remote_modified_at.isoformat() if a.remote_modified_at else None,
+                "uploader": a.created_by_display or "Unknown",
+                "folder": a.source_folder.label if a.source_folder else a.source_folder_label or "",
+                "is_active": a.is_active,
+                "duplicate_role": a.duplicate_role or "",
+            }
+            for a in recent_assets
+        ],
+        "approval": [
+            {
+                "id": p.id,
+                "reporting_period": p.reporting_period,
+                "version": p.version,
+                "row_count": p.row_count,
+                "total_spend": str(p.total_spend) if p.total_spend is not None else "0",
+                "total_impressions": str(p.total_impressions) if p.total_impressions is not None else "0",
+                "created_at": p.created_at.isoformat(),
+                "asset_name": p.asset.name if p.asset else "",
+            }
+            for p in approval_files
+        ],
+        "history": [
+            {
+                "id": p.id,
+                "reporting_period": p.reporting_period,
+                "version": p.version,
+                "row_count": p.row_count,
+                "total_spend": str(p.total_spend) if p.total_spend is not None else "0",
+                "total_impressions": str(p.total_impressions) if p.total_impressions is not None else "0",
+                "created_at": p.created_at.isoformat(),
+                "asset_name": p.asset.name if p.asset else "",
+                "output_path": p.output_path,
+            }
+            for p in history_files
+        ],
+        "events": [
+            {
+                "created_at": e.created_at.isoformat(),
+                "asset_name": e.asset.name,
+                "asset_id": e.asset_id,
+                "event_type": e.event_type,
+                "from_status": e.from_status,
+                "to_status": e.to_status,
+                "message": e.message,
+            }
+            for e in events
+        ],
+    }

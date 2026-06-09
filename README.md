@@ -810,6 +810,32 @@ Final/<Reporting_Period>/<Vendor>_<Reporting_Period>.csv
 - **Backend**: `build_vendor_page_context()` now returns `history_months` and `history_coverage` alongside the existing `metrics` and `vendor_rows`.
 - **Files**: `web/pipeline_dashboard/vendor_dashboard.py`, `web/pipeline_dashboard/templates/pipeline_dashboard/vendors.html`.
 
+### Vendor Details tab — Phase 1 (2026-06-09)
+
+- **Goal**: populate the existing vendor modal's **Details** tab with real data from the Django catalogue, without creating any new models.
+- **Design source**: `docs/vendor_details.md` ( Panels A–G from the phased build plan).
+- **New backend endpoint**: `GET /vendors/<id>/details/` returns a single JSON payload with all Phase 1 panel data.
+  - `build_vendor_detail_payload(vendor)` in `vendor_dashboard.py` reuses existing helpers (`parser_health`, `observed_people`, `health_badges`) and runs targeted queries for the remaining panels.
+- **Panels implemented**:
+  - **Panel A — Health & Parser**: compact badge bar showing `Inactive`, `Parser missing`, `No folders`, `Review pending`, `No observed users`, or `Healthy`; plus parser readiness (schema + `.py` present) and folder tags with roles.
+  - **Panel B — Upload histogram (90 days)**: GitHub-style contribution grid — 13 weeks × 7 days of 10 px squares with 4-level blue color intensity (`#e5e7eb` → `#1e40af`). Tooltip on each square shows the date and file count.
+  - **Panel C — Observed uploaders**: table of `Name | Email | Uploads | Last upload`.
+  - **Panel D — Recent raw files**: last 20 `Asset` rows with status badge (`New`, `Processing`, `Review`, `Failed`, etc.), size, modified date, uploader, and source folder.
+  - **Panel E — Approval queue**: last 5 `ParsedOutput` rows with `comparison_status="sent_for_approval"`, showing period, version, row count, spend, impressions, and age.
+  - **Panel F — Approved history**: last 5 `ParsedOutput` rows with `comparison_status="approved"`, same columns plus a **Download** button linking to the existing `download_approved_output` view.
+  - **Panel G — Activity stream**: last 20 `AssetEvent` rows with timestamp, file name, event type, from→to status transition, and message. Includes filter chips (`All`, `Discovered`, `Status`, `Parse`, `Approval`, `Cancelled`) that hide non-matching rows client-side.
+- **Frontend wiring**:
+  - Each vendor card now exposes `data-vendor-id`.
+  - The modal JS stores the current `vendorId`, pre-fetches details on open, and caches the payload per session so switching between **Reporting** and **Details** tabs does not re-fetch.
+  - All rendering is done in vanilla JS inside the existing `vendors.html` inline script, matching the page's current architecture.
+- **Styling**: scoped CSS added to the existing `<style>` block for `.detail-panel`, `.detail-health-bar`, `.upload-histogram`, `.detail-grid-2`, and `.detail-table`, reusing base.html badge/table variables.
+- **Tests** (in `pipeline_dashboard/tests/test_views.py`):
+  - `test_vendor_details_returns_all_panels` — full happy path with assets, events, parsed outputs.
+  - `test_vendor_details_404_for_missing_vendor`.
+  - `test_vendor_details_empty_panels_for_fresh_vendor`.
+  - `test_vendor_details_histogram_90_day_cutoff` — confirms the histogram window excludes uploads older than 90 days.
+- **Files**: `web/pipeline_dashboard/vendor_dashboard.py`, `web/pipeline_dashboard/views.py`, `web/pipeline_dashboard/urls.py`, `web/pipeline_dashboard/templates/pipeline_dashboard/vendors.html`, `web/pipeline_dashboard/tests/test_views.py`.
+
 ## Immediate Next Steps
 
 1. Define the shared target schema location and validation rules for final approved outputs.

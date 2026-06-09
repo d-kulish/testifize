@@ -476,6 +476,96 @@
       }
     }
 
+    .vendor-detail-content {
+      display: grid;
+      gap: 14px;
+      padding-bottom: 8px;
+    }
+
+    .detail-panel {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px 14px;
+    }
+
+    .detail-panel-title {
+      margin: 0 0 10px;
+      font-size: 12px;
+      font-weight: 760;
+      text-transform: uppercase;
+      letter-spacing: 0.02em;
+      color: var(--muted);
+    }
+
+    .detail-health-bar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 6px;
+      padding: 10px 12px;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+    }
+
+    .detail-grid-2 {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    @media (max-width: 760px) {
+      .detail-grid-2 {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .upload-histogram {
+      display: grid;
+      grid-template-columns: repeat(13, 1fr);
+      gap: 3px;
+    }
+
+    .upload-histogram > div {
+      display: grid;
+      gap: 3px;
+    }
+
+    .detail-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+
+    .detail-table th,
+    .detail-table td {
+      padding: 8px 10px;
+      border-bottom: 1px solid #edf0f4;
+      text-align: left;
+      vertical-align: middle;
+      white-space: nowrap;
+    }
+
+    .detail-table th {
+      background: #f8fafc;
+      color: #667085;
+      font-size: 11px;
+      font-weight: 750;
+      text-transform: uppercase;
+    }
+
+    .detail-table tbody tr:hover {
+      background: #f9fbff;
+    }
+
+    .detail-table .file-name {
+      max-width: 240px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      display: inline-block;
+    }
+
     @media (max-width: 520px) {
       .vendor-grid {
         grid-template-columns: 1fr;
@@ -562,7 +652,7 @@
 
   <section class="vendor-grid" aria-label="Vendor cards">
     {% for row in vendor_rows %}
-      <article class="vendor-card{% if row.gap_months <= 1 %} reporting-closed{% elif row.gap_months == 2 %} reporting-alert{% elif row.gap_months > 2 %} reporting-overdue{% endif %}" data-vendor-card>
+      <article class="vendor-card{% if row.gap_months <= 1 %} reporting-closed{% elif row.gap_months == 2 %} reporting-alert{% elif row.gap_months > 2 %} reporting-overdue{% endif %}" data-vendor-card data-vendor-id="{{ row.vendor.id }}">
         <div class="vendor-card-header">
           <div class="vendor-card-name">{{ row.vendor.name }}</div>
           <button class="vendor-card-open" type="button" data-vendor-open aria-label="Open details">
@@ -630,7 +720,20 @@
           <div class="review-message">Reporting content will appear here.</div>
         </div>
         <div class="vendor-modal-panel" data-vendor-tab-panel="details" hidden>
-          <div class="review-message">Details content will appear here.</div>
+          <div class="vendor-detail-loader" data-detail-loader>
+            <div class="review-message">Loading details…</div>
+          </div>
+          <div class="vendor-detail-content" data-detail-content hidden>
+            <div data-panel="health"></div>
+            <div data-panel="histogram"></div>
+            <div data-panel="people"></div>
+            <div data-panel="assets"></div>
+            <div class="detail-grid-2">
+              <div data-panel="approval"></div>
+              <div data-panel="history"></div>
+            </div>
+            <div data-panel="events"></div>
+          </div>
         </div>
       </div>
       <footer class="vendor-modal-footer">
@@ -712,20 +815,295 @@
       const modalTitle = document.querySelector("#vendor-modal-title");
       const tabs = document.querySelectorAll("[data-vendor-tab]");
       const panels = document.querySelectorAll("[data-vendor-tab-panel]");
+      const detailLoader = document.querySelector("[data-detail-loader]");
+      const detailContent = document.querySelector("[data-detail-content]");
       if (!modal) return;
 
-      function openModal(vendorName) {
+      let currentVendorId = null;
+      const detailCache = {};
+
+      function openModal(vendorName, vendorId) {
         modal.hidden = false;
+        currentVendorId = vendorId || null;
         if (modalTitle) modalTitle.textContent = vendorName || "Vendor Details";
         // Reset to Reporting tab by default
         tabs.forEach((tab) => tab.classList.toggle("active", tab.dataset.vendorTab === "reporting"));
         panels.forEach((panel) => {
           panel.hidden = panel.dataset.vendorTabPanel !== "reporting";
         });
+        // Pre-fetch details so they're ready when the user switches to the Details tab
+        if (currentVendorId && !detailCache[currentVendorId]) {
+          fetchVendorDetails(currentVendorId);
+        }
       }
 
       function closeModal() {
         modal.hidden = true;
+        currentVendorId = null;
+      }
+
+      function fmtDate(iso) {
+        if (!iso) return "—";
+        const d = new Date(iso);
+        return d.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
+      }
+
+      function fmtDateTime(iso) {
+        if (!iso) return "—";
+        const d = new Date(iso);
+        return d.toLocaleString(undefined, { month: "short", day: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit" });
+      }
+
+      function fmtSize(bytes) {
+        if (!bytes) return "—";
+        if (bytes < 1024) return bytes + " B";
+        if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + " KB";
+        return (bytes / (1024 * 1024)).toFixed(1) + " MB";
+      }
+
+      function fmtMoney(value) {
+        const n = parseFloat(value || 0);
+        if (Math.abs(n) >= 1000) return "$" + (n / 1000).toFixed(1) + "k";
+        return "$" + n.toFixed(0);
+      }
+
+      function badgeClassForStatus(status) {
+        const map = {
+          new: "new", queued: "new", discovered: "new",
+          processing: "processing", downloading: "processing", uploading: "processing",
+          review: "review",
+          processed: "processed", uploaded: "processed",
+          failed: "failed",
+          superseded: "superseded", ignored: "superseded",
+        };
+        return map[status] || "new";
+      }
+
+      function eventCategory(eventType) {
+        if (["discovered", "rediscovered"].includes(eventType)) return "discovered";
+        if (["status", "review_started"].includes(eventType)) return "status_change";
+        if (["approval_sent", "final_approved"].includes(eventType)) return "approval";
+        if (["parsed_output_cancelled", "processing_cancelled"].includes(eventType)) return "cancelled";
+        return "parse";
+      }
+
+      function renderDetails(panels) {
+        renderHealth(panels.health);
+        renderHistogram(panels.histogram);
+        renderPeople(panels.people);
+        renderAssets(panels.assets);
+        renderApproval(panels.approval);
+        renderHistory(panels.history);
+        renderEvents(panels.events);
+      }
+
+      function renderHealth(data) {
+        const el = document.querySelector("[data-panel='health']");
+        if (!el) return;
+        const parser = data.parser || {};
+        const parserBadge = parser.badge_class === "passed"
+          ? '<span class="badge passed">Parser ' + (parser.label || "Ready") + '</span>'
+          : '<span class="badge failed">Parser ' + (parser.label || "Missing") + '</span>';
+        const folderTags = (data.folders || []).length
+          ? data.folders.map(function (f) {
+              return '<span class="badge">' + (f.role || "folder") + ": " + f.label + '</span>';
+            }).join(" ")
+          : '<span class="badge superseded">No folders</span>';
+        const badges = (data.badges || []).map(function (b) {
+          return '<span class="badge ' + (b.class || "") + '" style="margin-right:6px;">' + b.label + '</span>';
+        }).join("");
+        el.innerHTML = '<div class="detail-health-bar">' + badges + parserBadge + ' <span style="margin-left:8px;">' + folderTags + '</span></div>';
+      }
+
+      function renderHistogram(days) {
+        const el = document.querySelector("[data-panel='histogram']");
+        if (!el) return;
+        if (!days || !days.length) {
+          el.innerHTML = '<div class="detail-panel"><div class="detail-panel-title">Upload Activity (90 days)</div><div class="empty">No uploads in the last 90 days.</div></div>';
+          return;
+        }
+        // Build 13 weeks × 7 days grid
+        let html = '<div class="detail-panel"><div class="detail-panel-title">Upload Activity (90 days)</div>';
+        html += '<div class="upload-histogram" style="display:grid;grid-template-columns:repeat(13,1fr);gap:3px;" title="">';
+        for (let w = 0; w < 13; w++) {
+          html += '<div style="display:grid;gap:3px;">';
+          for (let d = 0; d < 7; d++) {
+            const idx = w * 7 + d;
+            const day = days[idx] || { count: 0, date: "" };
+            const count = day.count || 0;
+            let color = "#e5e7eb";
+            if (count > 0) color = "#93c5fd";
+            if (count >= 2) color = "#3b82f6";
+            if (count >= 5) color = "#1e40af";
+            html += '<div style="width:10px;height:10px;border-radius:2px;background:' + color + ';" title="' + (day.date ? day.date + ": " + count + " file" + (count === 1 ? "" : "s") : "") + '"></div>';
+          }
+          html += '</div>';
+        }
+        html += '</div>';
+        // Legend
+        html += '<div style="display:flex;align-items:center;gap:8px;margin-top:8px;font-size:11px;color:var(--muted);">';
+        html += '<span>Less</span><div style="width:10px;height:10px;border-radius:2px;background:#e5e7eb;"></div>';
+        html += '<div style="width:10px;height:10px;border-radius:2px;background:#93c5fd;"></div>';
+        html += '<div style="width:10px;height:10px;border-radius:2px;background:#3b82f6;"></div>';
+        html += '<div style="width:10px;height:10px;border-radius:2px;background:#1e40af;"></div><span>More</span>';
+        html += '</div></div>';
+        el.innerHTML = html;
+      }
+
+      function renderTablePanel(el, title, headers, rows, emptyMsg) {
+        if (!el) return;
+        if (!rows || !rows.length) {
+          el.innerHTML = '<div class="detail-panel"><div class="detail-panel-title">' + title + '</div><div class="empty">' + emptyMsg + '</div></div>';
+          return;
+        }
+        let html = '<div class="detail-panel"><div class="detail-panel-title">' + title + '</div>';
+        html += '<div style="overflow-x:auto;"><table class="detail-table"><thead><tr>';
+        headers.forEach(function (h) {
+          html += '<th>' + h + '</th>';
+        });
+        html += '</tr></thead><tbody>';
+        rows.forEach(function (row) {
+          html += '<tr>';
+          row.forEach(function (cell) {
+            html += '<td>' + (cell || "") + '</td>';
+          });
+          html += '</tr>';
+        });
+        html += '</tbody></table></div></div>';
+        el.innerHTML = html;
+      }
+
+      function renderPeople(people) {
+        const el = document.querySelector("[data-panel='people']");
+        const rows = (people || []).map(function (p) {
+          return [
+            p.name || "Unknown",
+            p.email || "—",
+            p.upload_count || 0,
+            fmtDate(p.last_upload),
+          ];
+        });
+        renderTablePanel(el, "Observed Uploaders", ["Name", "Email", "Uploads", "Last upload"], rows, "No observed uploaders yet.");
+      }
+
+      function renderAssets(assets) {
+        const el = document.querySelector("[data-panel='assets']");
+        const rows = (assets || []).map(function (a) {
+          const badge = '<span class="badge ' + badgeClassForStatus(a.status) + '">' + (a.status || "—") + '</span>';
+          return [
+            '<span class="file-name" title="' + (a.name || "").replace(/"/g, "&quot;") + '">' + (a.name || "—") + '</span>',
+            badge,
+            fmtSize(a.file_size),
+            fmtDate(a.remote_modified_at),
+            a.uploader || "—",
+            a.folder || "—",
+          ];
+        });
+        renderTablePanel(el, "Recent Raw Files", ["Name", "Status", "Size", "Modified", "Uploader", "Folder"], rows, "No raw files for this vendor.");
+      }
+
+      function renderApproval(items) {
+        const el = document.querySelector("[data-panel='approval']");
+        const rows = (items || []).map(function (p) {
+          return [
+            p.reporting_period || "—",
+            "v" + (p.version || 1),
+            (p.row_count || 0).toLocaleString(),
+            fmtMoney(p.total_spend),
+            (p.total_impressions || 0).toLocaleString(),
+            fmtDate(p.created_at),
+          ];
+        });
+        renderTablePanel(el, "Approval Queue", ["Period", "Version", "Rows", "Spend", "Impressions", "Sent"], rows, "Nothing awaiting approval.");
+      }
+
+      function renderHistory(items) {
+        const el = document.querySelector("[data-panel='history']");
+        const rows = (items || []).map(function (p) {
+          const downloadUrl = p.id ? '{% url "pipeline_dashboard:download_approved_output" 0 %}'.replace("0", p.id) : "";
+          const downloadCell = downloadUrl
+            ? '<a class="button small" href="' + downloadUrl + '" download>Download</a>'
+            : '—';
+          return [
+            p.reporting_period || "—",
+            "v" + (p.version || 1),
+            (p.row_count || 0).toLocaleString(),
+            fmtMoney(p.total_spend),
+            (p.total_impressions || 0).toLocaleString(),
+            fmtDate(p.created_at),
+            downloadCell,
+          ];
+        });
+        renderTablePanel(el, "Approved History", ["Period", "Version", "Rows", "Spend", "Impressions", "Approved", "Action"], rows, "No approved outputs yet.");
+      }
+
+      function renderEvents(events) {
+        const el = document.querySelector("[data-panel='events']");
+        if (!el) return;
+        if (!events || !events.length) {
+          el.innerHTML = '<div class="detail-panel"><div class="detail-panel-title">Activity Stream</div><div class="empty">No events recorded.</div></div>';
+          return;
+        }
+        let html = '<div class="detail-panel"><div class="detail-panel-title">Activity Stream</div>';
+        // Filter chips
+        const chips = [
+          { key: "all", label: "All" },
+          { key: "discovered", label: "Discovered" },
+          { key: "status_change", label: "Status" },
+          { key: "parse", label: "Parse" },
+          { key: "approval", label: "Approval" },
+          { key: "cancelled", label: "Cancelled" },
+        ];
+        html += '<div class="filterbar" style="margin-bottom:8px;">';
+        chips.forEach(function (c) {
+          html += '<button type="button" class="button small" data-event-filter="' + c.key + '" onclick="filterEvents(this)">' + c.label + '</button> ';
+        });
+        html += '</div>';
+        html += '<div style="overflow-x:auto;"><table class="detail-table"><thead><tr><th>Time</th><th>File</th><th>Event</th><th>Transition</th><th>Message</th></tr></thead><tbody>';
+        events.forEach(function (e) {
+          const cat = eventCategory(e.event_type);
+          const transition = (e.from_status || "—") + " → " + (e.to_status || "—");
+          html += '<tr data-event-category="' + cat + '"><td>' + fmtDateTime(e.created_at) + '</td><td><span class="file-name" title="' + (e.asset_name || "").replace(/"/g, "&quot;") + '">' + (e.asset_name || "—") + '</span></td><td>' + e.event_type + '</td><td>' + transition + '</td><td>' + (e.message || "") + '</td></tr>';
+        });
+        html += '</tbody></table></div></div>';
+        el.innerHTML = html;
+        // Default active chip
+        const allChip = el.querySelector('[data-event-filter="all"]');
+        if (allChip) allChip.classList.add("primary");
+      }
+
+      window.filterEvents = function (btn) {
+        const container = btn.closest("[data-panel='events']");
+        if (!container) return;
+        const filter = btn.dataset.eventFilter;
+        container.querySelectorAll("[data-event-filter]").forEach(function (b) {
+          b.classList.toggle("primary", b === btn);
+        });
+        container.querySelectorAll("tbody tr").forEach(function (row) {
+          const show = filter === "all" || row.dataset.eventCategory === filter;
+          row.hidden = !show;
+        });
+      };
+
+      function fetchVendorDetails(vendorId) {
+        if (!vendorId) return;
+        if (detailLoader) detailLoader.hidden = false;
+        if (detailContent) detailContent.hidden = true;
+        fetch("/vendors/" + vendorId + "/details/")
+          .then(function (res) { return res.json(); })
+          .then(function (data) {
+            if (data.ok && data.panels) {
+              detailCache[vendorId] = data.panels;
+              renderDetails(data.panels);
+              if (detailLoader) detailLoader.hidden = true;
+              if (detailContent) detailContent.hidden = false;
+            } else {
+              if (detailLoader) detailLoader.innerHTML = '<div class="review-message">Failed to load details: ' + (data.error || "Unknown error") + '</div>';
+            }
+          })
+          .catch(function (err) {
+            if (detailLoader) detailLoader.innerHTML = '<div class="review-message">Failed to load details: ' + err.message + '</div>';
+          });
       }
 
       document.querySelectorAll("[data-vendor-open]").forEach((btn) => {
@@ -733,7 +1111,8 @@
           event.stopPropagation();
           const card = btn.closest("[data-vendor-card]");
           const name = card?.querySelector(".vendor-card-name")?.textContent?.trim() || "";
-          openModal(name);
+          const vendorId = card?.dataset.vendorId || "";
+          openModal(name, vendorId);
         });
       });
 
@@ -744,6 +1123,15 @@
           panels.forEach((p) => {
             p.hidden = p.dataset.vendorTabPanel !== target;
           });
+          if (target === "details" && currentVendorId) {
+            if (detailCache[currentVendorId]) {
+              renderDetails(detailCache[currentVendorId]);
+              if (detailLoader) detailLoader.hidden = true;
+              if (detailContent) detailContent.hidden = false;
+            } else {
+              fetchVendorDetails(currentVendorId);
+            }
+          }
         });
       });
 
