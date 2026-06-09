@@ -233,6 +233,28 @@ class DashboardViewTests(TestCase):
             to_status=AssetStatus.NEW,
             message="File discovered.",
         )
+        # Build a full pipeline so the histogram gets every stage
+        AssetEvent.objects.create(
+            asset=asset,
+            event_type="status",
+            from_status=AssetStatus.NEW,
+            to_status=AssetStatus.PROCESSING,
+            message="Moved to parsing.",
+        )
+        AssetEvent.objects.create(
+            asset=asset,
+            event_type="approval_sent",
+            from_status=AssetStatus.PROCESSING,
+            to_status=AssetStatus.REVIEW,
+            message="Sent for approval.",
+        )
+        AssetEvent.objects.create(
+            asset=asset,
+            event_type="final_approved",
+            from_status=AssetStatus.REVIEW,
+            to_status=AssetStatus.PROCESSED,
+            message="Approved and stored in Final.",
+        )
         ParsedOutput.objects.create(
             asset=asset,
             vendor=vendor,
@@ -275,7 +297,7 @@ class DashboardViewTests(TestCase):
         self.assertEqual(panels["assets"][0]["name"], "detail.xlsx")
         self.assertEqual(len(panels["approval"]), 1)
         self.assertEqual(len(panels["history"]), 1)
-        self.assertEqual(len(panels["events"]), 1)
+        self.assertEqual(len(panels["events"]), 4)
 
     def test_vendor_details_404_for_missing_vendor(self):
         response = self.client.get(reverse("pipeline_dashboard:vendor_details", args=[99999]))

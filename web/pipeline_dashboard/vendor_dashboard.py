@@ -253,10 +253,12 @@ def display_path(path: Path) -> str:
 def _build_histogram_maturity(vendor: Vendor, cutoff_date: date) -> list[dict[str, Any]]:
     """Build a 240-day pipeline-maturity timeline.
 
-    Each day shows the most advanced stage any file has ever reached by that
-    day.  Backward moves (failed, cancelled, returned to parsing) are ignored.
+    Each day is coloured ONLY if a file reached a new forward stage on that
+    day.  The colour shows the highest-priority new stage reached by any
+    file on that day.  Backward moves (failed, cancelled, returned to
+    parsing) are ignored because they do not represent a *new* stage.
 
-    Stages (in order of priority):
+    Stages (priority order — higher number wins):
         1 submitted  – raw file uploaded to ShareFile
         2 parsing    – file entered downloading / processing / uploading
         3 approval   – file sent for external approval (review status)
@@ -279,19 +281,13 @@ def _build_histogram_maturity(vendor: Vendor, cutoff_date: date) -> list[dict[st
         AssetStatus.UPLOADED,
     }
 
-    # Only track assets that had activity inside (or at the edge of) the window.
-    assets = (
-        Asset.objects.filter(vendor=vendor)
-        .filter(
-            Q(remote_created_at__date__gte=cutoff_date)
-            | Q(events__created_at__date__gte=cutoff_date)
-        )
-        .distinct()
-    )
+    # Consider every asset for this vendor — even ones created before the
+    # window, because they may reach a new stage *inside* the window.
+    assets = Asset.objects.filter(vendor=vendor)
 
-    # Batch-load all events for these assets, ordered chronologically.
+    # Batch-load all events, ordered chronologically.
     all_events = list(
-        AssetEvent.objects.filter(asset__in=assets)
+        AssetEvent.objects.filter(asset__vendor=vendor)
         .order_by("created_at")
         .values("asset_id", "created_at", "to_status", "event_type")
     )
@@ -299,50 +295,37 @@ def _build_histogram_maturity(vendor: Vendor, cutoff_date: date) -> list[dict[st
     for evt in all_events:
         events_by_asset.setdefault(evt["asset_id"], []).append(evt)
 
-    for asset in assets:
-        transitions: list[tuple[date, int]] = []
+    for asset in assets.iterator():
+        # For each asset, find the FIRST date it reached each stage.
+        stage_date: dict[int, date | None] = {
+            SUBMITTED: None,
+            PARSING: None,
+            APPROVAL: None,
+            APPROVED: None,
+        }
 
-        # Submitted
         if asset.remote_created_at:
-            transitions.append((asset.remote_created_at.date(), SUBMITTED))
+            stage_date[SUBMITTED] = asset.remote_created_at.date()
 
         events = events_by_asset.get(asset.remote_item_id, [])
 
-        # Parsing – first event that enters a parsing status
         for evt in events:
-            if evt["to_status"] in PARSING_STATUSES:
-                transitions.append((evt["created_at"].date(), PARSING))
+            if stage_date[PARSING] is None and evt["to_status"] in PARSING_STATUSES:
+                stage_date[PARSING] = evt["created_at"].date()
+            if stage_date[APPROVAL] is None and (
+                evt["to_status"] == AssetStatus.REVIEW or evt["event_type"] == "approval_sent"
+            ):
+                stage_date[APPROVAL] = evt["created_at"].date()
+            if stage_date[APPROVED] is None and evt["event_type"] == "final_approved":
+                stage_date[APPROVED] = evt["created_at"].date()
+            # Stop early if every stage is found.
+            if all(v is not None for v in stage_date.values()):
                 break
 
-        # Approval – first event that enters review or approval_sent
-        for evt in events:
-            if evt["to_status"] == AssetStatus.REVIEW or evt["event_type"] == "approval_sent":
-                transitions.append((evt["created_at"].date(), APPROVAL))
-                break
-
-        # Approved – first final_approved event
-        for evt in events:
-            if evt["event_type"] == "final_approved":
-                transitions.append((evt["created_at"].date(), APPROVED))
-                break
-
-        # Sort by date and keep only the earliest transition per stage
-        transitions.sort(key=lambda x: x[0])
-        seen_stages = set()
-        deduped: list[tuple[date, int]] = []
-        for d, stage in transitions:
-            if stage not in seen_stages:
-                seen_stages.add(stage)
-                deduped.append((d, stage))
-
-        # Walk the 240-day window, advancing the cumulative max stage
-        current_stage = 0
-        tidx = 0
-        for d in dates:
-            while tidx < len(deduped) and deduped[tidx][0] <= d:
-                current_stage = max(current_stage, deduped[tidx][1])
-                tidx += 1
-            date_to_stage[d] = max(date_to_stage[d], current_stage)
+        # Record each first-stage date that falls inside the window.
+        for stage, d in stage_date.items():
+            if d is not None and d in date_to_stage:
+                date_to_stage[d] = max(date_to_stage[d], stage)
 
     stage_names = {0: None, 1: "submitted", 2: "parsing", 3: "approval", 4: "approved"}
     return [{"date": str(d), "stage": stage_names[date_to_stage[d]]} for d in dates]
