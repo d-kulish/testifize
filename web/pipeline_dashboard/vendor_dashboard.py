@@ -394,13 +394,6 @@ def build_vendor_detail_payload(vendor: Vendor) -> dict[str, Any]:
         .order_by("-created_at")[:5]
     )
 
-    # Panel F: Activity stream
-    events = list(
-        AssetEvent.objects.filter(asset__vendor=vendor)
-        .select_related("asset")
-        .order_by("-created_at")[:20]
-    )
-
     return {
         "histogram": histogram,
         "people": [
@@ -452,17 +445,5 @@ def build_vendor_detail_payload(vendor: Vendor) -> dict[str, Any]:
                 "output_path": p.output_path,
             }
             for p in history_files
-        ],
-        "events": [
-            {
-                "created_at": e.created_at.isoformat(),
-                "asset_name": e.asset.name,
-                "asset_id": e.asset_id,
-                "event_type": e.event_type,
-                "from_status": e.from_status,
-                "to_status": e.to_status,
-                "message": e.message,
-            }
-            for e in events
         ],
     }

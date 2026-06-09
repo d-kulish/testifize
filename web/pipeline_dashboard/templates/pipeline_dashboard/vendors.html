@@ -714,7 +714,6 @@
             <div data-panel="assets"></div>
             <div data-panel="approval"></div>
             <div data-panel="history"></div>
-            <div data-panel="events"></div>
           </div>
         </div>
       </div>
@@ -875,7 +874,6 @@
         renderAssets(panels.assets);
         renderApproval(panels.approval);
         renderHistory(panels.history);
-        renderEvents(panels.events);
       }
 
       function renderHistogram(days) {
@@ -1087,54 +1085,6 @@
         });
         renderTablePanel(el, "Approved History", ["Period", "Version", "Rows", "Spend", "Impressions", "Approved", "Action"], rows, "No approved outputs yet.");
       }
-
-      function renderEvents(events) {
-        const el = document.querySelector("[data-panel='events']");
-        if (!el) return;
-        if (!events || !events.length) {
-          el.innerHTML = '<div class="detail-panel"><div class="detail-panel-title">Activity Stream</div><div class="empty">No events recorded.</div></div>';
-          return;
-        }
-        let html = '<div class="detail-panel"><div class="detail-panel-title">Activity Stream</div>';
-        // Filter chips
-        const chips = [
-          { key: "all", label: "All" },
-          { key: "discovered", label: "Discovered" },
-          { key: "status_change", label: "Status" },
-          { key: "parse", label: "Parse" },
-          { key: "approval", label: "Approval" },
-          { key: "cancelled", label: "Cancelled" },
-        ];
-        html += '<div class="filterbar" style="margin-bottom:8px;">';
-        chips.forEach(function (c) {
-          html += '<button type="button" class="button small" data-event-filter="' + c.key + '" onclick="filterEvents(this)">' + c.label + '</button> ';
-        });
-        html += '</div>';
-        html += '<table class="detail-table"><thead><tr><th>Time</th><th>File</th><th>Event</th><th>Transition</th><th>Message</th></tr></thead><tbody>';
-        events.forEach(function (e) {
-          const cat = eventCategory(e.event_type);
-          const transition = (e.from_status || "—") + " → " + (e.to_status || "—");
-          html += '<tr data-event-category="' + cat + '"><td>' + fmtDateTime(e.created_at) + '</td><td><span class="file-name" title="' + (e.asset_name || "").replace(/"/g, "&quot;") + '">' + (e.asset_name || "—") + '</span></td><td>' + e.event_type + '</td><td>' + transition + '</td><td>' + (e.message || "") + '</td></tr>';
-        });
-        html += '</tbody></table></div>';
-        el.innerHTML = html;
-        // Default active chip
-        const allChip = el.querySelector('[data-event-filter="all"]');
-        if (allChip) allChip.classList.add("primary");
-      }
-
-      window.filterEvents = function (btn) {
-        const container = btn.closest("[data-panel='events']");
-        if (!container) return;
-        const filter = btn.dataset.eventFilter;
-        container.querySelectorAll("[data-event-filter]").forEach(function (b) {
-          b.classList.toggle("primary", b === btn);
-        });
-        container.querySelectorAll("tbody tr").forEach(function (row) {
-          const show = filter === "all" || row.dataset.eventCategory === filter;
-          row.hidden = !show;
-        });
-      };
 
       function fetchVendorDetails(vendorId) {
         if (!vendorId) return;

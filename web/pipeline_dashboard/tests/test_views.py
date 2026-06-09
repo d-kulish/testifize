@@ -290,14 +290,12 @@ class DashboardViewTests(TestCase):
         self.assertIn("assets", panels)
         self.assertIn("approval", panels)
         self.assertIn("history", panels)
-        self.assertIn("events", panels)
         self.assertEqual(len(panels["people"]), 1)
         self.assertEqual(panels["people"][0]["upload_count"], 1)
         self.assertEqual(len(panels["assets"]), 1)
         self.assertEqual(panels["assets"][0]["name"], "detail.xlsx")
         self.assertEqual(len(panels["approval"]), 1)
         self.assertEqual(len(panels["history"]), 1)
-        self.assertEqual(len(panels["events"]), 4)
 
     def test_vendor_details_404_for_missing_vendor(self):
         response = self.client.get(reverse("pipeline_dashboard:vendor_details", args=[99999]))
@@ -315,7 +313,6 @@ class DashboardViewTests(TestCase):
         self.assertEqual(len(panels["assets"]), 0)
         self.assertEqual(len(panels["approval"]), 0)
         self.assertEqual(len(panels["history"]), 0)
-        self.assertEqual(len(panels["events"]), 0)
 
     def test_vendor_details_histogram_240_day_cutoff(self):
         vendor = Vendor.objects.create(name="Hist Vendor", parser_key="hist")
