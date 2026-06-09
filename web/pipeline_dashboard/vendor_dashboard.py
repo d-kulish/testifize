@@ -253,16 +253,18 @@ def display_path(path: Path) -> str:
 def _build_histogram_maturity(vendor: Vendor, cutoff_date: date) -> list[dict[str, Any]]:
     """Build a 240-day pipeline-maturity timeline.
 
-    Each day is coloured ONLY if a file reached a new forward stage on that
-    day.  The colour shows the highest-priority new stage reached by any
-    file on that day.  Backward moves (failed, cancelled, returned to
-    parsing) are ignored because they do not represent a *new* stage.
+    Each day shows the *current* stage a file is in on that day.  A stage
+    colours every day from its first occurrence until the next higher stage
+    begins.  Backward moves are ignored (once a stage is reached the file
+    never drops below it).  The ``approved`` stage is special: it only
+    colours the single day the approval happened, because that is the
+    finish line.
 
     Stages (priority order — higher number wins):
         1 submitted  – raw file uploaded to ShareFile
         2 parsing    – file entered downloading / processing / uploading
         3 approval   – file sent for external approval (review status)
-        4 approved   – file approved and stored in Final/
+        4 approved   – file approved and stored in Final/ (one-day only)
     """
     dates = [cutoff_date + timedelta(days=i) for i in range(240)]
     date_to_stage: dict[date, int] = {d: 0 for d in dates}
@@ -281,8 +283,7 @@ def _build_histogram_maturity(vendor: Vendor, cutoff_date: date) -> list[dict[st
         AssetStatus.UPLOADED,
     }
 
-    # Consider every asset for this vendor — even ones created before the
-    # window, because they may reach a new stage *inside* the window.
+    # All assets for this vendor.
     assets = Asset.objects.filter(vendor=vendor)
 
     # Batch-load all events, ordered chronologically.
@@ -296,36 +297,61 @@ def _build_histogram_maturity(vendor: Vendor, cutoff_date: date) -> list[dict[st
         events_by_asset.setdefault(evt["asset_id"], []).append(evt)
 
     for asset in assets.iterator():
-        # For each asset, find the FIRST date it reached each stage.
-        stage_date: dict[int, date | None] = {
-            SUBMITTED: None,
-            PARSING: None,
-            APPROVAL: None,
-            APPROVED: None,
-        }
+        # Build chronological transitions for this asset.
+        transitions: list[tuple[date, int]] = []
 
         if asset.remote_created_at:
-            stage_date[SUBMITTED] = asset.remote_created_at.date()
+            transitions.append((asset.remote_created_at.date(), SUBMITTED))
 
-        events = events_by_asset.get(asset.remote_item_id, [])
+        for evt in events_by_asset.get(asset.remote_item_id, []):
+            to_status = evt["to_status"]
+            event_type = evt["event_type"]
+            stage: int | None = None
+            if to_status in PARSING_STATUSES:
+                stage = PARSING
+            elif to_status == AssetStatus.REVIEW or event_type == "approval_sent":
+                stage = APPROVAL
+            elif event_type == "final_approved":
+                stage = APPROVED
+            if stage is not None:
+                transitions.append((evt["created_at"].date(), stage))
 
-        for evt in events:
-            if stage_date[PARSING] is None and evt["to_status"] in PARSING_STATUSES:
-                stage_date[PARSING] = evt["created_at"].date()
-            if stage_date[APPROVAL] is None and (
-                evt["to_status"] == AssetStatus.REVIEW or evt["event_type"] == "approval_sent"
-            ):
-                stage_date[APPROVAL] = evt["created_at"].date()
-            if stage_date[APPROVED] is None and evt["event_type"] == "final_approved":
-                stage_date[APPROVED] = evt["created_at"].date()
-            # Stop early if every stage is found.
-            if all(v is not None for v in stage_date.values()):
+        # Sort by date.
+        transitions.sort(key=lambda x: x[0])
+
+        # Deduplicate same-day transitions, keeping the max stage.
+        deduped: list[tuple[date, int]] = []
+        for d, stage in transitions:
+            if deduped and deduped[-1][0] == d:
+                deduped[-1] = (d, max(deduped[-1][1], stage))
+            else:
+                deduped.append((d, stage))
+
+        # Walk through transitions, maintaining cumulative stage (no backward).
+        current_stage = 0
+        for i, (trans_date, stage) in enumerate(deduped):
+            # Ignore backward moves.
+            if stage < current_stage:
+                continue
+            current_stage = stage
+
+            if stage == APPROVED:
+                # Approved is a one-day finish milestone.
+                if trans_date in date_to_stage:
+                    date_to_stage[trans_date] = max(date_to_stage[trans_date], APPROVED)
+                # After approval the asset contributes nothing further.
                 break
 
-        # Record each first-stage date that falls inside the window.
-        for stage, d in stage_date.items():
-            if d is not None and d in date_to_stage:
-                date_to_stage[d] = max(date_to_stage[d], stage)
+            # Determine end date for this stage (exclusive).
+            next_date = deduped[i + 1][0] if i + 1 < len(deduped) else None
+
+            # Colour every day from trans_date up to (but not including) next_date.
+            d = trans_date
+            while d in date_to_stage:
+                if next_date is not None and d >= next_date:
+                    break
+                date_to_stage[d] = max(date_to_stage[d], current_stage)
+                d += timedelta(days=1)
 
     stage_names = {0: None, 1: "submitted", 2: "parsing", 3: "approval", 4: "approved"}
     return [{"date": str(d), "stage": stage_names[date_to_stage[d]]} for d in dates]
