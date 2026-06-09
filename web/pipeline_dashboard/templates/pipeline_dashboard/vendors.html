@@ -498,17 +498,6 @@
       color: var(--muted);
     }
 
-    .detail-health-bar {
-      display: flex;
-      flex-wrap: wrap;
-      align-items: center;
-      gap: 6px;
-      padding: 10px 12px;
-      background: var(--panel);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-    }
-
     .detail-grid-2 {
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -909,10 +898,7 @@
               return '<span class="badge">' + (f.role || "folder") + ": " + f.label + '</span>';
             }).join(" ")
           : '<span class="badge superseded">No folders</span>';
-        const badges = (data.badges || []).map(function (b) {
-          return '<span class="badge ' + (b.class || "") + '" style="margin-right:6px;">' + b.label + '</span>';
-        }).join("");
-        el.innerHTML = '<div class="detail-health-bar">' + badges + parserBadge + ' <span style="margin-left:8px;">' + folderTags + '</span></div>';
+        el.innerHTML = '<div class="detail-panel" style="display:flex;flex-wrap:wrap;align-items:center;gap:6px;">' + parserBadge + ' <span style="margin-left:8px;">' + folderTags + '</span></div>';
       }
 
       function renderHistogram(days) {
