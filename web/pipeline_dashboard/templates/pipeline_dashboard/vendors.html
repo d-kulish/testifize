@@ -882,27 +882,100 @@
         const el = document.querySelector("[data-panel='histogram']");
         if (!el) return;
         if (!days || !days.length) {
-          el.innerHTML = '<div class="detail-panel"><div class="detail-panel-title">Upload Activity (90 days)</div><div class="empty">No uploads in the last 90 days.</div></div>';
+          el.innerHTML = '<div class="detail-panel"><div class="detail-panel-title">Upload Activity (240 days)</div><div class="empty">No uploads in the last 240 days.</div></div>';
           return;
         }
-        // Build 13 weeks × 7 days grid
-        let html = '<div class="detail-panel"><div class="detail-panel-title">Upload Activity (90 days)</div>';
-        html += '<div class="upload-histogram" style="display:grid;grid-template-columns:repeat(13,1fr);gap:3px;" title="">';
-        for (let w = 0; w < 13; w++) {
+
+        const DAYS_PER_COL = 7;
+        const firstDay = days[0] && days[0].date ? new Date(days[0].date) : new Date();
+        const startPadding = firstDay.getDay(); // 0=Sunday ... 6=Saturday
+
+        // Build grid array: null padding + actual days + trailing padding to full weeks
+        const grid = [];
+        for (let i = 0; i < startPadding; i++) grid.push(null);
+        grid.push(...days);
+        const trailing = (DAYS_PER_COL - (grid.length % DAYS_PER_COL)) % DAYS_PER_COL;
+        for (let i = 0; i < trailing; i++) grid.push(null);
+        const cols = grid.length / DAYS_PER_COL;
+
+        // Collect month start columns for labels
+        const monthLabels = [];
+        const seenMonths = new Set();
+        for (let c = 0; c < cols; c++) {
+          for (let r = 0; r < DAYS_PER_COL; r++) {
+            const day = grid[c * DAYS_PER_COL + r];
+            if (day && day.date) {
+              const d = new Date(day.date);
+              const key = d.getFullYear() + "-" + d.getMonth();
+              if (!seenMonths.has(key)) {
+                seenMonths.add(key);
+                monthLabels.push({ col: c, label: d.toLocaleDateString(undefined, { month: "short" }) });
+              }
+              break;
+            }
+          }
+        }
+
+        let html = '<div class="detail-panel"><div class="detail-panel-title">Upload Activity (240 days)</div>';
+
+        // Month label row
+        html += '<div style="display:grid;grid-template-columns:repeat(' + cols + ', 10px);gap:3px;margin-bottom:4px;">';
+        let labelIdx = 0;
+        for (let c = 0; c < cols; c++) {
+          if (labelIdx < monthLabels.length && monthLabels[labelIdx].col === c) {
+            html += '<div style="font-size:9px;font-weight:700;color:#111827;white-space:nowrap;overflow:visible;padding-left:2px;">' + monthLabels[labelIdx].label + '</div>';
+            labelIdx++;
+          } else {
+            html += '<div></div>';
+          }
+        }
+        html += '</div>';
+
+        // Histogram grid with month borders
+        html += '<div style="display:grid;grid-template-columns:repeat(' + cols + ', 10px);gap:3px;">';
+        for (let c = 0; c < cols; c++) {
           html += '<div style="display:grid;gap:3px;">';
-          for (let d = 0; d < 7; d++) {
-            const idx = w * 7 + d;
-            const day = days[idx] || { count: 0, date: "" };
+          for (let r = 0; r < DAYS_PER_COL; r++) {
+            const idx = c * DAYS_PER_COL + r;
+            const day = grid[idx];
+            if (!day || !day.date) {
+              html += '<div style="width:10px;height:10px;"></div>';
+              continue;
+            }
             const count = day.count || 0;
             let color = "#e5e7eb";
             if (count > 0) color = "#93c5fd";
             if (count >= 2) color = "#3b82f6";
             if (count >= 5) color = "#1e40af";
-            html += '<div style="width:10px;height:10px;border-radius:2px;background:' + color + ';" title="' + (day.date ? day.date + ": " + count + " file" + (count === 1 ? "" : "s") : "") + '"></div>';
+
+            const d = new Date(day.date);
+            const month = d.getMonth();
+            const year = d.getFullYear();
+
+            // Compute month borders by checking calendar neighbors
+            const topDate = new Date(d); topDate.setDate(d.getDate() - 1);
+            const bottomDate = new Date(d); bottomDate.setDate(d.getDate() + 1);
+            const leftDate = new Date(d); leftDate.setDate(d.getDate() - 7);
+            const rightDate = new Date(d); rightDate.setDate(d.getDate() + 7);
+
+            const topSame = topDate.getMonth() === month && topDate.getFullYear() === year;
+            const bottomSame = bottomDate.getMonth() === month && bottomDate.getFullYear() === year;
+            const leftSame = leftDate.getMonth() === month && leftDate.getFullYear() === year;
+            const rightSame = rightDate.getMonth() === month && rightDate.getFullYear() === year;
+
+            let style = 'width:10px;height:10px;border-radius:2px;background:' + color + ';box-sizing:border-box;';
+            if (!topSame) style += 'border-top:1px solid #111827;';
+            if (!bottomSame) style += 'border-bottom:1px solid #111827;';
+            if (!leftSame) style += 'border-left:1px solid #111827;';
+            if (!rightSame) style += 'border-right:1px solid #111827;';
+
+            const tooltip = day.date + ": " + count + " file" + (count === 1 ? "" : "s");
+            html += '<div style="' + style + '" title="' + tooltip + '"></div>';
           }
           html += '</div>';
         }
         html += '</div>';
+
         // Legend
         html += '<div style="display:flex;align-items:center;gap:8px;margin-top:8px;font-size:11px;color:var(--muted);">';
         html += '<span>Less</span><div style="width:10px;height:10px;border-radius:2px;background:#e5e7eb;"></div>';

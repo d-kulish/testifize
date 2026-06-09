@@ -288,14 +288,14 @@ class DashboardViewTests(TestCase):
         data = response.json()
         self.assertTrue(data["ok"])
         panels = data["panels"]
-        self.assertEqual(len(panels["histogram"]), 90)
+        self.assertEqual(len(panels["histogram"]), 240)
         self.assertEqual(len(panels["people"]), 0)
         self.assertEqual(len(panels["assets"]), 0)
         self.assertEqual(len(panels["approval"]), 0)
         self.assertEqual(len(panels["history"]), 0)
         self.assertEqual(len(panels["events"]), 0)
 
-    def test_vendor_details_histogram_90_day_cutoff(self):
+    def test_vendor_details_histogram_240_day_cutoff(self):
         vendor = Vendor.objects.create(name="Hist Vendor", parser_key="hist")
         today = timezone.now()
         Asset.objects.create(
@@ -310,7 +310,7 @@ class DashboardViewTests(TestCase):
             vendor=vendor,
             status=AssetStatus.NEW,
             name="old.xlsx",
-            remote_created_at=today - timedelta(days=100),
+            remote_created_at=today - timedelta(days=250),
         )
         response = self.client.get(reverse("pipeline_dashboard:vendor_details", args=[vendor.id]))
         self.assertEqual(response.status_code, 200)

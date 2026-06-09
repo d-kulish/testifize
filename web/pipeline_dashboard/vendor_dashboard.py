@@ -253,9 +253,9 @@ def display_path(path: Path) -> str:
 def build_vendor_detail_payload(vendor: Vendor) -> dict[str, Any]:
     """Assemble all Phase 1 Details-tab panels from existing models."""
     today = timezone.localdate()
-    cutoff_date = today - timedelta(days=89)
+    cutoff_date = today - timedelta(days=239)
 
-    # Panel A: 90-day histogram (dense list including zero-count days)
+    # Panel A: 240-day histogram (dense list including zero-count days)
     hist_qs = (
         Asset.objects.filter(vendor=vendor, remote_created_at__date__gte=cutoff_date)
         .values("remote_created_at__date")
@@ -268,7 +268,7 @@ def build_vendor_detail_payload(vendor: Vendor) -> dict[str, Any]:
     }
     histogram = [
         {"date": (cutoff_date + timedelta(days=i)).isoformat(), "count": hist_lookup.get(cutoff_date + timedelta(days=i), 0)}
-        for i in range(90)
+        for i in range(240)
     ]
 
     people = observed_people(vendor)
