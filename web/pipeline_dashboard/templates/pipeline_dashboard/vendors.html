@@ -957,7 +957,8 @@
               continue;
             }
             const stage = day.stage;
-            const color = stage ? STAGE_COLOR[stage] : "#f3f4f6";
+            const isWeekend = day.is_weekend;
+            const color = isWeekend ? "#fecaca" : (stage ? STAGE_COLOR[stage] : "#f3f4f6");
 
             const d = new Date(day.date);
             const month = d.getMonth();
@@ -981,7 +982,9 @@
             if (day.date === todayISO) innerStyle += 'box-shadow:' + (shadows.length ? shadows.join(',') + ',' : '') + 'inset 0 0 0 1.5px #111827;';
 
             const label = stage ? STAGE_LABEL[stage] : "Empty";
-            const tooltip = (day.date === todayISO ? "Today — " : "") + day.date + ": " + label;
+            const weekendPrefix = isWeekend ? "Weekend — " : "";
+            const todayPrefix = day.date === todayISO ? "Today — " : "";
+            const tooltip = todayPrefix + weekendPrefix + day.date + ": " + label;
             html += '<div style="padding:1px;"><div style="' + innerStyle + '" title="' + tooltip + '"></div></div>';
           }
           html += '</div>';
@@ -995,6 +998,7 @@
         html += '<span>Parsing</span><div style="width:10px;height:10px;border-radius:2px;background:#f59e0b;"></div>';
         html += '<span>Approval</span><div style="width:10px;height:10px;border-radius:2px;background:#a855f7;"></div>';
         html += '<span>Approved</span><div style="width:10px;height:10px;border-radius:2px;background:#16a34a;"></div>';
+        html += '<span>Weekend</span><div style="width:10px;height:10px;border-radius:2px;background:#fecaca;"></div>';
         html += '</div></div>';
         el.innerHTML = html;
       }

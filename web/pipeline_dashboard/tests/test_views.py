@@ -337,9 +337,10 @@ class DashboardViewTests(TestCase):
         self.assertTrue(data["ok"])
         hist = data["panels"]["histogram"]
         self.assertEqual(len(hist), 240)
-        # Every entry must have a 'stage' key
+        # Every entry must have 'stage' and 'is_weekend' keys
         for entry in hist:
             self.assertIn("stage", entry)
+            self.assertIn("is_weekend", entry)
         # Today's asset is within the window → today is 'submitted'
         today_str = today.date().isoformat()
         today_entry = next(d for d in hist if d["date"] == today_str)

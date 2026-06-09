@@ -360,7 +360,10 @@ def _build_histogram_maturity(vendor: Vendor, cutoff_date: date) -> list[dict[st
                 d += timedelta(days=1)
 
     stage_names = {0: None, 1: "submitted", 2: "parsing", 3: "approval", 4: "approved"}
-    return [{"date": str(d), "stage": stage_names[date_to_stage[d]]} for d in dates]
+    return [
+        {"date": str(d), "stage": stage_names[date_to_stage[d]], "is_weekend": d.weekday() >= 5}
+        for d in dates
+    ]
 
 
 def build_vendor_detail_payload(vendor: Vendor) -> dict[str, Any]:
