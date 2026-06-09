@@ -253,18 +253,18 @@ def display_path(path: Path) -> str:
 def _build_histogram_maturity(vendor: Vendor, cutoff_date: date) -> list[dict[str, Any]]:
     """Build a 240-day pipeline-maturity timeline.
 
-    Each day shows the *current* stage a file is in on that day.  A stage
-    colours every day from its first occurrence until the next higher stage
-    begins.  Backward moves are ignored (once a stage is reached the file
-    never drops below it).  The ``approved`` stage is special: it only
-    colours the single day the approval happened, because that is the
-    finish line.
+    Each day shows the highest stage any of the vendor's files reached on
+    that day.  Backward moves are ignored (once a stage is reached the file
+    never drops below it).
 
-    Stages (priority order — higher number wins):
+    Milestones (colour a single day only):
         1 submitted  – raw file uploaded to ShareFile
+        4 approved   – file approved and stored in Final/
+
+    Active periods (colour every day from first occurrence until the next
+    higher stage begins):
         2 parsing    – file entered downloading / processing / uploading
         3 approval   – file sent for external approval (review status)
-        4 approved   – file approved and stored in Final/ (one-day only)
     """
     dates = [cutoff_date + timedelta(days=i) for i in range(240)]
     date_to_stage: dict[date, int] = {d: 0 for d in dates}
@@ -279,8 +279,6 @@ def _build_histogram_maturity(vendor: Vendor, cutoff_date: date) -> list[dict[st
         AssetStatus.DOWNLOADED,
         AssetStatus.PROCESSING,
         AssetStatus.UPLOADING,
-        AssetStatus.PROCESSED,
-        AssetStatus.UPLOADED,
     }
 
     # All assets for this vendor.
@@ -307,12 +305,14 @@ def _build_histogram_maturity(vendor: Vendor, cutoff_date: date) -> list[dict[st
             to_status = evt["to_status"]
             event_type = evt["event_type"]
             stage: int | None = None
-            if to_status in PARSING_STATUSES:
-                stage = PARSING
+            # Check final_approved first: its to_status is PROCESSED, which
+            # would otherwise be swallowed by PARSING_STATUSES.
+            if event_type == "final_approved":
+                stage = APPROVED
             elif to_status == AssetStatus.REVIEW or event_type == "approval_sent":
                 stage = APPROVAL
-            elif event_type == "final_approved":
-                stage = APPROVED
+            elif to_status in PARSING_STATUSES:
+                stage = PARSING
             if stage is not None:
                 transitions.append((evt["created_at"].date(), stage))
 
@@ -334,6 +334,12 @@ def _build_histogram_maturity(vendor: Vendor, cutoff_date: date) -> list[dict[st
             if stage < current_stage:
                 continue
             current_stage = stage
+
+            if stage == SUBMITTED:
+                # Submitted is a one-day milestone only.
+                if trans_date in date_to_stage:
+                    date_to_stage[trans_date] = max(date_to_stage[trans_date], SUBMITTED)
+                continue
 
             if stage == APPROVED:
                 # Approved is a one-day finish milestone.

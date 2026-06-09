@@ -352,6 +352,89 @@ class DashboardViewTests(TestCase):
         active_days = [d for d in hist if d["stage"] is not None]
         self.assertEqual(len(active_days), 1)
 
+    def test_vendor_details_histogram_submitted_is_one_day_milestone(self):
+        vendor = Vendor.objects.create(name="Milestone Vendor", parser_key="milestone")
+        today = timezone.now()
+        asset = Asset.objects.create(
+            remote_item_id="fi-milestone",
+            vendor=vendor,
+            status=AssetStatus.NEW,
+            name="milestone.xlsx",
+            remote_created_at=today - timedelta(days=5),
+        )
+        response = self.client.get(reverse("pipeline_dashboard:vendor_details", args=[vendor.id]))
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertTrue(data["ok"])
+        hist = data["panels"]["histogram"]
+        # Only the submission day should show activity; days after are empty.
+        active_days = [d for d in hist if d["stage"] is not None]
+        self.assertEqual(len(active_days), 1)
+        submission_str = (today - timedelta(days=5)).date().isoformat()
+        self.assertEqual(active_days[0]["date"], submission_str)
+        self.assertEqual(active_days[0]["stage"], "submitted")
+
+    def test_vendor_details_histogram_full_pipeline_stages(self):
+        vendor = Vendor.objects.create(name="Pipeline Vendor", parser_key="pipeline")
+        today = timezone.now()
+        asset = Asset.objects.create(
+            remote_item_id="fi-pipeline",
+            vendor=vendor,
+            status=AssetStatus.PROCESSED,
+            name="pipeline.xlsx",
+            remote_created_at=today - timedelta(days=5),
+        )
+        # Day -5: submitted (milestone)
+        # Day -4: moved to parsing
+        # Day -3: still parsing
+        # Day -2: sent for approval
+        # Day -1: still approval
+        # Day 0: approved (milestone)
+        AssetEvent.objects.create(
+            asset=asset,
+            event_type="status",
+            from_status=AssetStatus.NEW,
+            to_status=AssetStatus.PROCESSING,
+            created_at=today - timedelta(days=4),
+        )
+        AssetEvent.objects.create(
+            asset=asset,
+            event_type="approval_sent",
+            from_status=AssetStatus.PROCESSING,
+            to_status=AssetStatus.REVIEW,
+            created_at=today - timedelta(days=2),
+        )
+        AssetEvent.objects.create(
+            asset=asset,
+            event_type="final_approved",
+            from_status=AssetStatus.REVIEW,
+            to_status=AssetStatus.PROCESSED,
+            created_at=today,
+        )
+
+        response = self.client.get(reverse("pipeline_dashboard:vendor_details", args=[vendor.id]))
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertTrue(data["ok"])
+        hist = {d["date"]: d["stage"] for d in data["panels"]["histogram"]}
+
+        day_submitted = (today - timedelta(days=5)).date().isoformat()
+        day_parsing_start = (today - timedelta(days=4)).date().isoformat()
+        day_parsing_end = (today - timedelta(days=3)).date().isoformat()
+        day_approval_start = (today - timedelta(days=2)).date().isoformat()
+        day_approval_end = (today - timedelta(days=1)).date().isoformat()
+        day_approved = today.date().isoformat()
+
+        self.assertEqual(hist[day_submitted], "submitted")
+        self.assertEqual(hist[day_parsing_start], "parsing")
+        self.assertEqual(hist[day_parsing_end], "parsing")
+        self.assertEqual(hist[day_approval_start], "approval")
+        self.assertEqual(hist[day_approval_end], "approval")
+        self.assertEqual(hist[day_approved], "approved")
+        # Day after approved should be empty
+        day_after = (today + timedelta(days=1)).date().isoformat()
+        self.assertIsNone(hist.get(day_after))
+
     def test_folders_page_renders_sharefile_mirror(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             repo_root = Path(tmpdir)
