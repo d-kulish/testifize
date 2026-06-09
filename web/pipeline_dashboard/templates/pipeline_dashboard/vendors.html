@@ -882,7 +882,7 @@
         const el = document.querySelector("[data-panel='histogram']");
         if (!el) return;
         if (!days || !days.length) {
-          el.innerHTML = '<div class="detail-panel"><div class="detail-panel-title">Upload Activity (240 days)</div><div class="empty">No uploads in the last 240 days.</div></div>';
+          el.innerHTML = '<div class="detail-panel"><div class="detail-panel-title">Pipeline Timeline (240 days)</div><div class="empty">No pipeline activity in the last 240 days.</div></div>';
           return;
         }
 
@@ -897,6 +897,22 @@
         const trailing = (DAYS_PER_COL - (grid.length % DAYS_PER_COL)) % DAYS_PER_COL;
         for (let i = 0; i < trailing; i++) grid.push(null);
         const cols = grid.length / DAYS_PER_COL;
+
+        const todayISO = new Date().toISOString().slice(0, 10);
+
+        // Stage colours
+        const STAGE_COLOR = {
+          submitted: "#3b82f6",
+          parsing: "#f59e0b",
+          approval: "#a855f7",
+          approved: "#16a34a",
+        };
+        const STAGE_LABEL = {
+          submitted: "Submitted",
+          parsing: "Parsing",
+          approval: "Approval",
+          approved: "Approved",
+        };
 
         // Collect month start columns for labels
         const monthLabels = [];
@@ -916,37 +932,34 @@
           }
         }
 
-        let html = '<div class="detail-panel"><div class="detail-panel-title">Upload Activity (240 days)</div>';
+        let html = '<div class="detail-panel"><div class="detail-panel-title">Pipeline Timeline (240 days)</div>';
 
         // Month label row
-        html += '<div style="display:grid;grid-template-columns:repeat(' + cols + ', 10px);gap:3px;margin-bottom:4px;">';
+        html += '<div style="display:grid;grid-template-columns:repeat(' + cols + ', 1fr);gap:0;margin-bottom:4px;">';
         let labelIdx = 0;
         for (let c = 0; c < cols; c++) {
           if (labelIdx < monthLabels.length && monthLabels[labelIdx].col === c) {
-            html += '<div style="font-size:9px;font-weight:700;color:#111827;white-space:nowrap;overflow:visible;padding-left:2px;">' + monthLabels[labelIdx].label + '</div>';
+            html += '<div style="padding:1px;"><div style="font-size:9px;font-weight:700;color:#111827;white-space:nowrap;overflow:visible;">' + monthLabels[labelIdx].label + '</div></div>';
             labelIdx++;
           } else {
-            html += '<div></div>';
+            html += '<div style="padding:1px;"></div>';
           }
         }
         html += '</div>';
 
-        // Histogram grid with month borders
-        html += '<div style="display:grid;grid-template-columns:repeat(' + cols + ', 10px);gap:3px;">';
+        // Histogram grid — gap is created by wrapper padding so month shadows can meet into a single line
+        html += '<div style="display:grid;grid-template-columns:repeat(' + cols + ', 1fr);gap:0;">';
         for (let c = 0; c < cols; c++) {
-          html += '<div style="display:grid;gap:3px;">';
+          html += '<div style="display:grid;gap:0;">';
           for (let r = 0; r < DAYS_PER_COL; r++) {
             const idx = c * DAYS_PER_COL + r;
             const day = grid[idx];
             if (!day || !day.date) {
-              html += '<div style="width:10px;height:10px;"></div>';
+              html += '<div style="padding:1px;"><div style="width:100%;aspect-ratio:2/1;background:#f3f4f6;border-radius:2px;"></div></div>';
               continue;
             }
-            const count = day.count || 0;
-            let color = "#e5e7eb";
-            if (count > 0) color = "#93c5fd";
-            if (count >= 2) color = "#3b82f6";
-            if (count >= 5) color = "#1e40af";
+            const stage = day.stage;
+            const color = stage ? STAGE_COLOR[stage] : "#f3f4f6";
 
             const d = new Date(day.date);
             const month = d.getMonth();
@@ -954,23 +967,24 @@
 
             // Compute month borders by checking calendar neighbors
             const topDate = new Date(d); topDate.setDate(d.getDate() - 1);
-            const bottomDate = new Date(d); bottomDate.setDate(d.getDate() + 1);
             const leftDate = new Date(d); leftDate.setDate(d.getDate() - 7);
-            const rightDate = new Date(d); rightDate.setDate(d.getDate() + 7);
 
             const topSame = topDate.getMonth() === month && topDate.getFullYear() === year;
-            const bottomSame = bottomDate.getMonth() === month && bottomDate.getFullYear() === year;
             const leftSame = leftDate.getMonth() === month && leftDate.getFullYear() === year;
-            const rightSame = rightDate.getMonth() === month && rightDate.getFullYear() === year;
 
-            let style = 'width:10px;height:10px;border-radius:2px;background:' + color + ';box-sizing:border-box;';
-            if (!topSame) style += 'border-top:1px solid #111827;';
-            if (!bottomSame) style += 'border-bottom:1px solid #111827;';
-            if (!leftSame) style += 'border-left:1px solid #111827;';
-            if (!rightSame) style += 'border-right:1px solid #111827;';
+            // Only draw shadow on the "start" side of a boundary so adjacent cells never both draw a line
+            const shadows = [];
+            if (!topSame) shadows.push('0 -1px 0 #111827');
+            if (!leftSame) shadows.push('-1px 0 0 #111827');
 
-            const tooltip = day.date + ": " + count + " file" + (count === 1 ? "" : "s");
-            html += '<div style="' + style + '" title="' + tooltip + '"></div>';
+            let innerStyle = 'width:100%;aspect-ratio:2/1;border-radius:2px;background:' + color + ';box-sizing:border-box;';
+            if (shadows.length) innerStyle += 'box-shadow:' + shadows.join(',') + ';';
+            // Today gets an inset ring so it is identifiable on any stage colour
+            if (day.date === todayISO) innerStyle += 'box-shadow:' + (shadows.length ? shadows.join(',') + ',' : '') + 'inset 0 0 0 1.5px #111827;';
+
+            const label = stage ? STAGE_LABEL[stage] : "Empty";
+            const tooltip = (day.date === todayISO ? "Today — " : "") + day.date + ": " + label;
+            html += '<div style="padding:1px;"><div style="' + innerStyle + '" title="' + tooltip + '"></div></div>';
           }
           html += '</div>';
         }
@@ -978,10 +992,11 @@
 
         // Legend
         html += '<div style="display:flex;align-items:center;gap:8px;margin-top:8px;font-size:11px;color:var(--muted);">';
-        html += '<span>Less</span><div style="width:10px;height:10px;border-radius:2px;background:#e5e7eb;"></div>';
-        html += '<div style="width:10px;height:10px;border-radius:2px;background:#93c5fd;"></div>';
-        html += '<div style="width:10px;height:10px;border-radius:2px;background:#3b82f6;"></div>';
-        html += '<div style="width:10px;height:10px;border-radius:2px;background:#1e40af;"></div><span>More</span>';
+        html += '<span>Empty</span><div style="width:10px;height:10px;border-radius:2px;background:#f3f4f6;"></div>';
+        html += '<span>Submitted</span><div style="width:10px;height:10px;border-radius:2px;background:#3b82f6;"></div>';
+        html += '<span>Parsing</span><div style="width:10px;height:10px;border-radius:2px;background:#f59e0b;"></div>';
+        html += '<span>Approval</span><div style="width:10px;height:10px;border-radius:2px;background:#a855f7;"></div>';
+        html += '<span>Approved</span><div style="width:10px;height:10px;border-radius:2px;background:#16a34a;"></div>';
         html += '</div></div>';
         el.innerHTML = html;
       }

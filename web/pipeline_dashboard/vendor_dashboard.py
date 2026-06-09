@@ -8,7 +8,7 @@ from types import SimpleNamespace
 from typing import Any
 
 from django.conf import settings
-from django.db.models import Count, Max
+from django.db.models import Count, Max, Q
 from django.utils import timezone
 
 from .models import Asset, AssetEvent, AssetStatus, ParsedOutput, ShareFileFolder, Vendor
@@ -250,26 +250,111 @@ def display_path(path: Path) -> str:
         return str(path)
 
 
+def _build_histogram_maturity(vendor: Vendor, cutoff_date: date) -> list[dict[str, Any]]:
+    """Build a 240-day pipeline-maturity timeline.
+
+    Each day shows the most advanced stage any file has ever reached by that
+    day.  Backward moves (failed, cancelled, returned to parsing) are ignored.
+
+    Stages (in order of priority):
+        1 submitted  – raw file uploaded to ShareFile
+        2 parsing    – file entered downloading / processing / uploading
+        3 approval   – file sent for external approval (review status)
+        4 approved   – file approved and stored in Final/
+    """
+    dates = [cutoff_date + timedelta(days=i) for i in range(240)]
+    date_to_stage: dict[date, int] = {d: 0 for d in dates}
+
+    SUBMITTED = 1
+    PARSING = 2
+    APPROVAL = 3
+    APPROVED = 4
+
+    PARSING_STATUSES = {
+        AssetStatus.DOWNLOADING,
+        AssetStatus.DOWNLOADED,
+        AssetStatus.PROCESSING,
+        AssetStatus.UPLOADING,
+        AssetStatus.PROCESSED,
+        AssetStatus.UPLOADED,
+    }
+
+    # Only track assets that had activity inside (or at the edge of) the window.
+    assets = (
+        Asset.objects.filter(vendor=vendor)
+        .filter(
+            Q(remote_created_at__date__gte=cutoff_date)
+            | Q(events__created_at__date__gte=cutoff_date)
+        )
+        .distinct()
+    )
+
+    # Batch-load all events for these assets, ordered chronologically.
+    all_events = list(
+        AssetEvent.objects.filter(asset__in=assets)
+        .order_by("created_at")
+        .values("asset_id", "created_at", "to_status", "event_type")
+    )
+    events_by_asset: dict[str, list[dict]] = {}
+    for evt in all_events:
+        events_by_asset.setdefault(evt["asset_id"], []).append(evt)
+
+    for asset in assets:
+        transitions: list[tuple[date, int]] = []
+
+        # Submitted
+        if asset.remote_created_at:
+            transitions.append((asset.remote_created_at.date(), SUBMITTED))
+
+        events = events_by_asset.get(asset.remote_item_id, [])
+
+        # Parsing – first event that enters a parsing status
+        for evt in events:
+            if evt["to_status"] in PARSING_STATUSES:
+                transitions.append((evt["created_at"].date(), PARSING))
+                break
+
+        # Approval – first event that enters review or approval_sent
+        for evt in events:
+            if evt["to_status"] == AssetStatus.REVIEW or evt["event_type"] == "approval_sent":
+                transitions.append((evt["created_at"].date(), APPROVAL))
+                break
+
+        # Approved – first final_approved event
+        for evt in events:
+            if evt["event_type"] == "final_approved":
+                transitions.append((evt["created_at"].date(), APPROVED))
+                break
+
+        # Sort by date and keep only the earliest transition per stage
+        transitions.sort(key=lambda x: x[0])
+        seen_stages = set()
+        deduped: list[tuple[date, int]] = []
+        for d, stage in transitions:
+            if stage not in seen_stages:
+                seen_stages.add(stage)
+                deduped.append((d, stage))
+
+        # Walk the 240-day window, advancing the cumulative max stage
+        current_stage = 0
+        tidx = 0
+        for d in dates:
+            while tidx < len(deduped) and deduped[tidx][0] <= d:
+                current_stage = max(current_stage, deduped[tidx][1])
+                tidx += 1
+            date_to_stage[d] = max(date_to_stage[d], current_stage)
+
+    stage_names = {0: None, 1: "submitted", 2: "parsing", 3: "approval", 4: "approved"}
+    return [{"date": str(d), "stage": stage_names[date_to_stage[d]]} for d in dates]
+
+
 def build_vendor_detail_payload(vendor: Vendor) -> dict[str, Any]:
     """Assemble all Phase 1 Details-tab panels from existing models."""
     today = timezone.localdate()
     cutoff_date = today - timedelta(days=239)
 
-    # Panel A: 240-day histogram (dense list including zero-count days)
-    hist_qs = (
-        Asset.objects.filter(vendor=vendor, remote_created_at__date__gte=cutoff_date)
-        .values("remote_created_at__date")
-        .annotate(count=Count("remote_item_id"))
-    )
-    hist_lookup: dict[date, int] = {
-        row["remote_created_at__date"]: row["count"]
-        for row in hist_qs
-        if row["remote_created_at__date"]
-    }
-    histogram = [
-        {"date": (cutoff_date + timedelta(days=i)).isoformat(), "count": hist_lookup.get(cutoff_date + timedelta(days=i), 0)}
-        for i in range(240)
-    ]
+    # Panel A: 240-day pipeline maturity histogram
+    histogram = _build_histogram_maturity(vendor, cutoff_date)
 
     people = observed_people(vendor)
 

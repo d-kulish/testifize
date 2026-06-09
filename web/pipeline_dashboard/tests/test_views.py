@@ -316,8 +316,19 @@ class DashboardViewTests(TestCase):
         self.assertEqual(response.status_code, 200)
         data = response.json()
         self.assertTrue(data["ok"])
-        total_count = sum(day["count"] for day in data["panels"]["histogram"])
-        self.assertEqual(total_count, 1)
+        hist = data["panels"]["histogram"]
+        self.assertEqual(len(hist), 240)
+        # Every entry must have a 'stage' key
+        for entry in hist:
+            self.assertIn("stage", entry)
+        # Today's asset is within the window → today is 'submitted'
+        today_str = today.date().isoformat()
+        today_entry = next(d for d in hist if d["date"] == today_str)
+        self.assertEqual(today_entry["stage"], "submitted")
+        # The 250-day-old asset has no events in the window → it is excluded
+        # Therefore only today should show activity; all other days are empty
+        active_days = [d for d in hist if d["stage"] is not None]
+        self.assertEqual(len(active_days), 1)
 
     def test_folders_page_renders_sharefile_mirror(self):
         with tempfile.TemporaryDirectory() as tmpdir:
