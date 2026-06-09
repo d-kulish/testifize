@@ -262,7 +262,7 @@ class DashboardViewTests(TestCase):
         self.assertTrue(data["ok"])
         self.assertEqual(data["vendor"]["name"], "Detail Vendor")
         panels = data["panels"]
-        self.assertIn("health", panels)
+        self.assertNotIn("health", panels)
         self.assertIn("histogram", panels)
         self.assertIn("people", panels)
         self.assertIn("assets", panels)
@@ -276,8 +276,6 @@ class DashboardViewTests(TestCase):
         self.assertEqual(len(panels["approval"]), 1)
         self.assertEqual(len(panels["history"]), 1)
         self.assertEqual(len(panels["events"]), 1)
-        self.assertEqual(panels["health"]["parser"]["has_schema"], False)
-        self.assertEqual(panels["health"]["folders"][0]["label"], "Shared Folders/Detail")
 
     def test_vendor_details_404_for_missing_vendor(self):
         response = self.client.get(reverse("pipeline_dashboard:vendor_details", args=[99999]))

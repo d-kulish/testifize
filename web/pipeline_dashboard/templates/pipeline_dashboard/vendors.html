@@ -713,7 +713,6 @@
             <div class="review-message">Loading details…</div>
           </div>
           <div class="vendor-detail-content" data-detail-content hidden>
-            <div data-panel="health"></div>
             <div data-panel="histogram"></div>
             <div data-panel="people"></div>
             <div data-panel="assets"></div>
@@ -877,28 +876,12 @@
       }
 
       function renderDetails(panels) {
-        renderHealth(panels.health);
         renderHistogram(panels.histogram);
         renderPeople(panels.people);
         renderAssets(panels.assets);
         renderApproval(panels.approval);
         renderHistory(panels.history);
         renderEvents(panels.events);
-      }
-
-      function renderHealth(data) {
-        const el = document.querySelector("[data-panel='health']");
-        if (!el) return;
-        const parser = data.parser || {};
-        const parserBadge = parser.badge_class === "passed"
-          ? '<span class="badge passed">Parser ' + (parser.label || "Ready") + '</span>'
-          : '<span class="badge failed">Parser ' + (parser.label || "Missing") + '</span>';
-        const folderTags = (data.folders || []).length
-          ? data.folders.map(function (f) {
-              return '<span class="badge">' + (f.role || "folder") + ": " + f.label + '</span>';
-            }).join(" ")
-          : '<span class="badge superseded">No folders</span>';
-        el.innerHTML = '<div class="detail-panel" style="display:flex;flex-wrap:wrap;align-items:center;gap:6px;">' + parserBadge + ' <span style="margin-left:8px;">' + folderTags + '</span></div>';
       }
 
       function renderHistogram(days) {

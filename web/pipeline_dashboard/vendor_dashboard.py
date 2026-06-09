@@ -254,11 +254,8 @@ def build_vendor_detail_payload(vendor: Vendor) -> dict[str, Any]:
     """Assemble all Phase 1 Details-tab panels from existing models."""
     today = timezone.localdate()
     cutoff_date = today - timedelta(days=89)
-    cutoff_dt = timezone.make_aware(
-        timezone.datetime.combine(cutoff_date, timezone.datetime.min.time())
-    ) if timezone.get_current_timezone() else cutoff_date
 
-    # Panel B: 90-day histogram (dense list including zero-count days)
+    # Panel A: 90-day histogram (dense list including zero-count days)
     hist_qs = (
         Asset.objects.filter(vendor=vendor, remote_created_at__date__gte=cutoff_date)
         .values("remote_created_at__date")
@@ -274,40 +271,30 @@ def build_vendor_detail_payload(vendor: Vendor) -> dict[str, Any]:
         for i in range(90)
     ]
 
-    # Panel A helpers
     people = observed_people(vendor)
-    status_counts = {
-        row["status"]: row["count"]
-        for row in Asset.objects.filter(vendor=vendor).values("status").annotate(count=Count("remote_item_id"))
-    }
-    parsed_counts = {
-        row["comparison_status"]: row["count"]
-        for row in ParsedOutput.objects.filter(vendor=vendor).values("comparison_status").annotate(count=Count("id"))
-    }
-    health = parser_health(vendor)
 
-    # Panel D: Recent raw files
+    # Panel C: Recent raw files
     recent_assets = list(
         Asset.objects.filter(vendor=vendor)
         .select_related("source_folder")
         .order_by("-remote_modified_at")[:20]
     )
 
-    # Panel E: Approval queue
+    # Panel D: Approval queue
     approval_files = list(
         ParsedOutput.objects.filter(vendor=vendor, comparison_status="sent_for_approval")
         .select_related("asset")
         .order_by("-created_at")[:5]
     )
 
-    # Panel F: Approved history
+    # Panel E: Approved history
     history_files = list(
         ParsedOutput.objects.filter(vendor=vendor, comparison_status="approved")
         .select_related("asset")
         .order_by("-created_at")[:5]
     )
 
-    # Panel G: Activity stream
+    # Panel F: Activity stream
     events = list(
         AssetEvent.objects.filter(asset__vendor=vendor)
         .select_related("asset")
@@ -315,21 +302,6 @@ def build_vendor_detail_payload(vendor: Vendor) -> dict[str, Any]:
     )
 
     return {
-        "health": {
-            "parser": {
-                "has_schema": health.has_schema,
-                "has_parser": health.has_parser,
-                "label": health.label,
-                "badge_class": health.badge_class,
-                "schema_path": health.schema_path,
-                "parser_path": health.parser_path,
-            },
-            "folders": [
-                {"label": f.label, "role": f.role, "folder_id": f.folder_id}
-                for f in vendor.folders.order_by("label")
-            ],
-            "badges": health_badges(vendor, status_counts, parsed_counts, people),
-        },
         "histogram": histogram,
         "people": [
             {
