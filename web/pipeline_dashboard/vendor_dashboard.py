@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import calendar
+import re
 from dataclasses import dataclass
 from datetime import date, timedelta
 from pathlib import Path
@@ -454,6 +455,7 @@ def build_vendor_detail_payload(vendor: Vendor) -> dict[str, Any]:
                 "created_at": p.created_at.isoformat(),
                 "asset_name": p.asset.name if p.asset else "",
                 "output_path": p.output_path,
+                "final_name": f"{vendor.name}_{re.sub(r'[^A-Za-z0-9]+', '_', p.reporting_period or '').strip('_') or 'Unknown_Period'}.csv",
             }
             for p in history_files
         ],

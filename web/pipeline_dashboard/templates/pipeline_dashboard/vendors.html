@@ -1165,7 +1165,7 @@
         const rows = (items || []).map(function (p) {
           return [
             fmtPeriod(p.reporting_period),
-            '<span class="file-name" title="' + (p.asset_name || "").replace(/"/g, "&quot;") + '">' + (p.asset_name || "—") + '</span>',
+            '<span class="file-name" title="' + (p.final_name || "").replace(/"/g, "&quot;") + '">' + (p.final_name || "—") + '</span>',
             (p.row_count || 0).toLocaleString(),
             fmtMoney(p.total_spend),
             (Math.round(parseFloat(p.total_impressions || 0)) || 0).toLocaleString(),
