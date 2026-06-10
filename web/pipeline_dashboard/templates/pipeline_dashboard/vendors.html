@@ -910,6 +910,11 @@
         return "$" + n.toFixed(0);
       }
 
+      function fmtPeriod(label) {
+        if (!label) return "—";
+        return label.replace(/_/g, " ").replace(/(\b[A-Za-z]{3})[a-z]* (\d{2})\d{2}/g, "$1 $2");
+      }
+
       function badgeClassForStatus(status) {
         const map = {
           new: "new", queued: "new", discovered: "new",
@@ -1144,7 +1149,7 @@
         const el = document.querySelector("[data-panel='approval']");
         const rows = (items || []).map(function (p) {
           return [
-            p.reporting_period || "—",
+            fmtPeriod(p.reporting_period),
             "v" + (p.version || 1),
             (p.row_count || 0).toLocaleString(),
             fmtMoney(p.total_spend),
@@ -1159,7 +1164,7 @@
         const el = document.querySelector("[data-panel='history']");
         const rows = (items || []).map(function (p) {
           return [
-            p.reporting_period || "—",
+            fmtPeriod(p.reporting_period),
             '<span class="file-name" title="' + (p.asset_name || "").replace(/"/g, "&quot;") + '">' + (p.asset_name || "—") + '</span>',
             (p.row_count || 0).toLocaleString(),
             fmtMoney(p.total_spend),
