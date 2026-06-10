@@ -494,12 +494,45 @@
     }
 
     .detail-panel-title {
-      margin: 0 0 10px;
+      margin: 0;
       font-size: 12px;
       font-weight: 760;
       text-transform: uppercase;
       letter-spacing: 0.02em;
       color: #111827;
+    }
+
+    .detail-panel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+      user-select: none;
+      padding-bottom: 10px;
+    }
+
+    .detail-panel-count {
+      margin-left: 6px;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--muted);
+    }
+
+    .detail-panel-arrow {
+      width: 16px;
+      height: 16px;
+      transition: transform 200ms ease;
+      flex-shrink: 0;
+      color: var(--muted);
+      pointer-events: none;
+    }
+
+    .detail-panel-body.collapsed {
+      display: none;
+    }
+
+    .detail-panel-header.collapsed .detail-panel-arrow {
+      transform: rotate(-90deg);
     }
 
     .upload-histogram {
@@ -801,6 +834,16 @@
       const panels = document.querySelectorAll("[data-vendor-tab-panel]");
       const detailLoader = document.querySelector("[data-detail-loader]");
       const detailContent = document.querySelector("[data-detail-content]");
+      if (detailContent) {
+        detailContent.addEventListener("click", function (e) {
+          const header = e.target.closest(".detail-panel-header");
+          if (!header) return;
+          const body = header.nextElementSibling;
+          if (!body) return;
+          body.classList.toggle("collapsed");
+          header.classList.toggle("collapsed");
+        });
+      }
       if (!modal) return;
 
       let currentVendorId = null;
@@ -1015,26 +1058,40 @@
         el.innerHTML = html;
       }
 
-      function renderTablePanel(el, title, headers, rows, emptyMsg) {
+      function renderTablePanel(el, title, headers, rows, emptyMsg, collapsible) {
         if (!el) return;
-        if (!rows || !rows.length) {
-          el.innerHTML = '<div class="detail-panel"><div class="detail-panel-title">' + title + '</div><div class="empty">' + emptyMsg + '</div></div>';
-          return;
+        const isCollapsible = collapsible !== false;
+        const count = rows ? rows.length : 0;
+        const panelId = 'panel-' + title.replace(/\s+/g, '-').toLowerCase();
+        let html = '<div class="detail-panel">';
+        if (isCollapsible) {
+          html += '<div class="detail-panel-header collapsed">';
+          html += '<div class="detail-panel-title">' + title + '<span class="detail-panel-count">' + count + '</span></div>';
+          html += '<svg class="detail-panel-arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+          html += '</div>';
+          html += '<div class="detail-panel-body collapsed" id="' + panelId + '">';
+        } else {
+          html += '<div style="padding-bottom:10px;"><div class="detail-panel-title">' + title + '</div></div>';
+          html += '<div class="detail-panel-body">';
         }
-        let html = '<div class="detail-panel"><div class="detail-panel-title">' + title + '</div>';
-        html += '<table class="detail-table"><thead><tr>';
-        headers.forEach(function (h) {
-          html += '<th>' + h + '</th>';
-        });
-        html += '</tr></thead><tbody>';
-        rows.forEach(function (row) {
-          html += '<tr>';
-          row.forEach(function (cell) {
-            html += '<td>' + (cell || "") + '</td>';
+        if (!rows || !rows.length) {
+          html += '<div class="empty">' + emptyMsg + '</div>';
+        } else {
+          html += '<table class="detail-table"><thead><tr>';
+          headers.forEach(function (h) {
+            html += '<th>' + h + '</th>';
           });
-          html += '</tr>';
-        });
-        html += '</tbody></table></div>';
+          html += '</tr></thead><tbody>';
+          rows.forEach(function (row) {
+            html += '<tr>';
+            row.forEach(function (cell) {
+              html += '<td>' + (cell || "") + '</td>';
+            });
+            html += '</tr>';
+          });
+          html += '</tbody></table>';
+        }
+        html += '</div></div>';
         el.innerHTML = html;
       }
 
@@ -1048,7 +1105,7 @@
             fmtDate(p.last_upload),
           ];
         });
-        renderTablePanel(el, "Observed Uploaders", ["Name", "Email", "Uploads", "Last upload"], rows, "No observed uploaders yet.");
+        renderTablePanel(el, "Observed Uploaders", ["Name", "Email", "Uploads", "Last upload"], rows, "No observed uploaders yet.", false);
       }
 
       function renderAssets(assets) {
