@@ -597,7 +597,9 @@
     }
 
     [data-panel="assets"] .detail-table th:first-child,
-    [data-panel="assets"] .detail-table td:first-child {
+    [data-panel="assets"] .detail-table td:first-child,
+    [data-panel="history"] .detail-table th:nth-child(2),
+    [data-panel="history"] .detail-table td:nth-child(2) {
       width: 45%;
     }
 
@@ -1156,21 +1158,16 @@
       function renderHistory(items) {
         const el = document.querySelector("[data-panel='history']");
         const rows = (items || []).map(function (p) {
-          const downloadUrl = p.id ? '{% url "pipeline_dashboard:download_approved_output" 0 %}'.replace("0", p.id) : "";
-          const downloadCell = downloadUrl
-            ? '<a class="button small" href="' + downloadUrl + '" download>Download</a>'
-            : '—';
           return [
             p.reporting_period || "—",
-            "v" + (p.version || 1),
+            '<span class="file-name" title="' + (p.asset_name || "").replace(/"/g, "&quot;") + '">' + (p.asset_name || "—") + '</span>',
             (p.row_count || 0).toLocaleString(),
             fmtMoney(p.total_spend),
             (p.total_impressions || 0).toLocaleString(),
             fmtDate(p.created_at),
-            downloadCell,
           ];
         });
-        renderTablePanel(el, "Approved History", ["Period", "Version", "Rows", "Spend", "Impressions", "Approved", "Action"], rows, "No approved outputs yet.");
+        renderTablePanel(el, "History", ["Period", "Name", "Rows", "Spend", "Impressions", "Approved"], rows, "No approved outputs yet.");
       }
 
       function fetchVendorDetails(vendorId) {
