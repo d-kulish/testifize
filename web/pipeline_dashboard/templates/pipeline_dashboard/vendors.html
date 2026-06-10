@@ -595,6 +595,11 @@
       white-space: nowrap;
     }
 
+    [data-panel="assets"] .detail-table th:first-child,
+    [data-panel="assets"] .detail-table td:first-child {
+      width: 45%;
+    }
+
     @media (max-width: 520px) {
       .vendor-grid {
         grid-template-columns: 1fr;
@@ -1127,10 +1132,9 @@
             fmtSize(a.file_size),
             fmtDate(a.remote_modified_at),
             a.uploader || "—",
-            a.folder || "—",
           ];
         });
-        renderTablePanel(el, "Recent Raw Files", ["Name", "Status", "Size", "Modified", "Uploader", "Folder"], rows, "No raw files for this vendor.");
+        renderTablePanel(el, "Raw files", ["Name", "Status", "Size", "Modified", "Uploader"], rows, "No raw files for this vendor.");
       }
 
       function renderApproval(items) {
