@@ -1148,7 +1148,7 @@
             "v" + (p.version || 1),
             (p.row_count || 0).toLocaleString(),
             fmtMoney(p.total_spend),
-            (p.total_impressions || 0).toLocaleString(),
+            (Math.round(parseFloat(p.total_impressions || 0)) || 0).toLocaleString(),
             fmtDate(p.created_at),
           ];
         });
@@ -1163,7 +1163,7 @@
             '<span class="file-name" title="' + (p.asset_name || "").replace(/"/g, "&quot;") + '">' + (p.asset_name || "—") + '</span>',
             (p.row_count || 0).toLocaleString(),
             fmtMoney(p.total_spend),
-            (p.total_impressions || 0).toLocaleString(),
+            (Math.round(parseFloat(p.total_impressions || 0)) || 0).toLocaleString(),
             fmtDate(p.created_at),
           ];
         });
