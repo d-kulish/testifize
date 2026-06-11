@@ -496,6 +496,7 @@ App pages:
 
 ```text
 /          dashboard
+/vendors/  Vendor overview with 12-month coverage matrix, per-vendor reporting charts, and pipeline detail panels
 /folders/  ShareFile folder catalogue with two chapters: Loaded Folders (file search, status sorting, review entrypoint) and Approval (read-only browser of ShareFile Approval CSVs grouped by month and vendor)
 /process/  Parsing page with three chapters: Parsing Files queue, Approval review queue, and approved-file History
 /admin/    Django Admin back office
@@ -834,6 +835,29 @@ Final/<Reporting_Period>/<Vendor>_<Reporting_Period>.csv
   - `test_vendor_details_empty_panels_for_fresh_vendor`.
   - `test_vendor_details_histogram_240_day_cutoff` — confirms the 240-day window excludes old inactive assets and today shows the correct stage.
 - **Files**: `web/pipeline_dashboard/vendor_dashboard.py`, `web/pipeline_dashboard/views.py`, `web/pipeline_dashboard/urls.py`, `web/pipeline_dashboard/templates/pipeline_dashboard/vendors.html`, `web/pipeline_dashboard/tests/test_views.py`.
+
+### Vendor Reporting tab (2026-06-11)
+
+- **Goal**: populate the previously empty **Reporting** tab in the vendor modal with 13-month aggregates from approved `ParsedOutput` records.
+- **Backend**:
+  - `vendor_dashboard.py`: added `build_vendor_reporting_payload(vendor)` which computes a 13-month rolling window and aggregates `total_spend`, `total_impressions`, and `cost_per_impression` by `period_start` month from all approved outputs.
+  - `views.py`: added `vendor_reporting` GET view at `/vendors/<id>/reporting/` returning `{"monthly": [...]}`.
+  - `urls.py`: added `vendors/<int:vendor_id>/reporting/` route.
+- **Frontend — two-column layout**:
+  - Left column (`2fr`): three stacked vertical bar charts.
+    - **Monthly Spend** (green `#16a34a`)
+    - **Monthly Impressions** (blue `#3b82f6`)
+    - **Cost / Impression** (amber `#f59e0b`)
+  - Right column (`1fr`): **Monthly Summary** table with columns `Month | Spend | Impressions | CPI`, newest month on top. Months without data show `—` in muted grey.
+- **Chart features**:
+  - **Y-axis tick labels** on the left, formatted with the same helpers as tooltips (`fmtSpend`, `fmtImpressions`, `fmtCpi`).
+  - **Horizontal grid lines** at every tick (`#e5e7eb`) behind the bars for easy value reading.
+  - **Smart ceiling** (`computeAxisMax`): sets the Y-axis max to ~5% above the actual data max, rounded to a clean step (1×, 2×, 5×, or 10× power-of-ten). Prevents the old problem where a $0.28 max got a $1.0 ceiling and left two-thirds of the chart empty.
+  - **Tooltips** on every bar showing `Month: formatted_value`.
+  - **Empty-state**: when a vendor has no approved data, all three charts and the table show a consistent "No approved data" message.
+- **Data source**: approved `ParsedOutput` rows (`comparison_status="approved"`), same source as the `/process/` History chapter. Aggregation uses `period_start` month as the bucket key; if `period_start` is missing it falls back to `created_at`.
+- **Caching**: the reporting payload is cached per session in `reportingCache` so switching between **Reporting** and **Details** tabs does not re-fetch.
+- **Files**: `web/pipeline_dashboard/vendor_dashboard.py`, `web/pipeline_dashboard/views.py`, `web/pipeline_dashboard/urls.py`, `web/pipeline_dashboard/templates/pipeline_dashboard/vendors.html`.
 
 ## Immediate Next Steps
 

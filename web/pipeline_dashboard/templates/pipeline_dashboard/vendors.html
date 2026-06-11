@@ -554,6 +554,174 @@
       gap: 3px;
     }
 
+    .reporting-layout {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 20px;
+      min-height: 0;
+    }
+
+    .reporting-column {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      min-height: 0;
+    }
+
+    .reporting-chart {
+      background: #ffffff;
+      border: 1px solid #111827;
+      border-radius: 8px;
+      padding: 14px;
+      box-shadow: 0 1px 2px rgba(60, 64, 67, 0.08), 0 2px 6px rgba(60, 64, 67, 0.10), 0 4px 12px rgba(60, 64, 67, 0.12);
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+    }
+
+    .reporting-chart-title {
+      font-size: 12px;
+      font-weight: 760;
+      text-transform: uppercase;
+      letter-spacing: 0.02em;
+      color: #111827;
+      margin-bottom: 10px;
+      flex-shrink: 0;
+    }
+
+    .reporting-chart-body {
+      display: grid;
+      grid-template-columns: 52px 1fr;
+      grid-template-rows: 1fr auto;
+      gap: 4px 8px;
+      min-height: 0;
+      flex: 1 1 auto;
+    }
+
+    .reporting-chart-yaxis {
+      grid-column: 1;
+      grid-row: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      align-items: flex-end;
+      padding-bottom: 0;
+    }
+
+    .reporting-chart-tick {
+      font-size: 9px;
+      font-weight: 700;
+      color: #667085;
+      line-height: 1;
+      white-space: nowrap;
+    }
+
+    .reporting-chart-bars {
+      grid-column: 2;
+      grid-row: 1;
+      position: relative;
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 4px;
+      min-height: 168px;
+    }
+
+    .reporting-chart-grid {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .reporting-chart-gridline {
+      position: absolute;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: #e5e7eb;
+    }
+
+    .reporting-chart-bar-wrapper {
+      position: relative;
+      z-index: 1;
+      flex: 1 1 0;
+      min-width: 0;
+      display: flex;
+      align-items: flex-end;
+      height: 100%;
+    }
+
+    .reporting-chart-bar {
+      width: 100%;
+      border-radius: 3px 3px 0 0;
+      min-height: 2px;
+      transition: opacity 150ms ease;
+      cursor: pointer;
+    }
+
+    .reporting-chart-bar:hover {
+      opacity: 0.75;
+    }
+
+    .reporting-chart-labels {
+      grid-column: 2;
+      grid-row: 2;
+      display: flex;
+      justify-content: space-between;
+      gap: 4px;
+      margin-top: 2px;
+    }
+
+    .reporting-chart-label {
+      flex: 1 1 0;
+      min-width: 0;
+      text-align: center;
+      font-size: 9px;
+      font-weight: 700;
+      color: #667085;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .reporting-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+      table-layout: auto;
+    }
+
+    .reporting-table th,
+    .reporting-table td {
+      padding: 6px 8px;
+      border-bottom: 1px solid #e5e7eb;
+      text-align: right;
+      vertical-align: middle;
+    }
+
+    .reporting-table th:first-child,
+    .reporting-table td:first-child {
+      text-align: left;
+    }
+
+    .reporting-table th {
+      background: #f8fafc;
+      color: #667085;
+      font-size: 10px;
+      font-weight: 750;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    .reporting-table tbody tr:hover {
+      background: #f9fbff;
+    }
+
+    .reporting-table .reporting-cell-empty {
+      color: #98a2b3;
+    }
+
     .detail-table {
       width: 100%;
       border-collapse: collapse;
@@ -754,7 +922,20 @@
           <button type="button" data-vendor-tab="details">Details</button>
         </div>
         <div class="vendor-modal-panel" data-vendor-tab-panel="reporting">
-          <div class="review-message">Reporting content will appear here.</div>
+          <div class="reporting-layout" data-reporting-content hidden>
+            <div class="reporting-column" data-reporting-charts>
+              <div data-chart="spend"></div>
+              <div data-chart="impressions"></div>
+              <div data-chart="cost_per_impression"></div>
+            </div>
+            <div class="reporting-column" data-reporting-table>
+              <div class="reporting-chart">
+                <div class="reporting-chart-title">Monthly Summary</div>
+                <div data-reporting-summary></div>
+              </div>
+            </div>
+          </div>
+          <div class="review-message" data-reporting-loader>Loading reporting data…</div>
         </div>
         <div class="vendor-modal-panel" data-vendor-tab-panel="details" hidden>
           <div class="vendor-detail-loader" data-detail-loader>
@@ -864,6 +1045,7 @@
 
       let currentVendorId = null;
       const detailCache = {};
+      const reportingCache = {};
 
       function openModal(vendorName, vendorId) {
         modal.hidden = false;
@@ -874,6 +1056,25 @@
         panels.forEach((panel) => {
           panel.hidden = panel.dataset.vendorTabPanel !== "reporting";
         });
+
+        // Reset reporting panel and fetch reporting data
+        const reportingLoader = document.querySelector("[data-reporting-loader]");
+        const reportingContent = document.querySelector("[data-reporting-content]");
+        if (reportingContent) reportingContent.hidden = true;
+        if (reportingLoader) {
+          reportingLoader.hidden = false;
+          reportingLoader.innerHTML = "Loading reporting data…";
+        }
+        if (currentVendorId) {
+          if (reportingCache[currentVendorId]) {
+            renderReporting(reportingCache[currentVendorId]);
+            if (reportingLoader) reportingLoader.hidden = true;
+            if (reportingContent) reportingContent.hidden = false;
+          } else {
+            fetchVendorReporting(currentVendorId);
+          }
+        }
+
         // Pre-fetch details so they're ready when the user switches to the Details tab
         if (currentVendorId && !detailCache[currentVendorId]) {
           fetchVendorDetails(currentVendorId);
@@ -913,6 +1114,24 @@
       function fmtPeriod(label) {
         if (!label) return "—";
         return label.replace(/_/g, " ").replace(/(\b[A-Za-z]{3})[a-z]* (\d{2})\d{2}/g, "$1 $2");
+      }
+
+      function fmtSpend(val) {
+        if (val >= 1000000) return "$" + (val / 1000000).toFixed(1) + "M";
+        if (val >= 1000) return "$" + (val / 1000).toFixed(1) + "k";
+        return "$" + val.toFixed(0);
+      }
+
+      function fmtImpressions(val) {
+        if (val >= 1000000) return (val / 1000000).toFixed(1) + "M";
+        if (val >= 1000) return (val / 1000).toFixed(1) + "k";
+        return val.toFixed(0);
+      }
+
+      function fmtCpi(val) {
+        if (val === 0) return "$0";
+        if (val < 0.01) return "$" + val.toFixed(4);
+        return "$" + val.toFixed(2);
       }
 
       function badgeClassForStatus(status) {
@@ -1173,6 +1392,158 @@
           ];
         });
         renderTablePanel(el, "History", ["Period", "Name", "Rows", "Spend", "Impressions", "Approved"], rows, "No approved outputs yet.");
+      }
+
+      function computeAxisMax(val) {
+        if (val <= 0) return { max: 1, ticks: [0, 0.25, 0.5, 0.75, 1] };
+        const target = val * 1.05;
+        const roughStep = target / 4;
+        const exponent = Math.floor(Math.log10(roughStep));
+        const magnitude = Math.pow(10, exponent);
+        const normalized = roughStep / magnitude;
+        let niceStep;
+        if (normalized <= 1) niceStep = magnitude;
+        else if (normalized <= 2) niceStep = 2 * magnitude;
+        else if (normalized <= 5) niceStep = 5 * magnitude;
+        else niceStep = 10 * magnitude;
+        const divisions = Math.max(2, Math.min(6, Math.ceil(target / niceStep)));
+        const maxVal = divisions * niceStep;
+        const ticks = [];
+        for (let i = 0; i <= divisions; i++) {
+          ticks.push(i * niceStep);
+        }
+        return { max: maxVal, ticks: ticks };
+      }
+
+      function renderBarChart(container, title, data, valueKey, color, formatter) {
+        if (!container) return;
+        if (!data || !data.length) {
+          container.innerHTML = '<div class="reporting-chart"><div class="reporting-chart-title">' + title + '</div><div class="empty" style="padding:24px 0;">No data available.</div></div>';
+          return;
+        }
+        const values = data.map(function (d) { return d[valueKey] || 0; });
+        const rawMax = Math.max.apply(null, values);
+        const axis = computeAxisMax(rawMax);
+        const axisMax = axis.max;
+        const ticks = axis.ticks;
+
+        // Y-axis ticks (top to bottom)
+        let yaxisHtml = '';
+        for (let i = ticks.length - 1; i >= 0; i--) {
+          yaxisHtml += '<div class="reporting-chart-tick">' + formatter(ticks[i]) + '</div>';
+        }
+
+        // Horizontal grid lines inside the bar area
+        let gridHtml = '';
+        ticks.forEach(function (tick) {
+          const pct = (tick / axisMax) * 100;
+          gridHtml += '<div class="reporting-chart-gridline" style="bottom:' + pct + '%;"></div>';
+        });
+
+        // Bars
+        let barsHtml = '<div class="reporting-chart-grid">' + gridHtml + '</div>';
+        data.forEach(function (d) {
+          const val = d[valueKey] || 0;
+          const heightPct = axisMax > 0 ? Math.max((val / axisMax) * 100, 0.5) : 0.5;
+          const barColor = d.has_data ? color : '#e5e7eb';
+          const tooltip = d.month_label + ': ' + formatter(val);
+          barsHtml += '<div class="reporting-chart-bar-wrapper" title="' + tooltip + '">';
+          barsHtml += '<div class="reporting-chart-bar" style="height:' + heightPct + '%;background:' + barColor + ';"></div>';
+          barsHtml += '</div>';
+        });
+
+        // X-axis labels
+        let labelsHtml = '';
+        data.forEach(function (d) {
+          labelsHtml += '<div class="reporting-chart-label">' + d.month_label + '</div>';
+        });
+
+        let html = '<div class="reporting-chart">';
+        html += '<div class="reporting-chart-title">' + title + '</div>';
+        html += '<div class="reporting-chart-body">';
+        html += '<div class="reporting-chart-yaxis">' + yaxisHtml + '</div>';
+        html += '<div class="reporting-chart-bars">' + barsHtml + '</div>';
+        html += '<div class="reporting-chart-labels">' + labelsHtml + '</div>';
+        html += '</div>';
+        html += '</div>';
+        container.innerHTML = html;
+      }
+
+      function renderReportingTable(monthly) {
+        const tableEl = document.querySelector("[data-reporting-summary]");
+        if (!tableEl) return;
+        if (!monthly || !monthly.length) {
+          tableEl.innerHTML = '<div class="empty" style="padding:16px 0;">No data.</div>';
+          return;
+        }
+        const reversed = monthly.slice().reverse();
+        let html = '<table class="reporting-table"><thead><tr>';
+        html += '<th>Month</th><th>Spend</th><th>Impressions</th><th>CPI</th>';
+        html += '</tr></thead><tbody>';
+        reversed.forEach(function (row) {
+          const monthLabel = row.month_label || '—';
+          const spendVal = row.spend || 0;
+          const impVal = row.impressions || 0;
+          const cpiVal = row.cost_per_impression || 0;
+          const hasData = row.has_data;
+          const spendCell = hasData ? fmtSpend(spendVal) : '<span class="reporting-cell-empty">—</span>';
+          const impCell = hasData ? fmtImpressions(impVal) : '<span class="reporting-cell-empty">—</span>';
+          const cpiCell = hasData ? fmtCpi(cpiVal) : '<span class="reporting-cell-empty">—</span>';
+          html += '<tr>';
+          html += '<td>' + monthLabel + '</td>';
+          html += '<td>' + spendCell + '</td>';
+          html += '<td>' + impCell + '</td>';
+          html += '<td>' + cpiCell + '</td>';
+          html += '</tr>';
+        });
+        html += '</tbody></table>';
+        tableEl.innerHTML = html;
+      }
+
+      function renderReporting(reporting) {
+        const monthly = reporting.monthly || [];
+        const hasAnyData = monthly.some(function (m) { return m.has_data; });
+        const spendEl = document.querySelector("[data-chart='spend']");
+        const impressionsEl = document.querySelector("[data-chart='impressions']");
+        const cpiEl = document.querySelector("[data-chart='cost_per_impression']");
+        const tableEl = document.querySelector("[data-reporting-summary]");
+
+        if (!hasAnyData) {
+          const emptyHtml = '<div class="reporting-chart"><div class="reporting-chart-title">No Data</div><div class="empty" style="padding:24px 0;">No approved data for this vendor.</div></div>';
+          if (spendEl) spendEl.innerHTML = emptyHtml;
+          if (impressionsEl) impressionsEl.innerHTML = emptyHtml;
+          if (cpiEl) cpiEl.innerHTML = emptyHtml;
+          if (tableEl) tableEl.innerHTML = '<div class="empty" style="padding:16px 0;">No approved data.</div>';
+          return;
+        }
+
+        renderBarChart(spendEl, "Monthly Spend", monthly, "spend", "#16a34a", fmtSpend);
+        renderBarChart(impressionsEl, "Monthly Impressions", monthly, "impressions", "#3b82f6", fmtImpressions);
+        renderBarChart(cpiEl, "Cost / Impression", monthly, "cost_per_impression", "#f59e0b", fmtCpi);
+        renderReportingTable(monthly);
+      }
+
+      function fetchVendorReporting(vendorId) {
+        if (!vendorId) return;
+        const reportingLoader = document.querySelector("[data-reporting-loader]");
+        const reportingContent = document.querySelector("[data-reporting-content]");
+        if (reportingLoader) reportingLoader.hidden = false;
+        if (reportingContent) reportingContent.hidden = true;
+        fetch("/vendors/" + vendorId + "/reporting/")
+          .then(function (res) { return res.json(); })
+          .then(function (data) {
+            if (data.ok && data.reporting) {
+              reportingCache[vendorId] = data.reporting;
+              renderReporting(data.reporting);
+              if (reportingLoader) reportingLoader.hidden = true;
+              if (reportingContent) reportingContent.hidden = false;
+            } else {
+              if (reportingLoader) reportingLoader.innerHTML = '<div class="review-message">Failed to load reporting: ' + (data.error || "Unknown error") + '</div>';
+            }
+          })
+          .catch(function (err) {
+            if (reportingLoader) reportingLoader.innerHTML = '<div class="review-message">Failed to load reporting: ' + err.message + '</div>';
+          });
       }
 
       function fetchVendorDetails(vendorId) {

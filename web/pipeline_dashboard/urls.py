@@ -28,6 +28,7 @@ from .views import (
     update_process_vendor,
     update_vendor,
     vendor_details,
+    vendor_reporting,
     vendors,
 )
 
@@ -57,6 +58,7 @@ urlpatterns = [
     path("folders/final/<str:remote_item_id>/download/", download_final_output, name="download_final_output"),
     path("vendors/", vendors, name="vendors"),
     path("vendors/<int:vendor_id>/details/", vendor_details, name="vendor_details"),
+    path("vendors/<int:vendor_id>/reporting/", vendor_reporting, name="vendor_reporting"),
     path("vendors/create/", create_vendor, name="create_vendor"),
     path("vendors/<int:vendor_id>/update/", update_vendor, name="update_vendor"),
     path("vendors/<int:vendor_id>/delete/", delete_vendor, name="delete_vendor"),

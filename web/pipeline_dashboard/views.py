@@ -36,7 +36,7 @@ from .parser_workflow import (
 )
 from .sharefile_mirror import load_approval_mirror, load_final_mirror, load_sharefile_mirror
 from .services import set_asset_status
-from .vendor_dashboard import build_vendor_detail_payload, build_vendor_page_context, can_delete_vendor
+from .vendor_dashboard import build_vendor_detail_payload, build_vendor_page_context, build_vendor_reporting_payload, can_delete_vendor
 
 
 REVIEW_STATUSES = [
@@ -683,6 +683,16 @@ def vendor_details(request, vendor_id: int):
     except Exception as exc:
         return JsonResponse({"error": str(exc)}, status=400)
     return JsonResponse({"ok": True, "vendor": {"id": vendor.id, "name": vendor.name}, "panels": payload})
+
+
+@require_GET
+def vendor_reporting(request, vendor_id: int):
+    vendor = get_object_or_404(Vendor, pk=vendor_id)
+    try:
+        payload = build_vendor_reporting_payload(vendor)
+    except Exception as exc:
+        return JsonResponse({"error": str(exc)}, status=400)
+    return JsonResponse({"ok": True, "vendor": {"id": vendor.id, "name": vendor.name}, "reporting": payload})
 
 
 @require_POST

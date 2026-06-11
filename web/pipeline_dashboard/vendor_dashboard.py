@@ -251,6 +251,58 @@ def display_path(path: Path) -> str:
         return str(path)
 
 
+def build_vendor_reporting_payload(vendor: Vendor) -> dict[str, Any]:
+    """Build monthly aggregates for the last 13 months from approved outputs."""
+    today = timezone.localdate()
+    month_window = []
+    year, month = today.year, today.month
+    for _ in range(13):
+        month_window.insert(0, date(year, month, 1))
+        month -= 1
+        if month == 0:
+            month = 12
+            year -= 1
+
+    month_labels = [m.strftime("%b %y") for m in month_window]
+    month_keys = [(m.year, m.month) for m in month_window]
+
+    # Approved outputs for this vendor
+    approved_outputs = list(
+        ParsedOutput.objects.filter(vendor=vendor, comparison_status="approved")
+    )
+
+    # Accumulate by period_start month
+    month_sums: dict[tuple[int, int], dict[str, Any]] = {}
+    for o in approved_outputs:
+        period_start = o.period_start or (o.created_at.date() if o.created_at else None)
+        if not period_start:
+            continue
+        key = (period_start.year, period_start.month)
+        if key not in month_sums:
+            month_sums[key] = {"spend": 0.0, "impressions": 0.0, "count": 0}
+        month_sums[key]["spend"] += float(o.total_spend or 0)
+        month_sums[key]["impressions"] += float(o.total_impressions or 0)
+        month_sums[key]["count"] += 1
+
+    monthly = []
+    for idx, key in enumerate(month_keys):
+        data = month_sums.get(key, {"spend": 0.0, "impressions": 0.0, "count": 0})
+        spend = data["spend"]
+        impressions = data["impressions"]
+        cpi = float(spend) / float(impressions) if impressions > 0 else 0.0
+        monthly.append(
+            {
+                "month_label": month_labels[idx],
+                "spend": spend,
+                "impressions": impressions,
+                "cost_per_impression": cpi,
+                "has_data": data["count"] > 0,
+            }
+        )
+
+    return {"monthly": monthly}
+
+
 def _build_histogram_maturity(vendor: Vendor, cutoff_date: date) -> list[dict[str, Any]]:
     """Build a 240-day pipeline-maturity timeline.
 
