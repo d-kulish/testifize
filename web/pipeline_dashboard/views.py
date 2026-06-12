@@ -51,7 +51,8 @@ REVIEW_STATUSES = [
 
 FOLDER_VENDOR_RULES = {
     "josh": ("PodcastOne", "Octopus", "Loop", "TVM", "TAIV"),
-    "may_2026_internal_folders": ("RallyAdMedia", "AdTaxi"),
+    "may_2026_internal_folders": ("RallyAdMedia",),
+    "adtaxi": ("AdTaxi",),
     "pm": ("S2",),
 }
 

@@ -7,7 +7,7 @@ from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import patch
 
-from datetime import timedelta
+from datetime import datetime, timedelta
 
 from django.test import TestCase, override_settings
 from django.urls import reverse
@@ -1097,7 +1097,7 @@ class DashboardViewTests(TestCase):
         self.assertEqual(response.context["mirror_summary"]["duplicate_name_count"], 1)
         self.assertEqual(response.context["folders"][1]["counts"]["duplicate_names"], 1)
         self.assertEqual(response.context["folders"][2]["counts"]["duplicate_names"], 0)
-        self.assertEqual(response.context["folders"][1]["allowed_vendor_names"], "RallyAdMedia, AdTaxi")
+        self.assertEqual(response.context["folders"][1]["allowed_vendor_names"], "RallyAdMedia")
         duplicate_rows = [
             file
             for folder in response.context["folders"]
@@ -1109,7 +1109,7 @@ class DashboardViewTests(TestCase):
         # One original badge, one duplicate badge
         self.assertIn("\n                            Original\n                          ", content)
         self.assertIn("\n                            Dup\n                          ", content)
-        self.assertIn('data-allowed-vendor-names="RallyAdMedia, AdTaxi"', content)
+        self.assertIn('data-allowed-vendor-names="RallyAdMedia"', content)
 
     def test_review_file_preview_returns_csv_rows(self):
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -1494,7 +1494,7 @@ class DashboardViewTests(TestCase):
         self.assertEqual(payload["candidate"]["summary"]["total_spend"], "280")
         self.assertEqual(payload["candidate"]["summary"]["total_impressions"], "2800")
 
-    def test_parse_process_file_distributes_adtaxi_totals_across_report_dates(self):
+    def test_parse_process_file_extracts_adtaxi_daily_data(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             repo_root = Path(tmpdir)
             asset = self._write_adtaxi_parse_fixture(repo_root)
@@ -2456,18 +2456,22 @@ class DashboardViewTests(TestCase):
         workbook_path.parent.mkdir(parents=True)
         workbook = Workbook()
         sheet = workbook.active
-        sheet.title = "Totals By State"
-        sheet["A1"] = "Timeframe"
-        sheet["G1"] = "Advertiser Cost "
-        sheet["H1"] = "Impressions"
-        sheet["A2"] = "Dates"
-        sheet["B2"] = "3/1/2026/26 - 3/31-26"
-        sheet["G3"] = 31
-        sheet["H3"] = 310
-        sheet["G4"] = 62
-        sheet["H4"] = 620
-        sheet["G5"] = 0
-        sheet["H5"] = 0
+        sheet.title = "Totals By State - Display - Test"
+        # Row 8: dual-table header with the "Daily by State" anchor
+        sheet["A8"] = "Test Campaign - Totals by State"
+        sheet["H8"] = "Test Campaign - Daily by State"
+        # Row 9: sub-header row (ignored)
+        sheet["D9"] = "Site Visit"
+        # Row 10: state total row (to be skipped by parser)
+        sheet["H10"] = "State1"
+        sheet["I10"] = 93.0
+        sheet["J10"] = 930.0
+        # Rows 11–41: actual daily data (31 days in March)
+        for day in range(1, 32):
+            row = 10 + day
+            sheet.cell(row=row, column=8, value=datetime(2026, 3, day))
+            sheet.cell(row=row, column=9, value=3.0)
+            sheet.cell(row=row, column=10, value=30.0)
         workbook.save(workbook_path)
         workbook.close()
 

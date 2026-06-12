@@ -224,6 +224,14 @@ def parse_asset_rows(asset: Asset, sheet_name: str | None = None) -> ParsedRows:
     if not validation["ok"]:
         raise ParserWorkflowError("; ".join(validation["errors"]))
 
+    # If the schema does not declare any sheet-level constraints, ignore a
+    # user-selected sheet so that self-discovering parsers process all sheets.
+    has_sheet_constraint = bool(
+        schema.get("sheet_name") or schema.get("worksheets") or schema.get("tables")
+    )
+    if not has_sheet_constraint:
+        sheet_name = None
+
     approved_path = approved_csv_path(asset.vendor)
     output_columns = load_output_columns(approved_path, schema)
     module = load_parser_module(paths.parser_path)
@@ -677,6 +685,8 @@ def validate_excel_schema(source_path: Path, schema: dict[str, Any]) -> list[str
 
         sheet_name = schema.get("sheet_name")
         if not sheet_name:
+            if not schema.get("header"):
+                return errors
             return ["Input schema is missing sheet_name."]
         header = schema.get("header") or {}
         header_row = header.get("row")

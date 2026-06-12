@@ -1,51 +1,53 @@
 from __future__ import annotations
 
 import re
-from datetime import date, datetime, timedelta
-from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
+from collections import defaultdict
+from datetime import date, datetime
+from decimal import Decimal, InvalidOperation
 from pathlib import Path
 from typing import Any
 
 from openpyxl import load_workbook
 
 
-MONEY_SCALE = Decimal("0.000001")
-IMPRESSION_SCALE = Decimal("0.000001")
+DAILY_SECTION_MARKER = "Daily by State"
 
 
 def parse_file(source_path: Path, input_schema: dict[str, Any], output_columns: list[str], sheet_name: str | None = None) -> list[dict[str, Any]]:
-    defaults = input_schema["output_defaults"]
+    """Parse AdTaxi multi-sheet Excel files containing daily spend/impressions by state.
+
+    Each sheet has a dual-table layout: a "Totals by State" table on the left and a
+    "Daily by State" table on the right.  The parser scans every sheet for the right
+    table, skips the state-level aggregate rows, and collects the actual day-by-day
+    rows.  Spend and impressions are aggregated across all sheets and all states.
+    """
+    defaults = input_schema.get("output_defaults", {})
     workbook = load_workbook(source_path, read_only=True, data_only=True)
     try:
-        sheet = workbook[sheet_name or input_schema["sheet_name"]]
-        start_date, end_date = parse_date_range(sheet[input_schema["metadata"]["date_range_cell"]].value)
-        dates = date_range(start_date, end_date)
-        if not dates:
-            raise ValueError(f"No report dates were parsed from {source_path}.")
+        daily_spend: defaultdict[date, Decimal] = defaultdict(lambda: Decimal("0"))
+        daily_impressions: defaultdict[date, Decimal] = defaultdict(lambda: Decimal("0"))
 
-        summary_rows = input_schema["summary_rows"]
-        spend_column = column_letter_to_index(summary_rows["spend_column"])
-        impressions_column = column_letter_to_index(summary_rows["impressions_column"])
-        first_row = summary_rows["first_row"]
-        last_row = summary_rows["last_row"]
+        sheets_to_process = [sheet_name] if sheet_name else workbook.sheetnames
+        for sn in sheets_to_process:
+            if sn not in workbook.sheetnames:
+                raise ValueError(f"Sheet {sn!r} not found in {source_path.name}.")
+            _extract_daily_rows(workbook[sn], daily_spend, daily_impressions)
 
-        total_spend = sum_required_cells(sheet, first_row, last_row, spend_column, "Advertiser Cost")
-        total_impressions = sum_required_cells(sheet, first_row, last_row, impressions_column, "Impressions")
-        daily_spend = distribute(total_spend, len(dates), MONEY_SCALE)
-        daily_impressions = distribute(total_impressions, len(dates), IMPRESSION_SCALE)
+        if not daily_spend:
+            raise ValueError(f"No daily data was found in {source_path.name}.")
 
         processed_at = datetime.now().isoformat(timespec="seconds")
         rows: list[dict[str, Any]] = []
-        for row_date, spend, impressions in zip(dates, daily_spend, daily_impressions, strict=True):
+        for row_date in sorted(daily_spend):
             parsed = {
                 "Date": row_date.isoformat(),
-                "Vendor": defaults["Vendor"],
-                "Brand": defaults["Brand"],
-                "Channel": defaults["Channel"],
-                "Platform": defaults["Platform"],
-                "Spend": decimal_text(spend),
-                "Impressions": decimal_text(impressions),
-                "Data_Grain": defaults["Data_Grain"],
+                "Vendor": defaults.get("Vendor", "AdTaxi"),
+                "Brand": defaults.get("Brand", "BetOnline"),
+                "Channel": defaults.get("Channel", "Display, CTV"),
+                "Platform": defaults.get("Platform", "AdTaxi"),
+                "Spend": decimal_text(daily_spend[row_date]),
+                "Impressions": decimal_text(daily_impressions.get(row_date, Decimal("0"))),
+                "Data_Grain": defaults.get("Data_Grain", "daily"),
                 "Processed_At": processed_at,
                 "Source_File": source_path.name,
             }
@@ -56,95 +58,86 @@ def parse_file(source_path: Path, input_schema: dict[str, Any], output_columns: 
         workbook.close()
 
 
-def parse_date_range(value: object) -> tuple[date, date]:
-    if value in (None, ""):
-        raise ValueError("Missing AdTaxi date range.")
-    text = str(value).strip()
-    if " - " in text:
-        start_text, end_text = text.split(" - ", 1)
-    else:
-        parts = re.findall(r"\d{1,2}/\d{1,2}(?:[/\-]\d{2,4})?", text)
-        if len(parts) < 2:
-            raise ValueError(f"Could not parse AdTaxi date range: {text!r}")
-        start_text, end_text = parts[0], parts[-1]
+def _extract_daily_rows(sheet, daily_spend: defaultdict, daily_impressions: defaultdict) -> None:
+    """Scan a single sheet for the 'Daily by State' section and aggregate values."""
+    in_daily_section = False
 
-    start = parse_flexible_date(start_text)
-    end = parse_flexible_date(end_text, default_year=start.year)
-    if end < start:
-        raise ValueError(f"AdTaxi date range ends before it starts: {text!r}")
-    return start, end
+    for row in sheet.iter_rows(values_only=True):
+        if not row or len(row) < 10:
+            continue
 
+        col_h = row[7]  # Column H
 
-def parse_flexible_date(value: str, default_year: int | None = None) -> date:
-    text = value.strip()
-    match = re.search(r"(?P<month>\d{1,2})/(?P<day>\d{1,2})(?P<year>[/\-]\d{2,4})?", text)
-    if not match:
-        raise ValueError(f"Invalid AdTaxi date value: {value!r}")
+        # Detect the "Daily by State" header row
+        if isinstance(col_h, str) and DAILY_SECTION_MARKER in col_h:
+            in_daily_section = True
+            continue
 
-    year_text = match.group("year")
-    if year_text:
-        year = int(year_text[1:])
-        if year < 100:
-            year += 2000
-    elif default_year:
-        year = default_year
-    else:
-        raise ValueError(f"AdTaxi date value is missing a year: {value!r}")
+        if not in_daily_section:
+            continue
 
-    return date(year, int(match.group("month")), int(match.group("day")))
+        # Skip state total rows and sub-headers in the daily section
+        if isinstance(col_h, str):
+            continue
+        if col_h is None:
+            continue
 
+        # Parse the date from the Excel cell
+        row_date = _parse_cell_date(col_h)
+        if row_date is None:
+            continue
 
-def date_range(start: date, end: date) -> list[date]:
-    days = (end - start).days + 1
-    return [start + timedelta(days=offset) for offset in range(days)]
+        # Spend is in column I (index 8), Impressions in column J (index 9)
+        spend = _parse_decimal(row[8])
+        impressions = _parse_decimal(row[9])
+
+        daily_spend[row_date] += spend
+        daily_impressions[row_date] += impressions
 
 
-def sum_required_cells(sheet: Any, first_row: int, last_row: int, column_index: int, column_name: str) -> Decimal:
-    total = Decimal("0")
-    for row_number in range(first_row, last_row + 1):
-        value = sheet.cell(row_number, column_index).value
-        total += parse_decimal(value, row_number, column_name)
-    return total
-
-
-def distribute(total: Decimal, count: int, scale: Decimal) -> list[Decimal]:
-    if count <= 0:
-        raise ValueError("Cannot distribute totals across an empty date range.")
-    daily = (total / Decimal(count)).quantize(scale, rounding=ROUND_HALF_UP)
-    values = [daily for _ in range(count)]
-    values[-1] = (total - sum(values[:-1], Decimal("0"))).quantize(scale, rounding=ROUND_HALF_UP)
-    return values
-
-
-def column_letter_to_index(letter: str) -> int:
-    index = 0
-    for char in letter.upper():
-        index = index * 26 + ord(char) - ord("A") + 1
-    return index
-
-
-def parse_decimal(value: object, row_number: int, column_name: str) -> Decimal:
-    if value in (None, ""):
-        raise ValueError(f"Missing {column_name} at row {row_number}.")
-
+def _parse_cell_date(value: Any) -> date | None:
+    """Extract a date from an Excel cell value."""
+    if isinstance(value, datetime):
+        return value.date()
+    if isinstance(value, date) and not isinstance(value, datetime):
+        return value
     if isinstance(value, str):
         text = value.strip()
-        negative = text.startswith("(") and text.endswith(")")
-        cleaned = text.strip("()").replace("$", "").replace(",", "")
-    else:
-        negative = False
-        cleaned = str(value)
+        # Handle verbose formats like "Thu Mar 26 2026 02:00:00 GMT+0200 ..."
+        match = re.search(r"\b([A-Za-z]{3})\s+(\d{1,2})\s+(\d{4})\b", text)
+        if match:
+            try:
+                return datetime.strptime(
+                    f"{match.group(1)} {match.group(2)} {match.group(3)}",
+                    "%b %d %Y",
+                ).date()
+            except ValueError:
+                pass
+        # Fallback to common slash formats
+        for fmt in ("%m/%d/%Y", "%m/%d/%y", "%Y-%m-%d"):
+            try:
+                return datetime.strptime(text, fmt).date()
+            except ValueError:
+                continue
+    return None
 
-    try:
-        parsed = Decimal(cleaned)
-    except (InvalidOperation, ValueError) as exc:
-        raise ValueError(f"Invalid {column_name} at row {row_number}: {value!r}") from exc
 
-    if negative:
-        parsed = -parsed
-    if parsed < 0:
-        raise ValueError(f"Negative {column_name} at row {row_number}: {value!r}")
-    return parsed
+def _parse_decimal(value: Any) -> Decimal:
+    """Safely parse a numeric cell value into a Decimal."""
+    if value is None or value == "":
+        return Decimal("0")
+    if isinstance(value, (int, float)):
+        return Decimal(str(value))
+    if isinstance(value, str):
+        cleaned = value.strip().replace("$", "").replace(",", "").strip("()")
+        try:
+            parsed = Decimal(cleaned)
+            if value.strip().startswith("(") and value.strip().endswith(")"):
+                parsed = -parsed
+            return parsed
+        except (InvalidOperation, ValueError):
+            return Decimal("0")
+    return Decimal("0")
 
 
 def decimal_text(value: Decimal) -> str:
